@@ -12,15 +12,15 @@
 % Variable: Lab Instructor
 \makeatletter \newcommand{\BvrSetLabInstructor}[1]{%
   \gdef\Bvr@LabInstructor{#1}}
-% default
-\newcommand{\Bvr@LabInstructor}{Dr. Raghav %
-  B. Venkataramaiyer}
+\newcommand{\Bvr@LabInstructor}{Dr. Jeelani Asif}
+
 % public accessor
 \newcommand{\BvrLabInstructorValue}{\Bvr@LabInstructor}
 \makeatother
 
 % Add subtitle
 \usepackage{titling}
+
 % -- Set title bold
 \pretitle{\begin{center}\bfseries\fontsize{18bp}{18bp}\selectfont}
 \makeatletter
@@ -38,24 +38,28 @@
 
 % -----------------------------------------------------
 
-\title{Grievance-Resolution System for a Tier-2/3 City}
+\title{Sortify: AI-Powered Waste Identification and Disposal Guidance}
 
-\BvrSetLabInstructor{Dr. Raghav B. Venkataramaiyer}
+\BvrSetLabInstructor{Dr. Jeelani Asif}
 
 \BvrSubtitle{%
   Project Proposal for UCS503P  \\
   Submitted to: \BvrLabInstructorValue \\ \bfseries
-  Thapar Institute of Engineering and Technology% 
+  Thapar Institute of Engineering and Technology%
 }
 
 \author{
-  Vidya Vaidyanathan, CSED%
-  \thanks{Roll No: \texttt{1024030xxx}, %
-    Email: \texttt{vvaidhanathan\_be24\@thapar.edu}}
-  \and 
-  Bhanurekha Ganesan, CSED%
-  \thanks{Roll No: \texttt{1024030xxx}, %
-    Email: \texttt{bganesan\_be24\@thapar.edu}}
+  Daksh Aggarwal, CSED%
+  \thanks{Roll No: \texttt{1024160015}, %
+    Email: \texttt{daggarwal\_be24\@thapar.edu}}
+  \and
+  Mankirat Singh, CSED%
+  \thanks{Roll No: \texttt{1024160002}, %
+    Email: \texttt{msingh3\_be24\@thapar.edu}}
+  \and
+  Saket Gatyan, CSED%
+  \thanks{Roll No: \texttt{1024160028}, %
+    Email: \texttt{sgatyan\_be24\@thapar.edu}}
 }
 
 \date{\today}
@@ -64,179 +68,301 @@
 \maketitle
 
 \section{Higher-order goal%
-  \BvrHint{\ldots secondary framing}}
-This project aims to improve sustainable urban
-governance by reducing the time and effort required to
-resolve citizen issues. While the topic is broader than
-any single municipality, the immediate engineering
-objective is to translate \emph{efficient public
-  service delivery} into a measurable, deployable
-software solution.
+  \BvrHint{\ldots broader objective}}
 
-\section{Time-to-value %
-\BvrHint{\ldots primary heuristic}}
+This project aims to make everyday waste segregation simpler and more accessible by providing users with an intelligent mobile assistant for identifying waste items and determining appropriate disposal methods. While waste management involves broader environmental and infrastructural challenges, the immediate engineering objective is to reduce uncertainty at the point where a user decides how to dispose of an item.
+
+The proposed system, \textbf{Sortify}, combines a mobile application, backend services, a waste-information database, and a lightweight machine learning model to provide actionable disposal guidance rather than merely classifying an image.
+
+\section{Time-to-value%
+  \BvrHint{\ldots primary heuristic}}
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item We will deliver meaningful increments quickly by prototyping the core user workflow and validating it with users within a short iteration window.
-    \item We will prioritize fast feedback over perfection by using weekly iterations (and targeting CI-backed automation early) to reduce release friction.
-    \item Success is defined by what can be delivered and measured in the first iteration, then improved based on user feedback.
+    \item The core workflow will focus on delivering immediate value: capture or upload an image, identify the waste item, and provide clear disposal guidance.
+    \item The system will prioritize a reliable and understandable user experience over unnecessary model complexity or research-oriented algorithms.
+    \item The application will be developed as a modular software system so that additional features such as user history, analytics, feedback, and administrative tools can be added without redesigning the core workflow.
+    \item Success will be evaluated through both software engineering quality and the usefulness and reliability of the waste-identification workflow.
 \end{itemize}
 
 \section{Problem Statement}
-Citizens in a tier-2/3 Indian city face delays and uncertainty when reporting local issues (e.g., streetlight outages, water leakage, garbage accumulation, road potholes). Common pain points include:
+
+People frequently encounter everyday items whose correct disposal method is unclear. Items such as plastic packaging, batteries, electronic accessories, food waste, medicine strips, and contaminated containers may belong to different waste streams, and the correct handling procedure is not always obvious to users.
+
+Common pain points include:
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item \textbf{Fragmentation:} complaints are often made via multiple channels (calls, social media, paper forms), causing lost context.
-    \item \textbf{Low transparency:} citizens cannot easily see the status of their complaint (e.g., ``received'', ``assigned'', ``in progress'', ``resolved'').
-    \item \textbf{Slow coordination:} departments/field teams lack a unified, trackable workflow with clear ownership.
-    \item \textbf{Poor data quality:} duplicate or incomplete reports force rework and extend resolution time.
+    \item \textbf{Identification uncertainty:} users may not know which waste category an item belongs to.
+    \item \textbf{Fragmented information:} disposal instructions are often scattered across different sources and require manual searching.
+    \item \textbf{Incorrect segregation:} uncertainty can result in recyclable, organic, hazardous, or e-waste items being placed in inappropriate waste streams.
+    \item \textbf{Lack of actionable guidance:} identifying an item is not sufficient; users need to know what to actually do with it.
+    \item \textbf{Location dependence:} disposal procedures can vary according to local waste-management practices and available facilities.
 \end{itemize}
 
-\textbf{Why this matters now (contextual relevance):} In an urban setting with limited staff bandwidth, even small process improvements can noticeably reduce resolution delays and repeated submissions.
+\textbf{Why this matters:} A simple and accessible decision-support system can reduce the effort required to make informed disposal decisions and encourage better waste-segregation habits.
 
-\section{Proposed Solution %
-\BvrHint{\ldots Software Proposition}}
+\section{Proposed Solution%
+  \BvrHint{\ldots Software Proposition}}
+
 \subsection{Overview}
-Build a \textbf{web-based} ``Grievance-to-Resolution'' system with the following components:
+
+Build a \textbf{mobile-first} waste identification and disposal guidance application named \textbf{Sortify}. The application will use machine learning as one component of a larger software system.
+
+The proposed solution will contain the following components:
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item \textbf{Citizen submission portal:} users submit an issue with photo (optional), category, and locality/ward.
-    \item \textbf{Automated triage:} basic duplicate detection and completeness checks.
-    \item \textbf{Department workflow:} assign issues to relevant department/team and update statuses.
-    \item \textbf{Status transparency:} citizens track status and receive notifications when resolved.
-    \item \textbf{Admin/ops dashboard:} performance summaries (resolution time, backlog).
+    \item \textbf{Mobile application:} users capture an image using their device camera or upload an existing image.
+    \item \textbf{ML-based identification:} a lightweight image-classification model predicts the likely waste item and provides a confidence score.
+    \item \textbf{Waste knowledge base:} the predicted item is mapped to its waste category, material information, disposal method, and relevant safety instructions.
+    \item \textbf{Location-aware guidance:} disposal recommendations can be associated with the user's selected geographical context so that guidance can account for local practices.
+    \item \textbf{Manual search and fallback:} users can search for waste items manually or select a category when the ML model is uncertain.
+    \item \textbf{User history:} authenticated users can save scans and view their previous classifications.
+    \item \textbf{Feedback system:} users can indicate when a prediction is incorrect, creating structured feedback for future model improvement.
+    \item \textbf{Administrative dashboard:} authorized administrators can manage waste items, disposal guidelines, and user feedback.
 \end{itemize}
 
 \subsection{Core workflow}
+
 \begin{enumerate}[leftmargin=0.7cm]
-    \item Citizen creates a complaint and receives a complaint ID immediately.
-    \item System validates completeness and suggests possible duplicates (lightweight similarity on text/category and approximate location).
-    \item Department staff update status (Received $\rightarrow$ Assigned $\rightarrow$ In Progress $\rightarrow$ Resolved).
-    \item Citizen views status updates and resolution notes.
+    \item The user captures or uploads an image of a waste item.
+    \item The application validates the image and sends it to the backend prediction service.
+    \item The ML model identifies the most likely waste item and returns a confidence score.
+    \item The backend retrieves the corresponding waste category and disposal information from the knowledge base.
+    \item The user receives an explanation containing the predicted item, category, confidence, disposal instructions, and relevant safety information.
+    \item The user can save the result, correct the prediction, or manually search for another item.
+    \item The scan and any user feedback are stored for history, analytics, and future improvement.
 \end{enumerate}
 
-\subsection{Operational constraints for an educational, tier-2/3 setting}
+\subsection{Waste classification structure}
+
+The initial system will focus on a limited number of practical waste categories rather than attempting to classify every possible object.
+
+The proposed categories are:
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item Keep the solution usable on low-to-mid range devices via responsive web design.
-    \item Avoid dependence on advanced research algorithms; focus on workflow, automation, and system correctness.
-    \item Design for deployability using common web hosting and managed databases.
+    \item \textbf{Recyclable:} examples include plastic bottles, paper, cardboard, glass, and metal containers.
+    \item \textbf{Organic:} examples include food scraps, fruit and vegetable waste, and other biodegradable material.
+    \item \textbf{General waste:} items that cannot reasonably be recycled or composted through the supported disposal streams.
+    \item \textbf{E-waste:} electronic devices, cables, chargers, and other electronic components.
+    \item \textbf{Hazardous waste:} batteries, certain medicines, chemical containers, and other materials requiring special handling.
 \end{itemize}
 
-\section{Solution Approach %
-\BvrHint{\ldots Engineering focus}}
-This is an engineering course project, so we focus on scalable administrative and workflow aspects rather than novel algorithm research.
+The ML component may identify a more specific item, such as a ``plastic bottle'' or ``battery'', while the application maps that item to the appropriate disposal category and guidance.
 
-\subsection{Duplicate/quality assistance %
-\BvrHint{\ldots non-research}}
-Duplicate detection will be heuristic-based:
+\section{Solution Approach%
+  \BvrHint{\ldots Engineering focus}}
+
+This is a Software Engineering project, so the focus will be on building a complete, maintainable, and deployable software system rather than developing a novel research model.
+
+\subsection{Machine learning component%
+  \BvrHint{\ldots lightweight ML}}
+
+The ML component will use a pretrained image-classification architecture with transfer learning or fine-tuning on an appropriate public waste-image dataset.
+
+The model development process will include:
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item Normalize text (category + short description keywords).
-    \item Use a simple similarity measure (e.g., token overlap / TF-IDF cosine with threshold) without claiming state-of-the-art.
-    \item Show top candidate duplicates to staff for decision; never fully auto-delete or auto-reject.
+    \item Dataset preparation and cleaning.
+    \item Image preprocessing and augmentation.
+    \item Training, validation, and testing.
+    \item Evaluation using accuracy, precision, recall, F1-score, and a confusion matrix.
+    \item Confidence-based handling of uncertain predictions.
+    \item Integration of the trained model with the application backend.
 \end{itemize}
 
-\subsection{Web architecture %
-\BvrHint{\ldots web-based solution}}
-A typical 3-tier web architecture:
+The model will not be treated as infallible. Low-confidence predictions will allow the user to retake the image, select an alternative prediction, or use manual search.
+
+\subsection{Mobile application%
+  \BvrHint{\ldots React Native}}
+
+The primary client will be developed using \textbf{React Native}. The application will provide:
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item \textbf{Frontend:} responsive UI for citizens and staff (status pages, submission form, dashboard).
-    \item \textbf{Backend API:} authentication, complaint submission, status transitions, assignment logic.
-    \item \textbf{Database:} store users, complaints, status history, attachments metadata.
+    \item Camera and image-upload functionality.
+    \item Prediction and disposal-guidance screens.
+    \item User authentication and profile management.
+    \item Scan history and search.
+    \item Personal statistics and activity dashboard.
+    \item Prediction feedback and correction.
+    \item Educational information about waste segregation.
 \end{itemize}
 
-\subsection{CI/CD and fast delivery enabler}
+\subsection{Backend architecture%
+  \BvrHint{\ldots FastAPI}}
+
+The backend will be implemented using \textbf{FastAPI} and will expose REST APIs for:
+
+\begin{itemize}[leftmargin=0.7cm]
+    \item Authentication and user management.
+    \item Image upload and ML inference.
+    \item Waste-item and disposal-guideline retrieval.
+    \item Scan history.
+    \item User feedback.
+    \item Dashboard and analytics data.
+    \item Administrative operations.
+\end{itemize}
+
+A relational database such as PostgreSQL will store users, waste items, guidelines, scans, prediction results, feedback, and relevant administrative data.
+
+\subsection{Knowledge base and disposal guidance}
+
+The application will maintain a structured database of waste items and disposal guidance. Each supported waste item can contain:
+
+\begin{itemize}[leftmargin=0.7cm]
+    \item Waste-item name and description.
+    \item Waste category.
+    \item Material information.
+    \item Recyclability or compostability information where applicable.
+    \item Disposal method.
+    \item Preparation instructions.
+    \item Safety warnings.
+    \item Location-specific guidance where available.
+\end{itemize}
+
+This separation between ML prediction and disposal guidance ensures that the model is responsible for recognition while the software system remains responsible for interpreting the prediction and presenting actionable instructions.
+
+\subsection{CI/CD and delivery}
+
 CI/CD will be used to:
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item Automatically build and run tests on every change.
-    \item Produce repeatable deployment artifacts to staging.
-    \item Enable safe and frequent releases of incremental features.
+    \item Automatically run unit and integration tests on code changes.
+    \item Perform linting and build checks.
+    \item Produce repeatable deployment artifacts.
+    \item Enable controlled deployment of the backend and application services.
+    \item Reduce regression risk as new features are introduced.
 \end{itemize}
 
-\section{Evaluation Criterion %
-\BvrHint{\ldots measurable and attributable}}
-We define success using measurable metrics tied to the core workflow.
+\section{Evaluation Criterion%
+  \BvrHint{\ldots measurable and attributable}}
 
-\subsection{Primary evaluation metric}
-\textbf{Time-to-acknowledgement (TTA):} time between complaint submission and ``Received/Assigned'' status creation in the system.
+The project will evaluate both the software system and the ML component.
+
+\subsection{Primary evaluation criteria}
+
+\textbf{End-to-end task success:} percentage of test users who can successfully identify an item and reach an appropriate disposal recommendation using the application.
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item Target: median TTA $\le$ 2 hours during pilot window.
-    \item Attribution: measured from database timestamps (submission vs. first status update by staff).
+    \item Measure the complete workflow from image capture/upload to disposal guidance.
+    \item Record failures caused by invalid input, low-confidence predictions, unavailable guidance, or backend errors.
 \end{itemize}
 
-\subsection{Secondary evaluation metrics}
+\textbf{ML classification performance:} evaluate the image-classification model on a held-out test set using standard classification metrics.
+
+\subsection{Secondary evaluation criteria}
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item \textbf{Resolution time reduction:} reduce time-to-resolved compared to baseline process (even if baseline is collected via survey).
-    \item \textbf{Duplicate rate:} percentage of complaints flagged as duplicates and resolved without rework.
-    \item \textbf{User clarity:} citizen-reported clarity of status using a simple 1--5 feedback question.
-    \item \textbf{Reliability:} availability of staging/production for login and submission during business hours (e.g., $\ge$ 99\% uptime in pilot).
+    \item \textbf{Accuracy and F1-score:} measure classification performance across supported waste classes.
+    \item \textbf{Confidence reliability:} evaluate how effectively the system identifies uncertain predictions and avoids presenting low-confidence results as certain.
+    \item \textbf{API reliability:} measure successful request completion and error rates during testing.
+    \item \textbf{Usability:} collect user feedback on how easily users can complete the scan-to-disposal workflow.
+    \item \textbf{Response time:} measure the time required to process an image and return a result under normal deployment conditions.
 \end{itemize}
 
-\subsection{Pilot validation plan %
-\BvrHint{\ldots high-level}}
+\subsection{Validation plan%
+  \BvrHint{\ldots high-level}}
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item Recruit 10--20 pilot users (citizens) and 3--5 staff roles (department simulation if real staff unavailable).
-    \item Compare metrics before/after within the iteration window by logging baseline estimates via short interviews or existing process observations.
+    \item Test the application using a defined set of representative waste items.
+    \item Evaluate the ML model on a held-out test dataset.
+    \item Conduct functional testing of authentication, image upload, prediction, history, feedback, and administrative workflows.
+    \item Conduct usability testing with representative student users.
+    \item Record and analyze incorrect predictions and user corrections to identify areas for improvement.
 \end{itemize}
 
-\section{Scalability %
-\BvrHint{\ldots with foresight}}
-The proposition should scale in both theoretical and practical senses.
+\section{Scalability%
+  \BvrHint{\ldots with foresight}}
+
+The system should be capable of expanding beyond the initial prototype without requiring a complete architectural redesign.
 
 \begin{enumerate}[leftmargin=0.7cm]
-    \item \textbf{Scalable (theoretically):} The system should support growth in number of complaints and concurrent dashboard usage by:
+    \item \textbf{Scalable architecture:} the mobile frontend, backend API, database, and ML inference components will remain logically separated.
     \begin{itemize}[leftmargin=0.7cm]
-        \item decoupling components (frontend/backend),
-        \item enabling pagination and indexing for common queries,
-        \item using stateless API design.
+        \item Stateless API design where appropriate.
+        \item Pagination and indexing for scan history and administrative queries.
+        \item Separation of ML inference from the main application logic.
+        \item Modular database structures for adding new waste items and locations.
     \end{itemize}
-    
-    \item \textbf{Operationally deployable (practically):} The system should run on common web hosting:
+
+    \item \textbf{Feature scalability:} the architecture should allow future additions such as:
     \begin{itemize}[leftmargin=0.7cm]
-        \item managed database,
-        \item containerized or platform-hosted deployment,
-        \item CI/CD pipeline for staging/production.
+        \item Additional waste categories and waste items.
+        \item More detailed local disposal guidelines.
+        \item Collection-point discovery.
+        \item Barcode-based product identification.
+        \item Improved ML models.
+        \item Optional on-device/offline inference.
     \end{itemize}
+
+    \item \textbf{Operational deployability:} the backend and database should be deployable using common cloud hosting and managed database services, with CI/CD supporting repeatable releases.
 \end{enumerate}
 
 \section{Engine availability heuristic}
-A mature set of ``engines'' (tooling/services) is available to implement this as a web-based project:
-\begin{itemize}[leftmargin=0.7cm]
-    \item Web framework for REST APIs and templated/reactive pages.
-    \item Managed relational or document database.
-    \item Authentication approach (token-based or session-based).
-    \item Object storage for optional attachments (or local storage for pilot).
-    \item Test framework for unit/integration tests.
-    \item CI runner and staging deployment target.
-\end{itemize}
-We will use these mature components to focus on workflow design, correctness, and measurement rather than inventing new infrastructure.
 
-\section{Project scope and deliverables %
-\BvrHint{\ldots iteration-friendly}}
-\subsection{Initial deliverable %
-\BvrHint{\ldots first iteration}}
+A mature set of frameworks, libraries, and services is available to implement Sortify without requiring the team to develop infrastructure from scratch.
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item Citizen submission form + complaint ID generation
-    \item Staff workflow: update status and assignment
-    \item Citizen status page: view timeline/history
-    \item Basic logging and timestamps for TTA measurement
-    \item CI: build + backend unit tests + linting
-    \item CD to staging with a single command or pipeline job
+    \item \textbf{Mobile framework:} React Native for cross-platform application development.
+    \item \textbf{Backend framework:} FastAPI for REST APIs and backend services.
+    \item \textbf{Database:} PostgreSQL or SQLite depending on the deployment stage.
+    \item \textbf{ML framework:} PyTorch and established pretrained image-classification architectures.
+    \item \textbf{Authentication:} token-based authentication with role-based authorization for users and administrators.
+    \item \textbf{Testing:} suitable unit, integration, API, and frontend testing frameworks.
+    \item \textbf{CI/CD:} automated build, test, and deployment pipelines.
+    \item \textbf{Deployment:} cloud-hosted backend and database with a distributable mobile application.
+\end{itemize}
+
+We will use these established technologies to focus engineering effort on system integration, correctness, usability, testing, and maintainability rather than inventing new infrastructure.
+
+\section{Project scope and deliverables%
+  \BvrHint{\ldots iteration-friendly}}
+
+\subsection{Initial deliverable%
+  \BvrHint{\ldots core prototype}}
+
+\begin{itemize}[leftmargin=0.7cm]
+    \item React Native application with the core navigation and user interface.
+    \item User registration, login, and authentication.
+    \item Image capture/upload workflow.
+    \item FastAPI backend with image validation and prediction endpoint.
+    \item Initial ML model integrated with the backend.
+    \item Waste category and disposal-guidance database.
+    \item Prediction result screen showing item, category, and confidence.
+    \item Basic scan history.
+    \item Backend unit/API tests and linting.
 \end{itemize}
 
 \subsection{Subsequent deliverables}
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item Lightweight duplicate suggestions with staff review
-    \item Notification layer (email/SMS optional in later iteration; can start with in-app notifications)
-    \item Admin dashboard for metrics and backlog
-    \item Improved search/filtering and indexed queries for scale readiness
+    \item Manual waste-item search and low-confidence fallback.
+    \item Location-aware disposal guidance.
+    \item User feedback and prediction correction.
+    \item Personal statistics and activity dashboard.
+    \item Educational waste-segregation content.
+    \item Administrative dashboard.
+    \item Waste-item and disposal-guideline management.
+    \item Model-performance and prediction analytics.
+    \item CI/CD and production deployment.
 \end{itemize}
 
 \section{Risks and mitigations}
+
 \begin{itemize}[leftmargin=0.7cm]
-    \item \textbf{Data privacy / consent:} minimize collected data; keep attachments optional; store only what is needed.
-    \item \textbf{Staff adoption:} provide an easy UI for status updates; keep workflow steps minimal; include shortcuts.
-    \item \textbf{Evaluation measurement ambiguity:} instrument timestamps and define clear status transitions before development begins.
-    \item \textbf{Operational issues in pilot:} use staging early; ensure CI/CD produces repeatable deployments.
+    \item \textbf{ML misclassification:} use confidence thresholds, allow manual correction, and avoid presenting uncertain predictions as definitive.
+    \item \textbf{Limited dataset coverage:} restrict the initial supported classes and clearly communicate the model's scope.
+    \item \textbf{Variation in disposal rules:} associate disposal guidance with a defined location and maintain the information separately from the ML model.
+    \item \textbf{Poor image quality:} validate uploaded images and provide clear instructions for retaking unclear photographs.
+    \item \textbf{Data privacy:} minimize stored personal information and images, obtain appropriate user consent, and provide controls for user data.
+    \item \textbf{Backend or network failure:} provide meaningful error states and allow manual access to locally available information where possible.
+    \item \textbf{Scope expansion:} prioritize the core scan-to-guidance workflow and treat advanced features such as barcode recognition and on-device inference as optional extensions.
 \end{itemize}
 
 \section{Summary}
-This project proposes a deployable web platform to reduce grievance handling delays in a tier-2/3 city context. It meets the course criteria by emphasizing time-to-value through rapid iterations, implementing CI/CD to support frequent safe releases, and using measurable evaluation criteria (especially time-to-acknowledgement). It remains focused on engineering workflow and scalability readiness rather than research-driven novelty.
+
+This project proposes \textbf{Sortify}, a mobile-first AI-powered waste identification and disposal guidance platform. The system combines a React Native mobile application, FastAPI backend, structured waste knowledge base, and lightweight image-classification model to help users move from an unidentified waste item to an actionable disposal recommendation.
+
+The project meets the requirements of a Software Engineering project by emphasizing complete system development rather than ML research alone. It includes requirements-driven design, mobile and backend development, database management, authentication, API integration, testing, CI/CD, deployment, administrative workflows, and measurable evaluation. At the same time, the ML component provides a meaningful opportunity to investigate image classification, model evaluation, confidence handling, and feedback-driven improvement.
+
+The initial scope will remain focused on a limited set of waste categories and supported items, allowing the team to build a reliable and maintainable system while leaving clear opportunities for future expansion.
 
 \end{document}
