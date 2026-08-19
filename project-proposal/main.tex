@@ -67,15 +67,13 @@
 \begin{document}
 \maketitle
 
-\section{Higher-order goal%
-  \BvrHint{\ldots broader objective}}
+\section{Higher-order goal}
 
 This project aims to make everyday waste segregation simpler and more accessible by providing users with an intelligent mobile assistant for identifying waste items and determining appropriate disposal methods. While waste management involves broader environmental and infrastructural challenges, the immediate engineering objective is to reduce uncertainty at the point where a user decides how to dispose of an item.
 
 The proposed system, \textbf{Sortify}, combines a mobile application, backend services, a waste-information database, and a lightweight machine learning model to provide actionable disposal guidance rather than merely classifying an image.
 
-\section{Time-to-value%
-  \BvrHint{\ldots primary heuristic}}
+\section{Time-to-value}
 
 \begin{itemize}[leftmargin=0.7cm]
     \item The core workflow will focus on delivering immediate value: capture or upload an image, identify the waste item, and provide clear disposal guidance.
@@ -100,8 +98,7 @@ Common pain points include:
 
 \textbf{Why this matters:} A simple and accessible decision-support system can reduce the effort required to make informed disposal decisions and encourage better waste-segregation habits.
 
-\section{Proposed Solution%
-  \BvrHint{\ldots Software Proposition}}
+\section{Proposed Solution}
 
 \subsection{Overview}
 
@@ -149,13 +146,11 @@ The proposed categories are:
 
 The ML component may identify a more specific item, such as a ``plastic bottle'' or ``battery'', while the application maps that item to the appropriate disposal category and guidance.
 
-\section{Solution Approach%
-  \BvrHint{\ldots Engineering focus}}
+\section{Solution Approach}
 
 This is a Software Engineering project, so the focus will be on building a complete, maintainable, and deployable software system rather than developing a novel research model.
 
-\subsection{Machine learning component%
-  \BvrHint{\ldots lightweight ML}}
+\subsection{Machine learning component}
 
 The ML component will use a pretrained image-classification architecture with transfer learning or fine-tuning on an appropriate public waste-image dataset.
 
@@ -172,8 +167,7 @@ The model development process will include:
 
 The model will not be treated as infallible. Low-confidence predictions will allow the user to retake the image, select an alternative prediction, or use manual search.
 
-\subsection{Mobile application%
-  \BvrHint{\ldots React Native}}
+\subsection{Mobile application}
 
 The primary client will be developed using \textbf{React Native}. The application will provide:
 
@@ -188,8 +182,7 @@ The primary client will be developed using \textbf{React Native}. The applicatio
     \item Chatbot interface for natural-language disposal queries.
 \end{itemize}
 
-\subsection{Backend architecture%
-  \BvrHint{\ldots FastAPI}}
+\subsection{Backend architecture}
 
 The backend will be implemented using \textbf{FastAPI} and will expose REST APIs for:
 
@@ -223,8 +216,7 @@ The application will maintain a structured database of waste items and disposal 
 
 This separation between ML prediction and disposal guidance ensures that the model is responsible for recognition while the software system remains responsible for interpreting the prediction and presenting actionable instructions.
 
-\subsection{Conversational assistant%
-  \BvrHint{\ldots natural-language guidance}}
+\subsection{Conversational assistant}
 
 In addition to the image-based scan-to-guidance workflow, Sortify will provide a conversational assistant that lets users interact with the waste knowledge base through natural language, for example by asking how to dispose of a specific item or whether something is recyclable.
 
@@ -248,8 +240,7 @@ CI/CD will be used to:
     \item Reduce regression risk as new features are introduced.
 \end{itemize}
 
-\section{Evaluation Criterion%
-  \BvrHint{\ldots measurable and attributable}}
+\section{Evaluation Criterion}
 
 The project will evaluate both the software system and the ML component.
 
@@ -274,8 +265,7 @@ The project will evaluate both the software system and the ML component.
     \item \textbf{Response time:} measure the time required to process an image and return a result under normal deployment conditions.
 \end{itemize}
 
-\subsection{Validation plan%
-  \BvrHint{\ldots high-level}}
+\subsection{Validation plan}
 
 \begin{itemize}[leftmargin=0.7cm]
     \item Test the application using a defined set of representative waste items.
@@ -285,8 +275,7 @@ The project will evaluate both the software system and the ML component.
     \item Record and analyze incorrect predictions and user corrections to identify areas for improvement.
 \end{itemize}
 
-\section{Scalability%
-  \BvrHint{\ldots with foresight}}
+\section{Scalability}
 
 The system should be capable of expanding beyond the initial prototype without requiring a complete architectural redesign.
 
@@ -330,11 +319,9 @@ A mature set of frameworks, libraries, and services is available to implement So
 
 We will use these established technologies to focus engineering effort on system integration, correctness, usability, testing, and maintainability rather than inventing new infrastructure.
 
-\section{Project scope and deliverables%
-  \BvrHint{\ldots iteration-friendly}}
+\section{Project scope and deliverables}
 
-\subsection{Initial deliverable%
-  \BvrHint{\ldots core prototype}}
+\subsection{Initial deliverable}
 
 \begin{itemize}[leftmargin=0.7cm]
     \item React Native application with the core navigation and user interface.
