@@ -118,6 +118,7 @@ The proposed solution will contain the following components:
     \item \textbf{User history:} authenticated users can save scans and view their previous classifications.
     \item \textbf{Feedback system:} users can indicate when a prediction is incorrect, creating structured feedback for future model improvement.
     \item \textbf{Administrative dashboard:} authorized administrators can manage waste items, disposal guidelines, and user feedback.
+    \item \textbf{Conversational assistant (chatbot):} an integrated chatbot lets users ask natural-language questions about waste disposal, clarify ambiguous items, and get guidance without manually searching the knowledge base.
 \end{itemize}
 
 \subsection{Core workflow}
@@ -184,6 +185,7 @@ The primary client will be developed using \textbf{React Native}. The applicatio
     \item Personal statistics and activity dashboard.
     \item Prediction feedback and correction.
     \item Educational information about waste segregation.
+    \item Chatbot interface for natural-language disposal queries.
 \end{itemize}
 
 \subsection{Backend architecture%
@@ -199,6 +201,7 @@ The backend will be implemented using \textbf{FastAPI} and will expose REST APIs
     \item User feedback.
     \item Dashboard and analytics data.
     \item Administrative operations.
+    \item Chatbot query handling and conversation storage.
 \end{itemize}
 
 A relational database such as PostgreSQL will store users, waste items, guidelines, scans, prediction results, feedback, and relevant administrative data.
@@ -219,6 +222,19 @@ The application will maintain a structured database of waste items and disposal 
 \end{itemize}
 
 This separation between ML prediction and disposal guidance ensures that the model is responsible for recognition while the software system remains responsible for interpreting the prediction and presenting actionable instructions.
+
+\subsection{Conversational assistant%
+  \BvrHint{\ldots natural-language guidance}}
+
+In addition to the image-based scan-to-guidance workflow, Sortify will provide a conversational assistant that lets users interact with the waste knowledge base through natural language, for example by asking how to dispose of a specific item or whether something is recyclable.
+
+\begin{itemize}[leftmargin=0.7cm]
+    \item \textbf{Grounded responses:} the chatbot will retrieve relevant entries from the waste knowledge base (retrieval-augmented generation) rather than relying on an unconstrained language model, reducing the risk of incorrect disposal advice.
+    \item \textbf{Fallback and escalation:} when the assistant cannot confidently answer a query, it will direct the user to manual search or suggest capturing an image for ML-based identification.
+    \item \textbf{Integration with scan results:} after a scan, users can ask follow-up questions about the identified item directly within the chatbot interface.
+    \item \textbf{Conversation history:} authenticated users' chatbot conversations can be stored alongside scan history for continuity across sessions.
+    \item \textbf{Scope control:} the assistant will be restricted to waste-management and disposal-related topics to keep responses relevant and reliable.
+\end{itemize}
 
 \subsection{CI/CD and delivery}
 
@@ -305,6 +321,7 @@ A mature set of frameworks, libraries, and services is available to implement So
     \item \textbf{Backend framework:} FastAPI for REST APIs and backend services.
     \item \textbf{Database:} PostgreSQL or SQLite depending on the deployment stage.
     \item \textbf{ML framework:} PyTorch and established pretrained image-classification architectures.
+    \item \textbf{Conversational AI:} an LLM API combined with retrieval-augmented generation over the waste knowledge base to power the chatbot.
     \item \textbf{Authentication:} token-based authentication with role-based authorization for users and administrators.
     \item \textbf{Testing:} suitable unit, integration, API, and frontend testing frameworks.
     \item \textbf{CI/CD:} automated build, test, and deployment pipelines.
@@ -339,6 +356,7 @@ We will use these established technologies to focus engineering effort on system
     \item User feedback and prediction correction.
     \item Personal statistics and activity dashboard.
     \item Educational waste-segregation content.
+    \item Conversational assistant (chatbot) for natural-language disposal queries.
     \item Administrative dashboard.
     \item Waste-item and disposal-guideline management.
     \item Model-performance and prediction analytics.
@@ -355,6 +373,7 @@ We will use these established technologies to focus engineering effort on system
     \item \textbf{Data privacy:} minimize stored personal information and images, obtain appropriate user consent, and provide controls for user data.
     \item \textbf{Backend or network failure:} provide meaningful error states and allow manual access to locally available information where possible.
     \item \textbf{Scope expansion:} prioritize the core scan-to-guidance workflow and treat advanced features such as barcode recognition and on-device inference as optional extensions.
+    \item \textbf{Chatbot reliability:} ground chatbot responses in the waste knowledge base via retrieval-augmented generation and restrict its scope to avoid hallucinated or unsafe disposal advice.
 \end{itemize}
 
 \section{Summary}
