@@ -4,6 +4,7 @@
 \usepackage{enumitem}
 \usepackage{graphicx}
 \usepackage{xcolor}
+\usepackage{float}
 
 % -----------------------------------------------------
 % bvraghav-tiet-ucs503p-article.sty
@@ -118,6 +119,17 @@ The proposed solution will contain the following components:
     \item \textbf{Conversational assistant (chatbot):} an integrated chatbot lets users ask natural-language questions about waste disposal, clarify ambiguous items, and get guidance without manually searching the knowledge base.
 \end{itemize}
 
+\subsection{System Context Diagram}
+
+Figure~\ref{fig:level0} provides a high-level view of Sortify and its interaction with the primary external actors.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.68\textwidth]{level0.png}
+    \caption{Level-0 Context Diagram for Sortify}
+    \label{fig:level0}
+\end{figure}
+
 \subsection{Core workflow}
 
 \begin{enumerate}[leftmargin=0.7cm]
@@ -129,6 +141,28 @@ The proposed solution will contain the following components:
     \item The user can save the result, correct the prediction, or manually search for another item.
     \item The scan and any user feedback are stored for history, analytics, and future improvement.
 \end{enumerate}
+
+\subsection{Use Case Diagram}
+
+Figure~\ref{fig:use-case-diagram} illustrates the major functional interactions between Sortify users, administrators, and the system.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{use_case_diagram.png}
+    \caption{Use Case Diagram for Sortify}
+    \label{fig:use-case-diagram}
+\end{figure}
+
+\subsection{Level-1 Data Flow Diagram}
+
+Figure~\ref{fig:level1} expands the system context into the main functional processes and data interactions within Sortify.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{level1.png}
+    \caption{Level-1 Data Flow Diagram for Sortify}
+    \label{fig:level1}
+\end{figure}
 
 \subsection{Waste classification structure}
 
@@ -167,6 +201,15 @@ The model development process will include:
 
 The model will not be treated as infallible. Low-confidence predictions will allow the user to retake the image, select an alternative prediction, or use manual search.
 
+Figure~\ref{fig:ml-process} summarizes the main processing stages of the classification component.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{3.0model.png}
+    \caption{ML Classification Process}
+    \label{fig:ml-process}
+\end{figure}
+
 \subsection{Mobile application}
 
 The primary client will be developed using \textbf{React Native}. The application will provide:
@@ -199,6 +242,24 @@ The backend will be implemented using \textbf{FastAPI} and will expose REST APIs
 
 A relational database such as PostgreSQL will store users, waste items, guidelines, scans, prediction results, feedback, and relevant administrative data.
 
+Figure~\ref{fig:user-data-flow} illustrates the main user-facing data operations involving saved scans, feedback, and scan history.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{3.0userdata.png}
+    \caption{User Data and Feedback Flow}
+    \label{fig:user-data-flow}
+\end{figure}
+
+Figure~\ref{fig:admin-flow} illustrates the corresponding administrative operations for managing the catalog and reviewing feedback and analytics.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.62\textwidth]{3.0admin.png}
+    \caption{Administrative Management Flow}
+    \label{fig:admin-flow}
+\end{figure}
+
 \subsection{Knowledge base and disposal guidance}
 
 The application will maintain a structured database of waste items and disposal guidance. Each supported waste item can contain:
@@ -216,6 +277,15 @@ The application will maintain a structured database of waste items and disposal 
 
 This separation between ML prediction and disposal guidance ensures that the model is responsible for recognition while the software system remains responsible for interpreting the prediction and presenting actionable instructions.
 
+Figure~\ref{fig:map-guide} shows how waste information and location context contribute to disposal guidance.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{3.0map.png}
+    \caption{Location-Aware Disposal Guidance Flow}
+    \label{fig:map-guide}
+\end{figure}
+
 \subsection{Conversational assistant}
 
 In addition to the image-based scan-to-guidance workflow, Sortify will provide a conversational assistant that lets users interact with the waste knowledge base through natural language, for example by asking how to dispose of a specific item or whether something is recyclable.
@@ -227,6 +297,15 @@ In addition to the image-based scan-to-guidance workflow, Sortify will provide a
     \item \textbf{Conversation history:} authenticated users' chatbot conversations can be stored alongside scan history for continuity across sessions.
     \item \textbf{Scope control:} the assistant will be restricted to waste-management and disposal-related topics to keep responses relevant and reliable.
 \end{itemize}
+
+Figure~\ref{fig:chatbot-flow} summarizes the chatbot's query and response flow.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.55\textwidth]{3.0chatbot.drawio.png}
+    \caption{Conversational Assistant Flow}
+    \label{fig:chatbot-flow}
+\end{figure}
 
 \subsection{CI/CD and delivery}
 
