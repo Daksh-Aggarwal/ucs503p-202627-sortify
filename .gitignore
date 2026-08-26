@@ -467,3 +467,6 @@ TSWLatexianTemp*
 #*Notes.bib
  .DS_Store
 project-proposal/.DS_Store
+docs/.DS_Store
+*/.DS_Store
+.DS_Store
