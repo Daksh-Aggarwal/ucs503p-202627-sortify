@@ -1,4 +1,4 @@
-# W3: Initial System Design Planning with Use Case Diagram
+# W2: Initial System Design Planning with Use Case Diagram
 
 ## Objective
 

@@ -8,7 +8,6 @@ This week, our goal was to choose a clear project idea and keep it realistic for
 
 As a team, we discussed common situations where people feel confused about how to throw away waste items. We talked about things like plastic wrappers, batteries, medicine strips, and dirty containers. From these examples, we noticed the same problem again and again: people often do not know which waste category an item belongs to.
 
-From there, we defined our problem more clearly. Instead of trying to solve waste management as a whole, we decided to focus on helping one person make the correct disposal decision at the right moment. This made the project more focused and much more realistic.
 
 I also helped think through why this problem is difficult in everyday life. People may not know the item category, the disposal information they find online is often scattered, and even if they identify the item, they may still not know what action to take. We also realized that the correct disposal method can change depending on location.
 
