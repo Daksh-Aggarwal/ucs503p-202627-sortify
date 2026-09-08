@@ -93,7 +93,7 @@ export default function TabTwoScreen() {
               <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
               screen densities.
             </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
+            <Image source={require('@/assets/images/logo.png')} style={styles.imageLogo} />
             <ExternalLink href="https://reactnative.dev/docs/images">
               <ThemedText type="linkPrimary">Learn more</ThemedText>
             </ExternalLink>
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     marginTop: Spacing.two,
   },
-  imageReact: {
+  imageLogo: {
     width: 100,
     height: 100,
     alignSelf: 'center',
