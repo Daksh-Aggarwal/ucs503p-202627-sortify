@@ -42,14 +42,14 @@ try {
   run(`sips -z 340 340 "${sourceLogo}" --out "${fgResized}"`);
   run(`sips -p 512 512 "${fgResized}" --out "${fgFinal}"`);
 
-  // 4. Android Adaptive Icon Background: 512x512 solid white PNG
-  console.log('✨ Creating android-icon-background.png (512x512)...');
+  // 4. Android Adaptive Icon Background: 512x512 solid brand background PNG (#FAFBF7)
+  console.log('✨ Creating android-icon-background.png (512x512, #FAFBF7)...');
   const bgSvg = path.join(tmpDir, 'bg.svg');
   const bgFinal = path.join(imagesDir, 'android-icon-background.png');
   fs.writeFileSync(
     bgSvg,
     `<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-      <rect width="512" height="512" fill="#FFFFFF"/>
+      <rect width="512" height="512" fill="#FAFBF7"/>
     </svg>`
   );
   run(`sips -s format png "${bgSvg}" --out "${bgFinal}"`);
@@ -63,15 +63,15 @@ try {
   run(`sips -m "/System/Library/ColorSync/Profiles/Generic Gray Profile.icc" "${monoResized}" --out "${monoGray}"`);
   run(`sips -p 432 432 "${monoGray}" --out "${monoFinal}"`);
 
-  // 6. App Icon: 820x820 logo centered in 1024x1024 white canvas (App Store / Play Store safe zone)
-  console.log('✨ Creating icon.png (1024x1024)...');
+  // 6. App Icon: 820x820 logo centered in 1024x1024 #FAFBF7 canvas (App Store / Play Store safe zone)
+  console.log('✨ Creating icon.png (1024x1024, #FAFBF7)...');
   const iconResized = path.join(tmpDir, 'icon_resized.png');
   const iconFinal = path.join(imagesDir, 'icon.png');
   run(`sips -z 820 820 "${sourceLogo}" --out "${iconResized}"`);
-  run(`sips -p 1024 1024 --padColor FFFFFF "${iconResized}" --out "${iconFinal}"`);
+  run(`sips -p 1024 1024 --padColor FAFBF7 "${iconResized}" --out "${iconFinal}"`);
 
-  // 7. Hero Glow: 604x604 emerald radial glow for Sortify brand
-  console.log('✨ Creating logo-glow.png (604x604 emerald radial glow)...');
+  // 7. Hero Glow: 604x604 brand emerald radial glow
+  console.log('✨ Creating logo-glow.png (604x604 brand radial glow)...');
   const glowSvg = path.join(tmpDir, 'glow.svg');
   const glowFinal = path.join(imagesDir, 'logo-glow.png');
   fs.writeFileSync(
@@ -79,11 +79,11 @@ try {
     `<svg width="604" height="604" viewBox="0 0 604 604" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <radialGradient id="emeraldGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#10B981" stop-opacity="0.65"/>
-          <stop offset="30%" stop-color="#10B981" stop-opacity="0.45"/>
-          <stop offset="60%" stop-color="#34D399" stop-opacity="0.2"/>
-          <stop offset="85%" stop-color="#34D399" stop-opacity="0.05"/>
-          <stop offset="100%" stop-color="#34D399" stop-opacity="0"/>
+          <stop offset="0%" stop-color="#4CAF7A" stop-opacity="0.65"/>
+          <stop offset="30%" stop-color="#4CAF7A" stop-opacity="0.45"/>
+          <stop offset="60%" stop-color="#1B5E3F" stop-opacity="0.2"/>
+          <stop offset="85%" stop-color="#1B5E3F" stop-opacity="0.05"/>
+          <stop offset="100%" stop-color="#1B5E3F" stop-opacity="0"/>
         </radialGradient>
       </defs>
       <circle cx="302" cy="302" r="302" fill="url(#emeraldGlow)"/>
@@ -105,14 +105,14 @@ try {
   fs.writeFileSync(
     badgeSvg,
     `<svg width="371" height="72" viewBox="0 0 371 72" xmlns="http://www.w3.org/2000/svg">
-      <rect width="371" height="72" rx="36" fill="#10B981"/>
+      <rect width="371" height="72" rx="36" fill="#1B5E3F"/>
       <text x="185" y="45" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="26" font-weight="700" text-anchor="middle">Sortify</text>
     </svg>`
   );
   fs.writeFileSync(
     badgeWhiteSvg,
     `<svg width="371" height="72" viewBox="0 0 371 72" xmlns="http://www.w3.org/2000/svg">
-      <rect width="371" height="72" rx="36" fill="#047857"/>
+      <rect width="371" height="72" rx="36" fill="#4CAF7A"/>
       <text x="185" y="45" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="26" font-weight="700" text-anchor="middle">Sortify</text>
     </svg>`
   );

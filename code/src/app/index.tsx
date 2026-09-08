@@ -37,9 +37,12 @@ export default function HomeScreen() {
           <ThemedText type="title" style={styles.title}>
             Welcome to&nbsp;Sortify
           </ThemedText>
+          <ThemedText themeColor="textSecondary" style={styles.tagline}>
+            SORT TODAY FOR A CLEANER TOMORROW
+          </ThemedText>
         </ThemedView>
 
-        <ThemedText type="code" style={styles.code}>
+        <ThemedText type="code" themeColor="primary" style={styles.code}>
           get started
         </ThemedText>
 
@@ -85,8 +88,17 @@ const styles = StyleSheet.create({
   title: {
     textAlign: 'center',
   },
+  tagline: {
+    fontSize: 11,
+    letterSpacing: 2,
+    fontWeight: '700',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
   code: {
     textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    fontWeight: '700',
   },
   stepContainer: {
     gap: Spacing.three,

@@ -7,20 +7,38 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+export const Palette = {
+  primary: '#1B5E3F', // Trust, sustainability
+  secondary: '#4CAF7A', // Growth, positive action
+  accent: '#CFEBD0', // Fresh, clean, modern
+  background: '#FAFBF7', // Minimal, airy
+  textPrimary: '#1F2937', // Clarity, readability
+  textSecondary: '#6B7280', // Supporting text
+  highlight: '#F5C46B', // Attention, actions
+} as const;
+
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    primary: Palette.primary,
+    secondary: Palette.secondary,
+    accent: Palette.accent,
+    highlight: Palette.highlight,
+    text: Palette.textPrimary,
+    textSecondary: Palette.textSecondary,
+    background: Palette.background,
+    backgroundElement: '#F0F4EC',
+    backgroundSelected: Palette.accent,
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    primary: Palette.secondary,
+    secondary: '#34D399',
+    accent: '#1B5E3F',
+    highlight: Palette.highlight,
+    text: Palette.background,
+    textSecondary: '#9CA3AF',
+    background: '#111827',
+    backgroundElement: Palette.textPrimary,
+    backgroundSelected: '#374151',
   },
 } as const;
 
