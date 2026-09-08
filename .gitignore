@@ -470,3 +470,10 @@ project-proposal/.DS_Store
 docs/.DS_Store
 */.DS_Store
 .DS_Store
+
+# Node & Mobile artifacts
+node_modules/
+.expo/
+*.apk
+*.aab
+*.ipa
