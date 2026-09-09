@@ -1,33 +1,33 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
-
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
-import { Colors } from '@/constants/theme';
-
-SplashScreen.preventAutoHideAsync();
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
-  const theme = {
-    ...(isDark ? DarkTheme : DefaultTheme),
-    colors: {
-      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
-      primary: isDark ? Colors.dark.primary : Colors.light.primary,
-      background: isDark ? Colors.dark.background : Colors.light.background,
-      card: isDark ? Colors.dark.backgroundElement : Colors.light.background,
-      text: isDark ? Colors.dark.text : Colors.light.text,
-      border: isDark ? Colors.dark.backgroundSelected : Colors.light.accent,
-    },
-  };
-
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { AppProvider , useApp } from '@/state/app-state';
+import { Shell } from '@/components/sortify/shell';
+import { ActivityIndicator, View } from 'react-native';
+import { C } from '@/components/sortify/ui';
+function AppContent() {
+  const { ready } = useApp();
+  if (!ready)
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', backgroundColor: C.bg }}>
+        <ActivityIndicator color={C.green} />
+      </View>
+    );
   return (
-    <ThemeProvider value={theme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+        contentStyle: { backgroundColor: C.bg },
+      }}
+      screenLayout={({ children }) => <Shell>{children}</Shell>}
+    />
+  );
+}
+export default function RootLayout() {
+  return (
+    <AppProvider>
+      <StatusBar style="dark" />
+      <AppContent />
+    </AppProvider>
   );
 }

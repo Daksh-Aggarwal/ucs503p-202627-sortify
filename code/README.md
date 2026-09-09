@@ -1,56 +1,60 @@
-# Welcome to your Expo app 👋
+# Sortify frontend prototype
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile-first Expo / React Native application for identifying everyday waste and finding its next step. The same screens run on iOS, Android, and the web, with a desktop sidebar and compact mobile navigation. The interface builds on the forest-green palette in `src/constants/theme.ts`.
 
-## Get started
+## Run locally
 
-1. Install dependencies
+Requires the Node version supported by Expo SDK 57 (22.13 or newer).
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```sh
+npm install
+npm run web
+# or, with Expo Go / a development build:
+npm run start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+```sh
+npm run typecheck
+npm run lint
+npm run build:web
+```
 
-### Other setup steps
+The web export is written to `dist/`. A static host must resolve paths such as `/scan` to their exported `.html` files. Native camera access should be checked on a physical device; desktop browsers may present a file chooser instead of a camera.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Walk through the prototype
 
-## Learn more
+1. **Overview** — sample discoveries, sorting totals, five waste streams, educational content, and assistant entry points.
+2. **Scan an item** — choose or capture an image, or select a sample. Images are validated for size and dimensions. Choose a demo result and select **Identify item · demo**.
+3. **Result** — see item, category, sample confidence, preparation steps, safety notes, and selected-area context. Confirm an uncertain match, save the item, mark it sorted, or submit a correction.
+4. **Waste guide** — search 15 starter entries, filter by category, and open the same disposal guidance manually. Read the three educational stories.
+5. **My history / My activity** — search saved entries, filter sorted/to-sort, remove entries with confirmation, and see counts and a seven-day chart derived from the saved data.
+6. **Sortify assistant** — ask about a supported item or enter from a result. The scripted assistant matches catalog keywords, links to guidance, preserves conversations, and offers a fallback for unknown questions.
+7. **Settings & profile** — try registration/sign-in validation, edit a local demo profile, sign out, or reset local data.
+8. **Admin demo** — add, edit, and delete catalog entries; update disposal and safety guidance; review submitted corrections; inspect usage totals.
 
-To learn more about developing your project with Expo, look at the following resources:
+Use the header location picker to switch between Patiala, Chandigarh, New Delhi, and another location. Use the scan page’s **Low-confidence result** and **Service unavailable** switches to demonstrate recovery paths.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Prototype boundaries
 
-## Join the community
+- **No live ML or backend calls.** The selected sample determines every demo prediction, even after a photo upload. Confidence values and the analysis delay are simulated.
+- **No real authentication or access control.** Both account forms create a local profile. Passwords are neither stored nor verified. The admin preview is intentionally open.
+- **No verified location services.** Location changes the displayed context; municipal rules, schedules, and facilities need a verified source before production use.
+- **No live conversational AI.** Replies use simple keyword matching against the local guide and are not a substitute for an integrated retrieval service.
+- **Local shared storage.** AsyncStorage persists profile, catalog edits, history, feedback, and messages under `sortify-prototype-v1`. Data belongs to the device/browser, not an authenticated account. Guest mode can save history. Photos remain in the picker session and are not stored in history.
+- Activity includes clearly identified starter records. No CO₂, weight, classification-accuracy, or other unmeasured impact numbers are invented.
+- Reset clears activity/profile and restores the original guide. Deleting an admin catalog item also removes associated history entries, after confirmation; feedback remains reviewable.
 
-Join our community of developers creating universal apps.
+## Code map and integration points
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+| Area | Location | Next integration |
+| --- | --- | --- |
+| Routes | `src/app/` | Keep navigation and screen URLs stable |
+| Shared layout and UI | `src/components/sortify/` | Visual components remain independent of API responses |
+| Catalog and types | `src/data/catalog.ts` | Replace starter items with waste-catalog endpoints |
+| Local state | `src/state/app-state.tsx` | Replace local actions with authenticated profile/history/feedback APIs |
+| Capture and demo prediction | `src/features/scan.tsx` | Send validated image data to FastAPI; handle progress, cancellation, errors, and returned confidence |
+| Guidance and corrections | `src/features/result.tsx` | Render server predictions and verified location rules; persist source image references where appropriate |
+| Conversation | `src/features/assistant.tsx` | Replace the scripted reply in `send` with the grounded chatbot endpoint |
+| Admin | `src/features/admin.tsx` | Add server-enforced roles and catalog/feedback endpoints before exposing real data |
+
+The state module exports `Scan`, `Feedback`, and `Message`; the catalog exports `WasteItem` and `Category`. Keep the recognition service separate from the disposal knowledge base when connecting the backend.
