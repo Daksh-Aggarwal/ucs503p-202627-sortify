@@ -1,5 +1,6 @@
+import { Disclosure } from '@/components/sortify/controls';
 import { useState } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { uniqueId, useApp } from '@/state/app-state';
 import { locationGuidance } from '@/data/catalog';
@@ -10,11 +11,9 @@ import {
   CategoryBadge,
   Empty,
   Field,
-  Heading,
   Icon,
   ItemArt,
   Row,
-  SectionTitle,
   Txt,
 } from '@/components/sortify/ui';
 export default function ResultScreen() {
@@ -25,7 +24,6 @@ export default function ResultScreen() {
     scanId?: string;
   }>();
   const { state, update, notify, saveScan } = useApp();
-  const { width } = useWindowDimensions();
   const [savedId, setSavedId] = useState(params.scanId || '');
   const [correcting, setCorrecting] = useState(false);
   const [correction, setCorrection] = useState('');
@@ -75,205 +73,145 @@ export default function ResultScreen() {
     notify('Correction saved. You can review it in the admin demo.');
   }
   return (
-    <View>
+    <View style={{ maxWidth: 850, width: '100%', alignSelf: 'center' }}>
       <Button
-        title="Back to waste guide"
+        title="Waste guide"
         icon="back"
         variant="ghost"
         onPress={() => router.push('/explore')}
-        style={{ alignSelf: 'flex-start', paddingLeft: 0, marginBottom: 12 }}
+        style={{ alignSelf: 'flex-start', paddingLeft: 0, marginBottom: 8 }}
       />
-      <Heading
-        eyebrow={source === 'demo' ? 'YOUR DEMO RESULT' : 'FROM THE WASTE GUIDE'}
-        title={low ? 'Let’s take a closer look.' : 'A better ending starts here.'}
-        subtitle={
-          low
-            ? 'This example is uncertain. Confirm the item before saving it.'
-            : 'Know what it is. Know what to do next.'
-        }
-      />
-      <View style={{ flexDirection: width > 1100 ? 'row' : 'column', gap: 24 }}>
-        <Card style={{ flex: 1, gap: 22 }}>
-          <View
+      <Row style={{ marginBottom: 20, alignItems: 'flex-start' }}>
+        <ItemArt item={item} size={64} />
+        <View style={{ flex: 1, gap: 5 }}>
+          <Txt accessibilityRole="header" size={26} weight="500" style={{ lineHeight: 32 }}>
+            {item.name}
+          </Txt>
+          <Txt size={13} color={C.muted}>
+            {item.material}
+          </Txt>
+          <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+            <CategoryBadge category={item.category} />
+            {confidence > 0 && (
+              <Txt size={12} color={C.muted}>
+                Demo confidence: {confidence}%
+              </Txt>
+            )}
+          </Row>
+        </View>
+      </Row>
+      {low && (
+        <Card style={{ gap: 12, marginBottom: 16, backgroundColor: '#FAF2E4' }}>
+          <Txt weight="600">Confirm this item</Txt>
+          <Txt size={13} color={C.muted}>
+            The example prediction is uncertain. Check the match before saving.
+          </Txt>
+          <Row style={{ flexWrap: 'wrap' }}>
+            <Button title="Yes, this is my item" onPress={() => setConfirmed(true)} />
+            <Button
+              title="Choose another"
+              variant="secondary"
+              onPress={() => router.push('/explore')}
+            />
+            <Button title="Retake photo" variant="ghost" onPress={() => router.push('/scan')} />
+          </Row>
+        </Card>
+      )}
+      <Card style={{ padding: 20, gap: 18 }}>
+        <Txt size={17} weight="600">
+          Disposal steps
+        </Txt>
+        {item.steps.map((step, index) => (
+          <Row key={index} style={{ alignItems: 'flex-start' }}>
+            <View
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 8,
+                backgroundColor: '#EEF3E5',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Txt size={12} weight="600">
+                {index + 1}
+              </Txt>
+            </View>
+            <Txt style={{ flex: 1 }}>{step}</Txt>
+          </Row>
+        ))}
+        {!!item.caution && (
+          <Row
             style={{
-              padding: 30,
-              alignItems: 'center',
-              backgroundColor: '#F5F7EF',
-              borderRadius: 14,
+              backgroundColor: '#FAF2E4',
+              padding: 14,
+              borderRadius: 10,
+              alignItems: 'flex-start',
             }}
           >
-            <ItemArt item={item} size={130} />
-          </View>
-          <CategoryBadge category={item.category} />
-          <View>
-            <Txt size={30} weight="500" style={{ letterSpacing: -1 }}>
-              {item.name}
+            <Icon name="warning" size={18} color="#8B652B" />
+            <Txt style={{ flex: 1 }} color="#805D28" size={13}>
+              {item.caution}
             </Txt>
-            <Txt color={C.muted} size={12}>
-              {item.material}
-            </Txt>
-          </View>
-          <Txt color={C.muted}>{item.description}</Txt>
-          {confidence > 0 && (
-            <View style={{ gap: 9 }}>
-              <Row style={{ justifyContent: 'space-between' }}>
-                <Txt size={12}>Example model confidence</Txt>
-                <Txt size={14} weight="600" color={low ? '#B08037' : C.green}>
-                  {confidence}%
-                </Txt>
-              </Row>
-              <View style={{ height: 5, backgroundColor: '#E9EDE3', borderRadius: 5 }}>
-                <View
-                  style={{
-                    width: `${Math.min(confidence, 100)}%`,
-                    height: 5,
-                    backgroundColor: low ? '#D0AA67' : '#83A665',
-                    borderRadius: 5,
-                  }}
-                />
-              </View>
-              <Txt size={10} color={C.muted}>
-                Simulated result · not a live image prediction
-              </Txt>
-            </View>
-          )}
-          {low ? (
-            <View style={{ gap: 12 }}>
-              <Txt color="#A07535" size={12}>
-                We’re not sure this is the right match. Compare your item with the guide, or retake
-                your photo.
-              </Txt>
-              <Button
-                title="Yes, this is my item"
-                icon="check"
-                onPress={() => setConfirmed(true)}
-              />
-              <Button
-                title="Choose a different item"
-                variant="secondary"
-                onPress={() => router.push('/explore')}
-              />
-              <Button
-                title="Retake photo"
-                icon="camera"
-                variant="ghost"
-                onPress={() => router.push('/scan')}
-              />
-            </View>
-          ) : (
-            <View style={{ gap: 10 }}>
-              <Button
-                title={saved?.sorted ? 'Marked as sorted' : 'I sorted this item'}
-                disabled={saved?.sorted}
-                icon="check"
-                onPress={() => save(true)}
-              />
-              <Button
-                title={saved ? 'Saved to history' : 'Save to my history'}
-                disabled={!!saved}
-                variant="secondary"
-                icon="bookmark"
-                onPress={() => save(false)}
-              />
-            </View>
-          )}
-        </Card>
-        <View style={{ flex: 1.5, gap: 20 }}>
-          <Card>
-            <SectionTitle title="Here’s what to do" />
-            <View style={{ gap: 25, marginTop: 9 }}>
-              {item.steps.map((step, index) => (
-                <Row key={index} style={{ alignItems: 'flex-start', gap: 16 }}>
-                  <View
-                    style={{
-                      width: 29,
-                      height: 29,
-                      borderRadius: 10,
-                      backgroundColor: '#EFF3E5',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Txt weight="500" size={12}>
-                      0{index + 1}
-                    </Txt>
-                  </View>
-                  <Txt style={{ flex: 1, paddingTop: 3 }} size={14}>
-                    {step}
-                  </Txt>
-                </Row>
-              ))}
-            </View>
-            {!!item.caution && (
-              <Row
-                style={{
-                  padding: 17,
-                  backgroundColor: '#FAF2E4',
-                  borderRadius: 12,
-                  marginTop: 25,
-                  alignItems: 'flex-start',
-                }}
-              >
-                <Icon name="warning" color="#A58349" size={20} />
-                <Txt color="#927343" size={12} style={{ flex: 1 }}>
-                  {item.caution}
-                </Txt>
-              </Row>
-            )}
-          </Card>
-          <Card style={{ backgroundColor: '#F0F4E9', gap: 12 }}>
-            <Row>
-              <Icon name="pin" size={19} />
-              <Txt weight="500">Around {state.location}</Txt>
-            </Row>
-            <Txt size={12} color={C.muted}>
-              {locationGuidance(state.location, item.category)}
-            </Txt>
-          </Card>
-          <Card style={{ gap: 14 }}>
-            <Row>
-              <Icon name="chat" />
-              <Txt size={17} weight="500">
-                Have a follow-up?
-              </Txt>
-            </Row>
-            <Txt color={C.muted} size={12}>
-              A tricky cap? A different material? Let’s talk it through.
-            </Txt>
+          </Row>
+        )}
+        {!low && (
+          <Row style={{ flexWrap: 'wrap', paddingTop: 4 }}>
             <Button
-              title="Ask about this item"
-              icon="arrow"
+              title={saved?.sorted ? 'Marked as sorted' : 'I sorted this item'}
+              disabled={saved?.sorted}
+              icon="check"
+              onPress={() => save(true)}
+              style={{ flexGrow: 1 }}
+            />
+            <Button
+              title={saved ? 'Saved to history' : 'Save for later'}
+              disabled={!!saved}
+              icon="bookmark"
               variant="secondary"
-              onPress={() => router.push({ pathname: '/assistant', params: { item: item.id } })}
-              style={{ alignSelf: 'flex-start' }}
+              onPress={() => save(false)}
+              style={{ flexGrow: 1 }}
             />
-          </Card>
-          {correcting ? (
-            <Card style={{ gap: 13 }}>
-              <Txt weight="500">Help us get it right.</Txt>
-              <Field
-                label="What should this item be?"
-                value={correction}
-                onChangeText={setCorrection}
-                placeholder="e.g. This is a glass bottle, not plastic"
-                multiline
-                maxLength={500}
-              />
-              <Row>
-                <Button title="Send correction" onPress={feedback} disabled={!correction.trim()} />
-                <Button title="Cancel" variant="ghost" onPress={() => setCorrecting(false)} />
-              </Row>
-            </Card>
-          ) : (
-            <Button
-              title="Something doesn’t look right? Correct this result"
-              variant="ghost"
-              icon="edit"
-              onPress={() => setCorrecting(true)}
-            />
-          )}
-        </View>
+          </Row>
+        )}
+      </Card>
+      <View style={{ marginTop: 16 }}>
+        <Disclosure title={`Local guidance · ${state.location}`} icon="pin">
+          <Txt size={13} color={C.muted}>
+            {locationGuidance(state.location, item.category)}
+          </Txt>
+        </Disclosure>
       </View>
+      <Row style={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
+        <Button
+          title="Ask about this item"
+          icon="chat"
+          variant="ghost"
+          onPress={() => router.push({ pathname: '/assistant', params: { item: item.id } })}
+        />
+        <Button
+          title="Correct result"
+          icon="edit"
+          variant="ghost"
+          onPress={() => setCorrecting(!correcting)}
+        />
+      </Row>
+      {correcting && (
+        <Card style={{ gap: 14 }}>
+          <Field
+            label="What should this item be?"
+            value={correction}
+            onChangeText={setCorrection}
+            placeholder="Describe the correct item"
+            multiline
+            maxLength={500}
+          />
+          <Row style={{ flexWrap: 'wrap' }}>
+            <Button title="Send correction" disabled={!correction.trim()} onPress={feedback} />
+            <Button title="Cancel" variant="ghost" onPress={() => setCorrecting(false)} />
+          </Row>
+        </Card>
+      )}
     </View>
   );
 }

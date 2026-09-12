@@ -17,9 +17,10 @@ const links = [
   { href: '/', label: 'Overview', icon: 'home' },
   { href: '/scan', label: 'Scan an item', icon: 'scan' },
   { href: '/explore', label: 'Waste guide', icon: 'book' },
-  { href: '/history', label: 'My history', icon: 'history' },
-  { href: '/activity', label: 'My activity', icon: 'chart' },
-  { href: '/assistant', label: 'Sortify assistant', icon: 'chat' },
+  { href: '/history', label: 'History', icon: 'history' },
+  { href: '/activity', label: 'Activity', icon: 'chart' },
+  { href: '/assistant', label: 'Assistant', icon: 'chat' },
+  { href: '/learn', label: 'Learn', icon: 'leaf' },
 ];
 export function Shell({ children }: React.PropsWithChildren) {
   const { width } = useWindowDimensions();
@@ -31,13 +32,14 @@ export function Shell({ children }: React.PropsWithChildren) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = (href: string) => {
     setMenuOpen(false);
-    router.push(href as Href);
+    router.navigate(href as Href);
   };
   const nav = (
-    <View style={{ flex: 1, backgroundColor: '#F2F4EC', padding: 22, paddingTop: 37, gap: 35 }}>
+    <View style={{ flex: 1, backgroundColor: '#F2F4EC', padding: 22, paddingTop: 28, gap: 24 }}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Sortify home"
+        style={{ minHeight: 44, justifyContent: 'center' }}
         onPress={() => navigate('/')}
       >
         <Row style={{ gap: 9, paddingHorizontal: 8 }}>
@@ -62,21 +64,15 @@ export function Shell({ children }: React.PropsWithChildren) {
         </Row>
       </Pressable>
       <View style={{ gap: 6 }}>
-        <Txt
-          size={9}
-          weight="600"
-          color="#919887"
-          style={{ letterSpacing: 1.8, marginLeft: 13, marginBottom: 13 }}
-        >
-          YOUR EVERYDAY IMPACT
-        </Txt>
         {links.map((link) => {
-          const active = pathname === link.href;
+          const active =
+            pathname === link.href || (pathname === '/result' && link.href === '/explore');
           return (
             <Pressable
               key={link.href}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
+              aria-current={active ? 'page' : undefined}
               onPress={() => navigate(link.href)}
               style={({ hovered }) => ({
                 flexDirection: 'row',
@@ -101,30 +97,11 @@ export function Shell({ children }: React.PropsWithChildren) {
         })}
       </View>
       <View style={{ flex: 1 }} />
-      <View
-        style={{ padding: 18, borderWidth: 1, borderColor: '#DDE4D2', borderRadius: 13, gap: 10 }}
-      >
-        <Icon name="sprout" size={26} />
-        <Txt weight="500" size={14}>
-          A little better, every day.
-        </Txt>
-        <Txt color={C.muted} size={11}>
-          Small choices add up to a cleaner tomorrow.
-        </Txt>
-        <Pressable accessibilityRole="button" onPress={() => navigate('/learn')}>
-          <Row>
-            <Txt size={11} weight="600">
-              Find your next good habit
-            </Txt>
-            <Icon name="arrow" size={14} />
-          </Row>
-        </Pressable>
-      </View>
       <View style={{ gap: 5 }}>
         <Pressable
           accessibilityRole="button"
           onPress={() => navigate('/profile')}
-          style={{ padding: 10 }}
+          style={{ padding: 10, minHeight: 44, justifyContent: 'center' }}
         >
           <Row>
             <Icon name="settings" size={18} color={C.muted} />
@@ -136,7 +113,7 @@ export function Shell({ children }: React.PropsWithChildren) {
         <Pressable
           accessibilityRole="button"
           onPress={() => navigate('/admin')}
-          style={{ padding: 10 }}
+          style={{ padding: 10, minHeight: 44, justifyContent: 'center' }}
         >
           <Row>
             <Icon name="demo" size={18} color={C.muted} />
@@ -168,10 +145,10 @@ export function Shell({ children }: React.PropsWithChildren) {
           </View>
           <View style={{ flex: 1 }}>
             <Txt size={12} weight="500">
-              {state.profile?.name || 'Your little corner'}
+              {state.profile?.name || 'Guest'}
             </Txt>
             <Txt color={C.muted} size={10}>
-              {state.profile ? 'Demo member' : 'Exploring as a guest'}
+              {state.profile ? 'Demo member' : 'Local demo'}
             </Txt>
           </View>
           <Icon name="chevron" size={15} />
@@ -200,17 +177,16 @@ export function Shell({ children }: React.PropsWithChildren) {
         >
           <Row
             style={{
-              minHeight: 77,
+              minHeight: 64,
               paddingHorizontal: desktop ? 38 : 18,
               justifyContent: 'space-between',
             }}
           >
             <Row>
-              {!desktop && (
-                <IconButton name="menu" label="Open navigation" onPress={() => setMenuOpen(true)} />
-              )}
               <Txt size={12} color={C.muted}>
-                {desktop ? 'A cleaner tomorrow starts with you.' : 'sortify.'}
+                {desktop
+                  ? links.find((link) => link.href === pathname)?.label || 'Sortify'
+                  : 'sortify.'}
               </Txt>
             </Row>
             <Row style={{ gap: desktop ? 20 : 8 }}>
@@ -218,45 +194,32 @@ export function Shell({ children }: React.PropsWithChildren) {
                 accessibilityRole="button"
                 accessibilityLabel="Change location"
                 onPress={() => setLocationOpen(true)}
+                style={{ minHeight: 44, justifyContent: 'center', flexShrink: 1 }}
               >
-                <Row style={{ gap: 7 }}>
+                <Row style={{ gap: 7, flexShrink: 1 }}>
                   <Icon name="pin" size={15} color={C.muted} />
-                  <Txt size={11}>{state.location}</Txt>
+                  <Txt size={12} numberOfLines={1} style={{ maxWidth: width < 400 ? 110 : 200 }}>
+                    {state.location}
+                  </Txt>
                   <Icon name="down" size={12} />
                 </Row>
               </Pressable>
               {desktop && <View style={{ height: 22, width: 1, backgroundColor: C.line }} />}
-              <Badge text="Prototype" icon="demo" background="#F0F1EA" color="#7A846C" />
+              <Badge text="Demo" icon="demo" background="#F0F1EA" color="#7A846C" />
             </Row>
           </Row>
         </View>
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
-            padding: desktop ? 38 : 20,
-            paddingBottom: 40,
+            padding: desktop ? 28 : 20,
+            paddingBottom: 24,
             width: '100%',
-            maxWidth: 1390,
+            maxWidth: 1200,
             alignSelf: 'center',
           }}
         >
           {children}
-          <Row
-            style={{
-              borderTopWidth: 1,
-              borderColor: C.line,
-              marginTop: 35,
-              paddingTop: 20,
-              justifyContent: 'space-between',
-            }}
-          >
-            <Txt size={10} color="#9CA28F">
-              SORT TODAY. BETTER TOMORROW.
-            </Txt>
-            <Txt size={10} color="#9CA28F">
-              Made with intention.
-            </Txt>
-          </Row>
         </ScrollView>
         {!desktop && (
           <Row
@@ -270,36 +233,52 @@ export function Shell({ children }: React.PropsWithChildren) {
               gap: 0,
             }}
           >
-            {[links[0], links[2], links[1], links[3], links[5]].map((link) => (
-              <Pressable
-                key={link.href}
-                accessibilityRole="button"
-                accessibilityLabel={link.label}
-                onPress={() => navigate(link.href)}
-                style={{ alignItems: 'center', gap: 5 }}
-              >
-                <Icon
-                  name={link.icon}
-                  size={22}
-                  color={pathname === link.href ? C.green : '#939B8D'}
-                />
-                <Txt
-                  size={9}
-                  weight={pathname === link.href ? '600' : '400'}
-                  color={pathname === link.href ? C.green : C.muted}
+            {[
+              links[0],
+              links[2],
+              links[1],
+              links[4],
+              { href: 'more', label: 'More', icon: 'more' },
+            ].map((link) => {
+              const active =
+                link.href === 'more'
+                  ? !['/', '/scan', '/explore', '/activity', '/result'].includes(pathname)
+                  : pathname === link.href || (pathname === '/result' && link.href === '/explore');
+              return (
+                <Pressable
+                  key={link.href}
+                  accessibilityRole="button"
+                  accessibilityLabel={link.label}
+                  aria-current={active ? 'page' : undefined}
+                  aria-expanded={link.href === 'more' ? menuOpen : undefined}
+                  accessibilityState={{
+                    selected: active,
+                    expanded: link.href === 'more' ? menuOpen : undefined,
+                  }}
+                  onPress={() => (link.href === 'more' ? setMenuOpen(true) : navigate(link.href))}
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 4,
+                    minHeight: 48,
+                    flex: 1,
+                    borderRadius: 8,
+                    backgroundColor: active ? '#EFF3E7' : 'transparent',
+                  }}
                 >
-                  {link.label === 'Sortify assistant'
-                    ? 'Assistant'
-                    : link.icon === 'book'
-                      ? 'Guide'
-                      : link.icon === 'history'
-                        ? 'History'
-                        : link.icon === 'scan'
+                  <Icon name={link.icon} size={21} color={active ? C.green : C.muted} />
+                  <Txt size={11} weight={active ? '600' : '400'} color={active ? C.green : C.muted}>
+                    {link.href === '/'
+                      ? 'Home'
+                      : link.href === '/explore'
+                        ? 'Guide'
+                        : link.href === '/scan'
                           ? 'Scan'
-                          : 'Home'}
-                </Txt>
-              </Pressable>
-            ))}
+                          : link.label}
+                  </Txt>
+                </Pressable>
+              );
+            })}
           </Row>
         )}
       </KeyboardAvoidingView>
@@ -346,7 +325,7 @@ export function Shell({ children }: React.PropsWithChildren) {
           >
             <Row style={{ justifyContent: 'space-between' }}>
               <Txt size={22} weight="500">
-                Make it local.
+                Location
               </Txt>
               <IconButton
                 name="close"
@@ -354,7 +333,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                 onPress={() => setLocationOpen(false)}
               />
             </Row>
-            <Txt color={C.muted}>Choose your area for disposal context.</Txt>
+            <Txt color={C.muted}>Choose your area.</Txt>
             {locations.map((l) => (
               <Button
                 key={l}
@@ -380,7 +359,13 @@ export function Shell({ children }: React.PropsWithChildren) {
         onRequestClose={() => setMenuOpen(false)}
       >
         <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#14291C66' }}>
-          <View style={{ width: 285, paddingTop: insets.top, backgroundColor: '#F2F4EC' }}>
+          <View
+            style={{
+              width: Math.min(300, width - 60),
+              paddingTop: insets.top,
+              backgroundColor: '#F2F4EC',
+            }}
+          >
             <ScrollView contentContainerStyle={{ flexGrow: 1 }}>{nav}</ScrollView>
           </View>
           <Pressable

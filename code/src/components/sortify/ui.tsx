@@ -63,7 +63,7 @@ import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
 export const C = {
   green: Palette.primary,
   ink: '#213D30',
-  muted: '#7B847A',
+  muted: '#65705F',
   bg: '#F8F9F4',
   line: '#E6E9E0',
   sage: '#E9EEDC',
@@ -210,7 +210,7 @@ export function Button({
       ) : icon ? (
         <Icon name={icon} size={18} color={color} />
       ) : null}
-      <Txt color={color} weight="600" size={13}>
+      <Txt color={color} weight="600" size={13} style={{ flexShrink: 1 }}>
         {title}
       </Txt>
     </Pressable>
@@ -231,7 +231,9 @@ export function IconButton({
       accessibilityLabel={label}
       onPress={onPress}
       style={({ hovered }) => ({
-        padding: 10,
+        padding: 12,
+        minWidth: 44,
+        minHeight: 44,
         borderRadius: 12,
         backgroundColor: hovered ? C.sage : 'transparent',
       })}
@@ -283,7 +285,7 @@ export function Field({ label, ...props }: TextInputProps & { label?: string }) 
       )}
       <TextInput
         accessibilityLabel={label || props.placeholder}
-        placeholderTextColor="#939B92"
+        placeholderTextColor="#717B6B"
         {...props}
         style={[s.input, props.style]}
       />
@@ -302,14 +304,19 @@ export function Heading({
   action?: React.ReactNode;
 }) {
   return (
-    <View style={{ gap: 6, marginBottom: 28 }}>
+    <View style={{ gap: 6, marginBottom: 20 }}>
       {!!eyebrow && (
         <Txt size={10} weight="600" color={C.muted} style={{ letterSpacing: 2 }}>
           {eyebrow}
         </Txt>
       )}
       <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <Txt accessibilityRole="header" size={32} weight="500" style={{ letterSpacing: -1 }}>
+        <Txt
+          accessibilityRole="header"
+          size={28}
+          weight="500"
+          style={{ letterSpacing: -0.7, lineHeight: 36, flexShrink: 1 }}
+        >
           {title}
         </Txt>
         {action}
@@ -328,12 +335,16 @@ export function SectionTitle({
   onPress?: () => void;
 }) {
   return (
-    <Row style={{ justifyContent: 'space-between', marginBottom: 17 }}>
+    <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', marginBottom: 12 }}>
       <Txt size={18} weight="600" style={{ letterSpacing: -0.35 }}>
         {title}
       </Txt>
       {!!action && onPress && (
-        <Pressable accessibilityRole="button" onPress={onPress}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onPress}
+          style={{ minHeight: 44, justifyContent: 'center' }}
+        >
           <Row style={{ gap: 6 }}>
             <Txt size={12} color={C.green} weight="500">
               {action}

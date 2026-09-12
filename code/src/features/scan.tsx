@@ -1,30 +1,13 @@
+import { Disclosure, Segments } from '@/components/sortify/controls';
 import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  Platform,
-  Pressable,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { Image, Platform, Pressable, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useApp } from '@/state/app-state';
-import {
-  Badge,
-  Button,
-  C,
-  Card,
-  Heading,
-  Icon,
-  ItemArt,
-  Row,
-  SectionTitle,
-  Txt,
-} from '@/components/sortify/ui';
+import { Button, C, Card, Heading, Icon, ItemArt, Row, Txt } from '@/components/sortify/ui';
 export default function ScanScreen() {
   const { state } = useApp();
-  const { width } = useWindowDimensions();
+  const [mode, setMode] = useState('Photo');
   const [uri, setUri] = useState('');
   const [sample, setSample] = useState('bottle');
   const [error, setError] = useState('');
@@ -84,214 +67,179 @@ export default function ScanScreen() {
       });
     }, 1600);
   }
+  const samples = state.items.filter((i) =>
+    ['bottle', 'banana', 'box', 'battery', 'charger'].includes(i.id),
+  );
   return (
-    <View>
-      <Heading
-        eyebrow="ONE ITEM. ONE BETTER CHOICE."
-        title="Let’s find its right place."
-        subtitle="A clear photo is the first step to a better ending."
+    <View style={{ maxWidth: 760, width: '100%', alignSelf: 'center' }}>
+      <Heading title="Scan an item" />
+      <Segments
+        options={['Photo', 'Samples']}
+        value={mode}
+        onChange={(value) => {
+          setMode(value);
+          setError('');
+        }}
       />
-      <Row style={{ marginBottom: 26, gap: 16, flexWrap: 'wrap' }}>
-        {['Capture an item', 'Understand the result', 'Sort with confidence'].map((t, i) => (
-          <Row key={t} style={{ gap: 8 }}>
+      <Card style={{ gap: 16, padding: 20 }}>
+        {mode === 'Photo' && (
+          <>
             <View
               style={{
-                width: 25,
-                height: 25,
-                borderRadius: 20,
-                backgroundColor: i === 0 ? C.green : '#E9EDE3',
+                height: 180,
+                borderRadius: 12,
+                backgroundColor: '#F1F5E9',
                 alignItems: 'center',
                 justifyContent: 'center',
+                gap: 12,
+                padding: 16,
               }}
             >
-              <Txt size={11} color={i === 0 ? 'white' : C.muted}>
-                {i + 1}
-              </Txt>
+              {uri ? (
+                <Image
+                  accessibilityLabel="Selected waste photo"
+                  source={{ uri }}
+                  style={{ height: 150, width: '100%', borderRadius: 10 }}
+                  resizeMode="contain"
+                />
+              ) : (
+                <>
+                  <Icon name="scan" size={42} />
+                  <Txt size={13} color={C.muted}>
+                    One item, clearly in focus.
+                  </Txt>
+                  <Txt size={12} color={C.muted}>
+                    Images up to 10 MB
+                  </Txt>
+                </>
+              )}
             </View>
-            <Txt size={12} color={i === 0 ? C.green : C.muted}>
-              {t}
-            </Txt>
-            {i < 2 && <Icon name="chevron" size={13} color="#B7BEAE" />}
-          </Row>
-        ))}
-      </Row>
-      <View style={{ flexDirection: width > 1100 ? 'row' : 'column', gap: 24 }}>
-        <Card style={{ flex: 1.6, gap: 20 }}>
-          <View
-            style={{
-              minHeight: 265,
-              borderRadius: 15,
-              borderWidth: 1,
-              borderStyle: 'dashed',
-              borderColor: '#BACBAD',
-              backgroundColor: '#F5F7EF',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 26,
-              gap: 16,
-            }}
-          >
-            {uri ? (
-              <Image
-                accessibilityLabel="Selected waste photo"
-                source={{ uri }}
-                style={{ height: 230, width: '100%', borderRadius: 12 }}
-                resizeMode="contain"
+            <Row style={{ flexWrap: 'wrap' }}>
+              <Button
+                title="Take photo"
+                icon="camera"
+                onPress={() => pick(true)}
+                style={{ flexGrow: 1 }}
               />
-            ) : (
-              <>
-                <View style={{ padding: 20, borderRadius: 24, backgroundColor: '#E9EFDE' }}>
-                  <Icon name="scan" size={45} strokeWidth={1.2} />
-                </View>
-                <Txt size={21} weight="500">
-                  A new perspective on waste.
-                </Txt>
-                <Txt color={C.muted} size={12} style={{ textAlign: 'center' }}>
-                  Place one item in good lighting.{'\n'}Keep it in focus, with a simple background.
-                </Txt>
-                <Txt size={10} color="#929B89">
-                  IMAGES UP TO 10 MB
-                </Txt>
-              </>
-            )}
-          </View>
-          <Row style={{ flexWrap: 'wrap' }}>
-            <Button
-              title={uri ? 'Replace photo' : 'Upload a photo'}
-              icon="upload"
-              variant="secondary"
-              onPress={() => pick(false)}
-              style={{ flex: 1 }}
-            />
-            <Button
-              title="Take a photo"
-              icon="camera"
-              onPress={() => pick(true)}
-              style={{ flex: 1 }}
-            />
-          </Row>
-          {!!uri && <Button title="Remove photo" variant="ghost" onPress={() => setUri('')} />}
-          <View style={{ gap: 12 }}>
-            <SectionTitle
-              title={uri ? 'Choose a demo result for this photo' : 'Or explore with a sample'}
-            />
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {state.items
-                .filter((i) => ['bottle', 'banana', 'box', 'battery', 'charger'].includes(i.id))
-                .map((item) => (
-                  <Pressable
-                    key={item.id}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: sample === item.id }}
-                    onPress={() => setSample(item.id)}
-                    style={{
-                      flex: 1,
-                      minWidth: 90,
-                      borderWidth: 1,
-                      borderColor: sample === item.id ? C.green : C.line,
-                      borderRadius: 12,
-                      padding: 12,
-                      alignItems: 'center',
-                      gap: 9,
-                      backgroundColor: sample === item.id ? '#F1F5E9' : 'white',
-                    }}
-                  >
-                    <ItemArt item={item} size={43} />
-                    <Txt size={10} style={{ textAlign: 'center' }}>
-                      {item.name}
-                    </Txt>
-                  </Pressable>
-                ))}
-            </View>
-          </View>
-          {!!error && (
-            <View
-              accessibilityRole="alert"
-              style={{ padding: 14, backgroundColor: '#FAEDE7', borderRadius: 9 }}
-            >
-              <Txt color="#9A543D" size={12}>
-                {error}
-              </Txt>
-            </View>
-          )}
-          {busy && (
-            <Row accessibilityLiveRegion="polite">
-              <ActivityIndicator color={C.green} />
-              <Txt color={C.muted}>Preparing your demo result…</Txt>
+              <Button
+                title={uri ? 'Replace photo' : 'Upload photo'}
+                icon="upload"
+                variant="secondary"
+                onPress={() => pick(false)}
+                style={{ flexGrow: 1 }}
+              />
             </Row>
-          )}
-          <Button title="Identify item · demo" icon="sparkle" loading={busy} onPress={analyze} />
-          <Txt size={11} color={C.muted}>
-            No AI is connected yet. Your selected sample determines the result, including when you
-            upload a photo. Photos stay in this session.
-          </Txt>
-        </Card>
-        <View style={{ flex: 1, gap: 20 }}>
-          <Card style={{ backgroundColor: '#EDF2E3', gap: 20 }}>
-            <Icon name="leaf" size={29} />
-            <Txt size={23} weight="500">
-              Make the first shot count.
+            {!!uri && <Button title="Remove photo" variant="ghost" onPress={() => setUri('')} />}
+          </>
+        )}
+        {(mode === 'Samples' || !!uri) && (
+          <>
+            <Txt size={13} color={C.muted}>
+              {uri && mode === 'Photo'
+                ? 'Choose the demo result for this photo.'
+                : 'Choose an item to try the scan flow.'}
             </Txt>
-            {[
-              'One item at a time',
-              'Natural, even lighting',
-              'A clear, uncluttered background',
-            ].map((t, i) => (
-              <Row key={t}>
-                <Txt color="#95A17F" size={12}>
-                  0{i + 1}
-                </Txt>
-                <Txt size={13}>{t}</Txt>
-              </Row>
-            ))}
-          </Card>
-          <Card style={{ gap: 16 }}>
-            <Badge text="PROTOTYPE SCENARIOS" icon="demo" />
-            <Txt size={12} color={C.muted}>
-              Walk through the moments when an answer needs a little more care.
-            </Txt>
-            {[
-              {
-                label: 'Low-confidence result',
-                value: uncertain,
-                toggle: () => setUncertain(!uncertain),
-              },
-              { label: 'Service unavailable', value: failed, toggle: () => setFailed(!failed) },
-            ].map((o) => (
-              <Pressable
-                key={o.label}
-                accessibilityRole="switch"
-                accessibilityState={{ checked: o.value }}
-                onPress={o.toggle}
-              >
-                <Row style={{ justifyContent: 'space-between' }}>
-                  <Txt size={12}>{o.label}</Txt>
-                  <View
-                    style={{
-                      width: 36,
-                      height: 22,
-                      borderRadius: 20,
-                      padding: 3,
-                      backgroundColor: o.value ? C.green : '#DCE2D3',
-                      alignItems: o.value ? 'flex-end' : 'flex-start',
-                    }}
-                  >
-                    <View
-                      style={{ width: 16, height: 16, borderRadius: 9, backgroundColor: 'white' }}
+            <View style={{ gap: 4 }}>
+              {samples.map((item) => (
+                <Pressable
+                  key={item.id}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: sample === item.id }}
+                  aria-checked={sample === item.id}
+                  onPress={() => setSample(item.id)}
+                  style={{
+                    padding: 10,
+                    borderRadius: 10,
+                    backgroundColor: sample === item.id ? '#EFF4E7' : 'transparent',
+                    minHeight: 48,
+                  }}
+                >
+                  <Row>
+                    <ItemArt item={item} size={32} />
+                    <Txt style={{ flex: 1 }}>{item.name}</Txt>
+                    <Icon
+                      name={sample === item.id ? 'success' : 'plus'}
+                      size={18}
+                      color={sample === item.id ? C.green : C.muted}
                     />
-                  </View>
-                </Row>
-              </Pressable>
-            ))}
-          </Card>
-          <Button
-            title="Search for an item instead"
-            icon="search"
-            variant="ghost"
-            onPress={() => router.push('/explore')}
-          />
-        </View>
-      </View>
+                  </Row>
+                </Pressable>
+              ))}
+            </View>
+            <Button
+              title="Identify item · demo"
+              icon="scan"
+              loading={busy}
+              disabled={!samples.some((i) => i.id === sample)}
+              onPress={analyze}
+            />
+            <Txt size={12} color={C.muted}>
+              Simulated prediction. The selected sample determines the result; photos stay on this
+              device.
+            </Txt>
+          </>
+        )}
+        {!!error && (
+          <View
+            accessibilityRole="alert"
+            style={{ padding: 14, backgroundColor: '#FAEDE7', borderRadius: 9 }}
+          >
+            <Txt color="#914A32" size={13}>
+              {error}
+            </Txt>
+          </View>
+        )}
+      </Card>
+      <Button
+        title="Search the waste guide"
+        icon="search"
+        variant="ghost"
+        onPress={() => router.push('/explore')}
+        style={{ marginVertical: 12 }}
+      />
+      <Disclosure title="Photo tips">
+        <Txt size={13} color={C.muted}>
+          Use even lighting and a plain background. Keep the whole item in frame. If the image is
+          unclear, retake it or search the guide.
+        </Txt>
+      </Disclosure>
+      <Disclosure title={`Demo options${uncertain || failed ? ' · active' : ''}`} icon="demo">
+        {[
+          {
+            label: 'Low-confidence result',
+            value: uncertain,
+            toggle: () => setUncertain(!uncertain),
+          },
+          { label: 'Service unavailable', value: failed, toggle: () => setFailed(!failed) },
+        ].map((o) => (
+          <Pressable
+            key={o.label}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: o.value }}
+            aria-checked={o.value}
+            onPress={o.toggle}
+            style={{ minHeight: 44, justifyContent: 'center' }}
+          >
+            <Row style={{ justifyContent: 'space-between' }}>
+              <Txt size={13}>{o.label}</Txt>
+              <View
+                style={{
+                  width: 38,
+                  height: 24,
+                  borderRadius: 20,
+                  padding: 3,
+                  backgroundColor: o.value ? C.green : '#CED6C4',
+                  alignItems: o.value ? 'flex-end' : 'flex-start',
+                }}
+              >
+                <View
+                  style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: 'white' }}
+                />
+              </View>
+            </Row>
+          </Pressable>
+        ))}
+      </Disclosure>
     </View>
   );
 }

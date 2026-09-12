@@ -1,3 +1,4 @@
+import { Pagination } from '@/components/sortify/controls';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { categories, type WasteItem } from '@/data/catalog';
@@ -29,6 +30,11 @@ export default function AdminScreen() {
   const { state, update, notify } = useApp();
   const [tab, setTab] = useState('Waste catalog');
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const filteredItems = state.items.filter((i) =>
+    i.name.toLowerCase().includes(query.toLowerCase()),
+  );
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(filteredItems.length / 6) - 1));
   const [editing, setEditing] = useState<WasteItem | null>(null);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -56,34 +62,9 @@ export default function AdminScreen() {
   }
   return (
     <View>
-      <Heading
-        eyebrow="BEHIND EVERY BETTER ANSWER"
-        title="The knowledge that keeps us sorting."
-        subtitle="Manage the demo guide and close the loop on feedback."
-      />
-      <Badge
-        text="Admin preview · open demo access, no authorization enforced"
-        icon="demo"
-        background="#FBF1DF"
-        color="#A07D46"
-      />
-      <Row style={{ flexWrap: 'wrap', marginVertical: 24 }}>
-        {[
-          { label: 'Waste items', value: state.items.length },
-          { label: 'Saved discoveries', value: state.scans.length },
-          { label: 'Feedback to review', value: pending.length },
-        ].map((t) => (
-          <Card key={t.label} style={{ flex: 1, minWidth: 150 }}>
-            <Txt size={30} weight="500">
-              {t.value}
-            </Txt>
-            <Txt size={12} color={C.muted}>
-              {t.label}
-            </Txt>
-          </Card>
-        ))}
-      </Row>
-      <Row style={{ flexWrap: 'wrap', marginBottom: 22 }}>
+      <Heading title="Admin" subtitle="Manage the catalog and review corrections." />
+      <Badge text="Demo admin · open access" icon="demo" background="#FBF1DF" color="#805D28" />
+      <Row style={{ flexWrap: 'wrap', marginTop: 20, marginBottom: 20 }}>
         {['Waste catalog', 'Feedback', 'Analytics'].map((t) => (
           <Button
             title={t}
@@ -96,6 +77,24 @@ export default function AdminScreen() {
           />
         ))}
       </Row>
+      {tab === 'Analytics' && (
+        <Row style={{ flexWrap: 'wrap', marginVertical: 24 }}>
+          {[
+            { label: 'Waste items', value: state.items.length },
+            { label: 'Saved discoveries', value: state.scans.length },
+            { label: 'Feedback to review', value: pending.length },
+          ].map((t) => (
+            <Card key={t.label} style={{ flex: 1, minWidth: 150 }}>
+              <Txt size={30} weight="500">
+                {t.value}
+              </Txt>
+              <Txt size={12} color={C.muted}>
+                {t.label}
+              </Txt>
+            </Card>
+          ))}
+        </Row>
+      )}
       {tab === 'Waste catalog' &&
         (editing ? (
           <Card style={{ gap: 18 }}>
@@ -204,7 +203,7 @@ export default function AdminScreen() {
         ) : (
           <Card>
             <SectionTitle
-              title="Waste items & disposal guidance"
+              title={`Waste catalog · ${state.items.length}`}
               action="Add item"
               onPress={() => {
                 setEditing({ ...blank, steps: ['', '', ''] });
@@ -212,21 +211,32 @@ export default function AdminScreen() {
                 setDeleting(false);
               }}
             />
-            <Field placeholder="Search the catalog…" value={query} onChangeText={setQuery} />
-            {state.items
-              .filter((i) => i.name.toLowerCase().includes(query.toLowerCase()))
-              .map((i) => (
-                <ItemRow
-                  key={i.id}
-                  item={i}
-                  onPress={() => {
-                    setEditing({ ...i, steps: [...i.steps] });
-                    setError('');
-                    setDeleting(false);
-                  }}
-                  end={<Icon name="edit" size={17} />}
-                />
-              ))}
+            <Field
+              placeholder="Search the catalog…"
+              value={query}
+              onChangeText={(value) => {
+                setQuery(value);
+                setPage(0);
+              }}
+            />
+            {filteredItems.slice(currentPage * 6, (currentPage + 1) * 6).map((i) => (
+              <ItemRow
+                key={i.id}
+                item={i}
+                onPress={() => {
+                  setEditing({ ...i, steps: [...i.steps] });
+                  setError('');
+                  setDeleting(false);
+                }}
+                end={<Icon name="edit" size={17} />}
+              />
+            ))}
+            <Pagination
+              page={currentPage}
+              total={filteredItems.length}
+              pageSize={6}
+              onChange={setPage}
+            />
             {!state.items.some((i) => i.name.toLowerCase().includes(query.toLowerCase())) && (
               <Txt color={C.muted} style={{ marginTop: 20 }}>
                 No entries match this search.
@@ -310,7 +320,7 @@ export default function AdminScreen() {
           <View style={{ backgroundColor: '#F2F5EB', padding: 20, borderRadius: 12, gap: 9 }}>
             <Row>
               <Icon name="chart" />
-              <Txt weight="500">Model evaluation comes next.</Txt>
+              <Txt weight="500">Model evaluation</Txt>
             </Row>
             <Txt size={12} color={C.muted}>
               Accuracy, F1 score, inference latency, and the confusion matrix require a trained

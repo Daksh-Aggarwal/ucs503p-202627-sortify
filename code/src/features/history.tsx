@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useApp } from '@/state/app-state';
 import { categories } from '@/data/catalog';
 import {
-  Badge,
   Button,
   C,
   Card,
@@ -12,16 +11,19 @@ import {
   Field,
   Heading,
   Icon,
+  IconButton,
   ItemRow,
   Row,
-  SectionTitle,
   Txt,
 } from '@/components/sortify/ui';
+import { Pagination, Segments } from '@/components/sortify/controls';
+import { Milestone, StatsSummary } from '@/components/sortify/progress';
 export default function HistoryScreen() {
   const { state, update, notify } = useApp();
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('All discoveries');
+  const [filter, setFilter] = useState('All');
   const [remove, setRemove] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
   const scans = state.scans.filter((scan) => {
     const item = state.items.find((i) => i.id === scan.itemId);
     return (
@@ -31,88 +33,89 @@ export default function HistoryScreen() {
       (filter !== 'To sort' || !scan.sorted)
     );
   });
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(scans.length / 6) - 1));
   return (
-    <View>
-      <Heading
-        eyebrow="YOUR SORTING JOURNEY"
-        title="Every discovery, in one place."
-        subtitle="Revisit what you learned and pick up where you left off."
-        action={<Button title="Scan an item" icon="plus" onPress={() => router.push('/scan')} />}
+    <View style={{ maxWidth: 900, width: '100%', alignSelf: 'center' }}>
+      <Heading title="History" />
+      <Field
+        placeholder="Search history"
+        value={query}
+        onChangeText={(value) => {
+          setQuery(value);
+          setPage(0);
+        }}
       />
-      <Field placeholder="Search your history…" value={query} onChangeText={setQuery} />
-      <Row style={{ marginVertical: 18, flexWrap: 'wrap' }}>
-        {['All discoveries', 'Sorted', 'To sort'].map((t) => (
-          <Button
-            key={t}
-            title={t}
-            variant={filter === t ? 'primary' : 'secondary'}
-            onPress={() => setFilter(t)}
-          />
-        ))}
-      </Row>
+      <View style={{ marginTop: 16 }}>
+        <Segments
+          options={['All', 'Sorted', 'To sort']}
+          value={filter}
+          onChange={(value) => {
+            setFilter(value);
+            setPage(0);
+          }}
+        />
+      </View>
       {scans.length ? (
-        <Card>
-          {scans.map((scan) => {
+        <Card style={{ paddingHorizontal: 16, paddingVertical: 0 }}>
+          {scans.slice(currentPage * 6, (currentPage + 1) * 6).map((scan) => {
             const item = state.items.find((i) => i.id === scan.itemId)!;
             return (
               <View key={scan.id}>
-                <ItemRow
-                  item={item}
-                  subtitle={`${new Date(scan.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · ${scan.source === 'demo' ? 'Demo scan' : 'Manual selection'}`}
-                  onPress={() =>
-                    router.push({ pathname: '/result', params: { id: item.id, scanId: scan.id } })
-                  }
-                  end={
-                    <Badge
-                      text={scan.sorted ? 'Sorted' : 'To sort'}
-                      icon={scan.sorted ? 'check' : 'clock'}
+                <Row style={{ gap: 4 }}>
+                  <View style={{ flex: 1 }}>
+                    <ItemRow
+                      item={item}
+                      subtitle={`${new Date(scan.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · ${scan.sorted ? 'Sorted' : 'To sort'} · ${scan.source === 'demo' ? 'Demo' : 'Manual'}`}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/result',
+                          params: { id: item.id, scanId: scan.id },
+                        })
+                      }
+                      end={<></>}
                     />
-                  }
-                />
-                <Row style={{ justifyContent: 'flex-end' }}>
-                  {remove === scan.id ? (
-                    <>
-                      <Txt size={11} color={C.muted}>
-                        Remove this saved item?
-                      </Txt>
+                  </View>
+                  <IconButton
+                    name="trash"
+                    label={`Remove ${item.name} from history`}
+                    onPress={() => setRemove(remove === scan.id ? null : scan.id)}
+                  />
+                </Row>
+                {remove === scan.id && (
+                  <View style={{ paddingVertical: 14, gap: 10 }}>
+                    <Txt size={13}>Remove this saved item?</Txt>
+                    <Row>
                       <Button
                         title="Remove"
                         variant="danger"
                         onPress={() => {
                           update((s) => ({ ...s, scans: s.scans.filter((v) => v.id !== scan.id) }));
                           setRemove(null);
-                          notify('Item removed from history.');
+                          notify('Removed from history.');
                         }}
                       />
-                      <Button title="Keep" variant="ghost" onPress={() => setRemove(null)} />
-                    </>
-                  ) : (
-                    <Button
-                      title="Remove from history"
-                      variant="ghost"
-                      onPress={() => setRemove(scan.id)}
-                      style={{ minHeight: 32, paddingVertical: 8 }}
-                    />
-                  )}
-                </Row>
+                      <Button title="Keep" variant="secondary" onPress={() => setRemove(null)} />
+                    </Row>
+                  </View>
+                )}
               </View>
             );
           })}
         </Card>
       ) : (
         <Empty
-          title="A fresh start."
-          text="No discoveries match this view. Try another search or scan your first item."
+          title="No saved items"
+          text="Scan an item or search the guide to get started."
           action={<Button title="Scan an item" icon="scan" onPress={() => router.push('/scan')} />}
         />
       )}
+      <Pagination page={currentPage} total={scans.length} pageSize={6} onChange={setPage} />
     </View>
   );
 }
 export function ActivityScreen() {
   const { state } = useApp();
-  const { width } = useWindowDimensions();
-  const sorted = state.scans.filter((s) => s.sorted);
+  const [view, setView] = useState('This week');
   const totals = categories.map((c) => ({
     ...c,
     count: state.scans.filter(
@@ -131,81 +134,60 @@ export function ActivityScreen() {
   });
   const dayMax = Math.max(1, ...days.map((d) => d.count));
   return (
-    <View>
-      <Heading
-        eyebrow="SMALL ACTIONS ADD UP"
-        title="Look how far you’re growing."
-        subtitle="Your activity is a reflection of the choices you make, one item at a time."
-      />
-      <Row style={{ flexWrap: 'wrap', alignItems: 'stretch', marginBottom: 24 }}>
-        {[
-          { label: 'Items explored', value: state.scans.length, icon: 'scan' },
-          { label: 'Marked as sorted', value: sorted.length, icon: 'leaf' },
-          {
-            label: 'Categories discovered',
-            value: totals.filter((t) => t.count > 0).length,
-            icon: 'target',
-          },
-        ].map((t) => (
-          <Card key={t.label} style={{ flex: 1, minWidth: 170, gap: 12 }}>
-            <Icon name={t.icon} />
-            <Txt size={38} weight="500">
-              {t.value}
+    <View style={{ maxWidth: 950, width: '100%', alignSelf: 'center' }}>
+      <Heading title="Activity" />
+      <StatsSummary />
+      <View style={{ marginVertical: 16 }}>
+        <Milestone />
+      </View>
+      <Card style={{ padding: 20 }}>
+        <Segments options={['This week', 'Categories']} value={view} onChange={setView} />
+        {view === 'This week' ? (
+          <>
+            <Txt size={13} color={C.muted}>
+              Saved items in the last seven days
             </Txt>
-            <Txt size={12} color={C.muted}>
-              {t.label}
-            </Txt>
-          </Card>
-        ))}
-      </Row>
-      <View style={{ flexDirection: width > 1100 ? 'row' : 'column', gap: 22 }}>
-        <Card style={{ flex: 1 }}>
-          <SectionTitle title="Your last seven days" />
-          <Txt size={12} color={C.muted}>
-            Saved discoveries
-          </Txt>
-          <Row style={{ height: 210, alignItems: 'flex-end', gap: 15, marginTop: 25 }}>
-            {days.map((d, i) => (
-              <View key={i} style={{ flex: 1, alignItems: 'center', gap: 9 }}>
-                <Txt size={11} color={C.muted}>
-                  {d.count}
-                </Txt>
-                <View
-                  accessibilityLabel={`${d.label}: ${d.count} saved discoveries`}
-                  style={{
-                    height: 8 + (d.count / dayMax) * 135,
-                    width: '100%',
-                    maxWidth: 55,
-                    borderTopLeftRadius: 6,
-                    borderTopRightRadius: 6,
-                    backgroundColor: i === 6 ? C.green : '#CFDCBA',
-                  }}
-                />
-                <Txt size={10} color={C.muted}>
-                  {d.label}
-                </Txt>
-              </View>
-            ))}
-          </Row>
-        </Card>
-        <Card style={{ flex: 1 }}>
-          <SectionTitle title="A little of everything" />
-          <View style={{ gap: 22 }}>
+            <Row style={{ height: 185, alignItems: 'flex-end', gap: 12, marginTop: 8 }}>
+              {days.map((d, i) => (
+                <View key={i} style={{ flex: 1, alignItems: 'center', gap: 8 }}>
+                  <Txt size={12} color={C.muted}>
+                    {d.count}
+                  </Txt>
+                  <View
+                    accessibilityRole="image"
+                    accessibilityLabel={`${d.label}: ${d.count} saved items`}
+                    style={{
+                      height: 8 + (d.count / dayMax) * 115,
+                      width: '100%',
+                      maxWidth: 50,
+                      borderRadius: 5,
+                      backgroundColor: i === 6 ? C.green : '#B5C79A',
+                    }}
+                  />
+                  <Txt size={12} color={C.muted}>
+                    {d.label}
+                  </Txt>
+                </View>
+              ))}
+            </Row>
+          </>
+        ) : (
+          <View style={{ gap: 16 }}>
             {totals.map((c) => (
-              <View key={c.name} style={{ gap: 8 }}>
+              <View key={c.name} style={{ gap: 7 }}>
                 <Row style={{ justifyContent: 'space-between' }}>
                   <Row>
-                    <Icon name={c.icon} color={c.color} size={16} />
-                    <Txt size={12}>{c.name}</Txt>
+                    <Icon name={c.icon} size={17} color={c.color} />
+                    <Txt size={13}>{c.name}</Txt>
                   </Row>
-                  <Txt size={12}>{c.count}</Txt>
+                  <Txt size={13}>{c.count}</Txt>
                 </Row>
-                <View style={{ height: 7, borderRadius: 7, backgroundColor: c.background }}>
+                <View style={{ height: 6, backgroundColor: c.background, borderRadius: 5 }}>
                   <View
                     style={{
-                      height: 7,
+                      height: 6,
                       width: `${(c.count / max) * 100}%`,
-                      borderRadius: 7,
+                      borderRadius: 5,
                       backgroundColor: c.color,
                     }}
                   />
@@ -213,36 +195,10 @@ export function ActivityScreen() {
               </View>
             ))}
           </View>
-        </Card>
-      </View>
-      <Card style={{ marginTop: 22, backgroundColor: '#EAF0DF' }}>
-        <Row style={{ alignItems: 'flex-start' }}>
-          <Icon name="sprout" size={35} />
-          <View style={{ flex: 1, gap: 8 }}>
-            <Txt size={21} weight="500">
-              Your next little milestone: five sorted items.
-            </Txt>
-            <Txt color={C.muted} size={13}>
-              {sorted.length >= 5
-                ? 'You’ve reached this milestone. Keep the good habits going.'
-                : `${5 - sorted.length} more to go. Every thoughtful choice counts.`}
-            </Txt>
-            <View style={{ height: 7, backgroundColor: '#D8E1CB', borderRadius: 8, marginTop: 6 }}>
-              <View
-                style={{
-                  height: 7,
-                  width: `${Math.min(sorted.length / 5, 1) * 100}%`,
-                  borderRadius: 8,
-                  backgroundColor: C.green,
-                }}
-              />
-            </View>
-          </View>
-        </Row>
+        )}
       </Card>
-      <Txt size={11} color={C.muted} style={{ marginTop: 16 }}>
-        Activity reflects saved demo and manual entries. Environmental impact estimates are not
-        calculated.
+      <Txt size={12} color={C.muted} style={{ marginTop: 14 }}>
+        Includes demo and manually saved items.
       </Txt>
     </View>
   );

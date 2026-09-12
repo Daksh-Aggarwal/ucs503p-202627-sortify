@@ -8,21 +8,21 @@ import {
   Button,
   C,
   Card,
-  CategoryBadge,
   Empty,
   Field,
   Heading,
   Icon,
-  ItemArt,
+  ItemRow,
   Row,
-  SectionTitle,
   Txt,
 } from '@/components/sortify/ui';
+import { Pagination } from '@/components/sortify/controls';
 export default function GuideScreen() {
   const { category } = useLocalSearchParams<{ category?: string }>();
   const { state } = useApp();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState(category || 'All items');
+  const [page, setPage] = useState(0);
   const items = state.items.filter(
     (i) =>
       (filter === 'All items' || i.category === filter) &&
@@ -30,132 +30,79 @@ export default function GuideScreen() {
         .toLowerCase()
         .includes(query.toLowerCase().trim()),
   );
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(items.length / 6) - 1));
   return (
-    <View>
-      <Heading
-        eyebrow="LESS GUESSWORK. MORE KNOW-HOW."
-        title="There’s a place for everything."
-        subtitle="Find your item and give it the right next chapter."
-        action={<Button title="Scan instead" icon="scan" onPress={() => router.push('/scan')} />}
-      />
-      <Row
-        style={{
-          backgroundColor: 'white',
-          borderWidth: 1,
-          borderColor: C.line,
-          borderRadius: 12,
-          paddingLeft: 16,
-          marginBottom: 18,
+    <View style={{ maxWidth: 900, width: '100%', alignSelf: 'center' }}>
+      <Heading title="Waste guide" />
+      <Field
+        placeholder="Search an item or material"
+        value={query}
+        onChangeText={(value) => {
+          setQuery(value);
+          setPage(0);
         }}
-      >
-        <Icon name="search" color={C.muted} />
-        <View style={{ flex: 1 }}>
-          <Field
-            placeholder="Search bottles, batteries, food scraps…"
-            value={query}
-            onChangeText={setQuery}
-            style={{ borderWidth: 0, backgroundColor: 'transparent', minHeight: 53 }}
-          />
-        </View>
-        {!!query && <Button title="Clear" variant="ghost" onPress={() => setQuery('')} />}
-      </Row>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 27 }}>
+      />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 16 }}>
         {['All items', ...categories.map((c) => c.name)].map((c) => (
-          <Button
+          <Pressable
             key={c}
-            title={c}
-            variant={filter === c ? 'primary' : 'secondary'}
-            onPress={() => setFilter(c)}
-            style={{ minHeight: 36, paddingVertical: 8, paddingHorizontal: 14 }}
-          />
+            accessibilityRole="button"
+            accessibilityState={{ selected: filter === c }}
+            aria-pressed={filter === c}
+            onPress={() => {
+              setFilter(c);
+              setPage(0);
+            }}
+            style={({ hovered }) => ({
+              minHeight: 44,
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              borderRadius: 9,
+              backgroundColor: filter === c ? C.green : hovered ? '#E8EEDF' : 'white',
+              borderWidth: 1,
+              borderColor: filter === c ? C.green : C.line,
+            })}
+          >
+            <Txt size={13} color={filter === c ? 'white' : C.green}>
+              {c}
+            </Txt>
+          </Pressable>
         ))}
       </View>
-      <SectionTitle
-        title={`${items.length} ${items.length === 1 ? 'item' : 'items'} to get to know`}
-      />
-      {!items.length && (
+      <Txt size={12} color={C.muted} style={{ marginBottom: 10 }}>
+        {items.length} {items.length === 1 ? 'item' : 'items'}
+      </Txt>
+      {items.length ? (
+        <Card style={{ paddingHorizontal: 16, paddingVertical: 0 }}>
+          {items.slice(currentPage * 6, (currentPage + 1) * 6).map((item) => (
+            <ItemRow
+              key={item.id}
+              item={item}
+              subtitle={item.category}
+              end={<Icon name="arrow" size={16} />}
+              onPress={() =>
+                router.push({ pathname: '/result', params: { id: item.id, source: 'manual' } })
+              }
+            />
+          ))}
+        </Card>
+      ) : (
         <Empty
-          title="No match just yet."
-          text="Try another material or a simpler name, or explore all five categories."
+          title="No items found"
+          text="Try another search or category."
           action={
             <Button
               title="Reset search"
               onPress={() => {
                 setQuery('');
                 setFilter('All items');
+                setPage(0);
               }}
             />
           }
         />
       )}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
-        {items.map((item) => (
-          <Pressable
-            key={item.id}
-            accessibilityRole="button"
-            onPress={() =>
-              router.push({ pathname: '/result', params: { id: item.id, source: 'manual' } })
-            }
-            style={({ hovered }) => ({
-              flexGrow: 1,
-              flexBasis: 250,
-              maxWidth: 500,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: hovered ? '#A5B78F' : C.line,
-              padding: 22,
-              backgroundColor: 'white',
-              gap: 17,
-            })}
-          >
-            <Row style={{ justifyContent: 'space-between' }}>
-              <ItemArt item={item} />
-              <Icon name="arrow" color="#A1AC95" size={18} />
-            </Row>
-            <View>
-              <Txt size={18} weight="500">
-                {item.name}
-              </Txt>
-              <Txt color={C.muted} size={11}>
-                {item.material}
-              </Txt>
-            </View>
-            <CategoryBadge category={item.category} />
-          </Pressable>
-        ))}
-      </View>
-      <View style={{ marginTop: 30 }}>
-        <SectionTitle
-          title="A little knowledge goes a long way"
-          action="All stories"
-          onPress={() => router.push('/learn')}
-        />
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
-          {lessons.slice(0, 2).map((lesson, i) => (
-            <Pressable
-              key={lesson.title}
-              accessibilityRole="button"
-              onPress={() => router.push({ pathname: '/learn', params: { article: String(i) } })}
-              style={{ flex: 1, minWidth: 240 }}
-            >
-              <Card style={{ backgroundColor: lesson.color, gap: 15, borderWidth: 0 }}>
-                <Row>
-                  <Icon name={lesson.icon} />
-                  <Txt size={9} weight="600" color={C.muted} style={{ letterSpacing: 1.5 }}>
-                    {lesson.tag}
-                  </Txt>
-                </Row>
-                <Txt size={21} weight="500">
-                  {lesson.title}
-                </Txt>
-                <Txt color={C.muted} size={11}>
-                  {lesson.time} ↗
-                </Txt>
-              </Card>
-            </Pressable>
-          ))}
-        </View>
-      </View>
+      <Pagination page={currentPage} total={items.length} pageSize={6} onChange={setPage} />
     </View>
   );
 }
@@ -168,11 +115,8 @@ export function LearnScreen() {
   return (
     <View>
       <Heading
-        eyebrow="THE EVERYDAY FIELD GUIDE"
-        title={lesson ? lesson.title : 'Better habits begin here.'}
-        subtitle={
-          lesson ? lesson.intro : 'A few minutes of reading. A fresh way of seeing everyday waste.'
-        }
+        title={lesson ? lesson.title : 'Learn'}
+        subtitle={lesson ? lesson.intro : 'Practical guides to sorting waste.'}
       />
       {lesson ? (
         <Card style={{ maxWidth: 850, gap: 25 }}>
@@ -180,12 +124,12 @@ export function LearnScreen() {
           <View
             style={{
               alignItems: 'center',
-              padding: 35,
+              padding: 20,
               backgroundColor: lesson.color,
               borderRadius: 14,
             }}
           >
-            <Icon name={lesson.icon} size={75} strokeWidth={1} />
+            <Icon name={lesson.icon} size={44} strokeWidth={1} />
           </View>
           {lesson.paragraphs.map((p, i) => (
             <Txt key={p} size={16} style={{ lineHeight: 29 }}>
@@ -193,7 +137,7 @@ export function LearnScreen() {
             </Txt>
           ))}
           <Button
-            title="Back to all stories"
+            title="All guides"
             icon="back"
             variant="secondary"
             onPress={() => setActive(null)}
@@ -209,13 +153,13 @@ export function LearnScreen() {
                   <Icon name={l.icon} size={30} />
                   <Badge text={`${l.tag} · ${l.time}`} background="#FFFFFF77" />
                 </Row>
-                <Txt size={25} weight="500">
+                <Txt size={20} weight="500">
                   {l.title}
                 </Txt>
-                <Txt color={C.muted}>{l.intro}</Txt>
+
                 <Row>
                   <Txt size={12} weight="600">
-                    Read the story
+                    Read guide
                   </Txt>
                   <Icon name="arrow" size={17} />
                 </Row>

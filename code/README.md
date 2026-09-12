@@ -23,16 +23,18 @@ The web export is written to `dist/`. A static host must resolve paths such as `
 
 ## Walk through the prototype
 
-1. **Overview** — sample discoveries, sorting totals, five waste streams, educational content, and assistant entry points.
-2. **Scan an item** — choose or capture an image, or select a sample. Images are validated for size and dimensions. Choose a demo result and select **Identify item · demo**.
+1. **Overview** — a scan shortcut, compact stats, and the next sorting milestone. Full history, charts, learning content, and chat live on dedicated pages.
+2. **Scan an item** — use the **Photo** tab to capture/upload, or **Samples** to try the demo without a photo. Images are validated for size and dimensions. Choose a demo result and select **Identify item · demo**.
 3. **Result** — see item, category, sample confidence, preparation steps, safety notes, and selected-area context. Confirm an uncertain match, save the item, mark it sorted, or submit a correction.
-4. **Waste guide** — search 15 starter entries, filter by category, and open the same disposal guidance manually. Read the three educational stories.
-5. **My history / My activity** — search saved entries, filter sorted/to-sort, remove entries with confirmation, and see counts and a seven-day chart derived from the saved data.
+4. **Waste guide** — search 15 starter entries, filter by category, and browse six compact results per page. The separate **Learn** page contains the educational guides.
+5. **History / Activity** — history uses paginated rows and per-item removal. Activity keeps stats and progressive milestones, with **This week** and **Categories** tabs for the charts.
 6. **Sortify assistant** — ask about a supported item or enter from a result. The scripted assistant matches catalog keywords, links to guidance, preserves conversations, and offers a fallback for unknown questions.
-7. **Settings & profile** — try registration/sign-in validation, edit a local demo profile, sign out, or reset local data.
+7. **Settings & profile** — the **Profile** tab contains account forms; **Data & privacy** contains local storage details and the reset control.
 8. **Admin demo** — add, edit, and delete catalog entries; update disposal and safety guidance; review submitted corrections; inspect usage totals.
 
-Use the header location picker to switch between Patiala, Chandigarh, New Delhi, and another location. Use the scan page’s **Low-confidence result** and **Service unavailable** switches to demonstrate recovery paths.
+On mobile, **Home**, **Guide**, **Scan**, and **Activity** are always available in the bottom bar. **More** opens navigation to History, Assistant, Learn, profile/settings, and admin. Desktop uses the sidebar.
+
+Use the header location picker to switch between Patiala, Chandigarh, New Delhi, and another location. Open the scan page’s **Demo options** to access the **Low-confidence result** and **Service unavailable** switches to demonstrate recovery paths.
 
 ## Prototype boundaries
 
@@ -43,6 +45,13 @@ Use the header location picker to switch between Patiala, Chandigarh, New Delhi,
 - **Local shared storage.** AsyncStorage persists profile, catalog edits, history, feedback, and messages under `sortify-prototype-v1`. Data belongs to the device/browser, not an authenticated account. Guest mode can save history. Photos remain in the picker session and are not stored in history.
 - Activity includes clearly identified starter records. No CO₂, weight, classification-accuracy, or other unmeasured impact numbers are invented.
 - Reset clears activity/profile and restores the original guide. Deleting an admin catalog item also removes associated history entries, after confirmation; feedback remains reviewable.
+
+## Interface conventions
+
+- Keep each screen focused on its primary task. Supporting tips, local context, and demo controls use expandable sections. Safety guidance stays visible in results.
+- Shared stats and milestone components live in `src/components/sortify/progress.tsx`; tab, disclosure, and pagination controls live in `controls.tsx`.
+- Tabs expose selection to assistive technology and support Left/Right/Home/End on web. Controls retain visible keyboard focus and at least 44px touch targets.
+- Milestones advance through 5, 10, 25, 50, and 100 sorted items, then in increments of 50. They use actual local saved counts.
 
 ## Code map and integration points
 

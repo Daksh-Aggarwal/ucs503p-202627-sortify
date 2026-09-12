@@ -8,7 +8,7 @@ export default function AssistantScreen() {
   const { state, update } = useApp();
   const [draft, setDraft] = useState('');
   const messagesRef = useRef<ScrollView>(null);
-  const { width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -54,39 +54,32 @@ export default function AssistantScreen() {
   }
   return (
     <View style={{ maxWidth: 930, width: '100%', alignSelf: 'center' }}>
-      <Heading
-        eyebrow="YOUR EVERYDAY SORTING COMPANION"
-        title="Let’s sort it out, together."
-        subtitle="A little clarity for the things that don’t fit neatly into a bin."
-      />
+      <Heading title="Assistant" />
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <Row
           style={{
+            paddingHorizontal: 20,
+            paddingVertical: 14,
             borderBottomWidth: 1,
             borderColor: C.line,
-            padding: 20,
             justifyContent: 'space-between',
             flexWrap: 'wrap',
           }}
         >
-          <Row>
-            <View style={{ padding: 10, backgroundColor: '#EAF0DF', borderRadius: 13 }}>
-              <Icon name="chat" />
-            </View>
-            <View>
-              <Txt weight="600">Sortify assistant</Txt>
-              <Txt size={10} color={C.muted}>
-                Answers from the demo waste guide
-              </Txt>
-            </View>
-          </Row>
-          <Badge text="Scripted demo" icon="demo" />
+          <Txt size={12} color={C.muted}>
+            Answers from the waste guide
+          </Txt>
+          <Badge text="Scripted demo" />
         </Row>
         <ScrollView
           ref={messagesRef}
           nestedScrollEnabled
-          style={{ maxHeight: width < 650 ? 360 : 460 }}
-          contentContainerStyle={{ padding: 24, gap: 22, minHeight: 300 }}
+          style={{ maxHeight: Math.max(200, Math.min(height - 390, 460)) }}
+          contentContainerStyle={{
+            padding: 20,
+            gap: 18,
+            minHeight: Math.max(180, Math.min(height - 410, 280)),
+          }}
           onContentSizeChange={() => {
             if (state.messages.length) messagesRef.current?.scrollToEnd({ animated: true });
           }}
@@ -98,12 +91,12 @@ export default function AssistantScreen() {
           )}
           {!state.messages.length ? (
             <View style={{ alignItems: 'center', paddingVertical: 20, gap: 18 }}>
-              <Icon name="sprout" size={48} strokeWidth={1.2} />
-              <Txt size={24} weight="500" style={{ textAlign: 'center' }}>
-                Every good habit starts with a question.
+              <Icon name="chat" size={28} strokeWidth={1.5} />
+              <Txt size={20} weight="500" style={{ textAlign: 'center' }}>
+                What are you sorting?
               </Txt>
               <Txt size={13} color={C.muted} style={{ textAlign: 'center' }}>
-                Tell me what you’re sorting. We’ll find its next step.
+                Ask about an item or choose a question.
               </Txt>
               <View
                 style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}
@@ -113,7 +106,6 @@ export default function AssistantScreen() {
                     ? `How do I dispose of ${context.name.toLowerCase()}?`
                     : 'Where does a plastic bottle go?',
                   'What do I do with old batteries?',
-                  'Can I compost banana peels?',
                 ].map((q) => (
                   <Button key={q} title={q} variant="secondary" onPress={() => send(q)} />
                 ))}
@@ -177,7 +169,7 @@ export default function AssistantScreen() {
             />
           </Row>
           <Txt size={10} color={C.muted}>
-            This prototype matches keywords to sample guidance. It does not use a live AI model.
+            Demo replies use catalog keywords, not live AI.
           </Txt>
         </View>
       </Card>
@@ -199,7 +191,7 @@ export default function AssistantScreen() {
           </>
         ) : (
           <Button
-            title="Start a new conversation"
+            title="New conversation"
             icon="plus"
             variant="ghost"
             disabled={busy || !state.messages.length}
