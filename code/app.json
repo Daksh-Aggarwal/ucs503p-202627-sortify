@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "sortify",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/images/icon.png"
     },
@@ -31,6 +31,14 @@
           "backgroundColor": "#FAFBF7",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 160
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a photo of an item to explore its disposal guidance.",
+          "cameraPermission": "Take a photo of an item you want to sort.",
+          "microphonePermission": false
         }
       ]
     ],
