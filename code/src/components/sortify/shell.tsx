@@ -22,9 +22,16 @@ const links = [
   { href: '/assistant', label: 'Assistant', icon: 'chat' },
   { href: '/learn', label: 'Learn', icon: 'leaf' },
 ];
-export function Shell({ children }: React.PropsWithChildren) {
+export function NativeRouteShell({ children }: React.PropsWithChildren) {
+  return Platform.OS === 'ios' ? <Shell nativeBottomTabs>{children}</Shell> : <>{children}</>;
+}
+
+export function Shell({
+  children,
+  nativeBottomTabs = false,
+}: React.PropsWithChildren<{ nativeBottomTabs?: boolean }>) {
   const { width } = useWindowDimensions();
-  const desktop = width >= 1000;
+  const desktop = nativeBottomTabs ? false : width >= 1000;
   const insets = useSafeAreaInsets();
   const { state, update, notice } = useApp();
   const pathname = usePathname();
@@ -221,7 +228,7 @@ export function Shell({ children }: React.PropsWithChildren) {
         >
           {children}
         </ScrollView>
-        {!desktop && (
+        {!desktop && !nativeBottomTabs && (
           <Row
             style={{
               backgroundColor: C.white,
