@@ -12,6 +12,7 @@
       "bundleIdentifier": "com.daksh.sortify"
     },
     "android": {
+      "package": "com.daksh.sortify",
       "adaptiveIcon": {
         "backgroundColor": "#FAFBF7",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
