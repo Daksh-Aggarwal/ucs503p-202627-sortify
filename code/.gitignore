@@ -35,6 +35,10 @@ yarn-error.*
 .env.*
 !.env.example
 
+# Local model artifacts can be large and must not be committed.
+server/models/
+server/.venv/
+
 # typescript
 *.tsbuildinfo
 
