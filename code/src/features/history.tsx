@@ -65,7 +65,7 @@ export default function HistoryScreen() {
                   <View style={{ flex: 1 }}>
                     <ItemRow
                       item={item}
-                      subtitle={`${new Date(scan.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · ${scan.sorted ? 'Sorted' : 'To sort'} · ${scan.source === 'demo' ? 'Demo' : 'Manual'}`}
+                      subtitle={`${new Date(scan.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · ${scan.sorted ? 'Sorted' : 'To sort'} · ${scan.source === 'demo' ? 'Demo' : scan.source === 'model' ? 'Scan' : 'Manual'}`}
                       onPress={() =>
                         router.push({
                           pathname: '/result',

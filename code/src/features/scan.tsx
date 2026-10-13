@@ -1,10 +1,11 @@
 import { Disclosure, Segments } from '@/components/sortify/controls';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Image, Platform, Pressable, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useApp } from '@/state/app-state';
 import { Button, C, Card, Heading, Icon, ItemArt, Row, Txt } from '@/components/sortify/ui';
+import { demoPrediction, recognizeImage, serializeBox } from '@/services/recognition';
 export default function ScanScreen() {
   const { state } = useApp();
   const [mode, setMode] = useState('Photo');
@@ -14,8 +15,6 @@ export default function ScanScreen() {
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const [failed, setFailed] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
   async function pick(camera: boolean) {
     setError('');
     try {
@@ -50,25 +49,55 @@ export default function ScanScreen() {
       );
     }
   }
-  function analyze() {
+  function openResult(
+    prediction: ReturnType<typeof demoPrediction>,
+    source: 'demo' | 'model',
+    imageUri?: string,
+  ) {
+    router.push({
+      pathname: '/result',
+      params: {
+        id: prediction.itemId,
+        confidence: String(prediction.confidence),
+        source,
+        detectorClass: prediction.className,
+        bbox: serializeBox(prediction.box),
+        ...(imageUri ? { imageUri } : {}),
+      },
+    });
+  }
+  function analyzeSample() {
     setBusy(true);
     setError('');
-    timer.current = setTimeout(() => {
+    setTimeout(() => {
       setBusy(false);
       if (failed) {
         setError(
-          'The demo prediction service is unavailable. Retry with the error scenario off, or find your item in the waste guide.',
+          'The demo prediction is unavailable. Retry with the error scenario off, or find your item in the waste guide.',
         );
         return;
       }
-      router.push({
-        pathname: '/result',
-        params: { id: sample, confidence: uncertain ? '46' : '98', source: 'demo' },
-      });
+      openResult(demoPrediction(sample, uncertain ? 46 : 98), 'demo');
     }, 1600);
   }
+  async function analyzePhoto() {
+    if (!uri) return;
+    setBusy(true);
+    setError('');
+    try {
+      openResult(await recognizeImage(uri), 'model', uri);
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : 'The image could not be analyzed. Please try again.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   const samples = state.items.filter((i) =>
-    ['bottle', 'banana', 'box', 'battery', 'charger'].includes(i.id),
+    ['bottle', 'banana', 'box', 'battery', 'can'].includes(i.id),
   );
   return (
     <View style={{ maxWidth: 760, width: '100%', alignSelf: 'center' }}>
@@ -132,12 +161,10 @@ export default function ScanScreen() {
             {!!uri && <Button title="Remove photo" variant="ghost" onPress={() => setUri('')} />}
           </>
         )}
-        {(mode === 'Samples' || !!uri) && (
+        {mode === 'Samples' && (
           <>
             <Txt size={13} color={C.muted}>
-              {uri && mode === 'Photo'
-                ? 'Choose the demo result for this photo.'
-                : 'Choose an item to try the scan flow.'}
+              Choose an item to try the scan flow.
             </Txt>
             <View style={{ gap: 4 }}>
               {samples.map((item) => (
@@ -171,11 +198,19 @@ export default function ScanScreen() {
               icon="scan"
               loading={busy}
               disabled={!samples.some((i) => i.id === sample)}
-              onPress={analyze}
+              onPress={analyzeSample}
             />
             <Txt size={12} color={C.muted}>
               Simulated prediction. The selected sample determines the result; photos stay on this
               device.
+            </Txt>
+          </>
+        )}
+        {mode === 'Photo' && !!uri && (
+          <>
+            <Button title="Identify item" icon="scan" loading={busy} onPress={analyzePhoto} />
+            <Txt size={12} color={C.muted}>
+              Your photo is sent only to the configured Sortify recognition service for this scan.
             </Txt>
           </>
         )}
@@ -203,43 +238,45 @@ export default function ScanScreen() {
           unclear, retake it or search the guide.
         </Txt>
       </Disclosure>
-      <Disclosure title={`Demo options${uncertain || failed ? ' · active' : ''}`} icon="demo">
-        {[
-          {
-            label: 'Low-confidence result',
-            value: uncertain,
-            toggle: () => setUncertain(!uncertain),
-          },
-          { label: 'Service unavailable', value: failed, toggle: () => setFailed(!failed) },
-        ].map((o) => (
-          <Pressable
-            key={o.label}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: o.value }}
-            aria-checked={o.value}
-            onPress={o.toggle}
-            style={{ minHeight: 44, justifyContent: 'center' }}
-          >
-            <Row style={{ justifyContent: 'space-between' }}>
-              <Txt size={13}>{o.label}</Txt>
-              <View
-                style={{
-                  width: 38,
-                  height: 24,
-                  borderRadius: 20,
-                  padding: 3,
-                  backgroundColor: o.value ? C.green : '#CED6C4',
-                  alignItems: o.value ? 'flex-end' : 'flex-start',
-                }}
-              >
+      {mode === 'Samples' && (
+        <Disclosure title={`Demo options${uncertain || failed ? ' · active' : ''}`} icon="demo">
+          {[
+            {
+              label: 'Low-confidence result',
+              value: uncertain,
+              toggle: () => setUncertain(!uncertain),
+            },
+            { label: 'Service unavailable', value: failed, toggle: () => setFailed(!failed) },
+          ].map((o) => (
+            <Pressable
+              key={o.label}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: o.value }}
+              aria-checked={o.value}
+              onPress={o.toggle}
+              style={{ minHeight: 44, justifyContent: 'center' }}
+            >
+              <Row style={{ justifyContent: 'space-between' }}>
+                <Txt size={13}>{o.label}</Txt>
                 <View
-                  style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: 'white' }}
-                />
-              </View>
-            </Row>
-          </Pressable>
-        ))}
-      </Disclosure>
+                  style={{
+                    width: 38,
+                    height: 24,
+                    borderRadius: 20,
+                    padding: 3,
+                    backgroundColor: o.value ? C.green : '#CED6C4',
+                    alignItems: o.value ? 'flex-end' : 'flex-start',
+                  }}
+                >
+                  <View
+                    style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: 'white' }}
+                  />
+                </View>
+              </Row>
+            </Pressable>
+          ))}
+        </Disclosure>
+      )}
     </View>
   );
 }

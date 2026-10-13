@@ -4,6 +4,8 @@ import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { uniqueId, useApp } from '@/state/app-state';
 import { locationGuidance } from '@/data/catalog';
+import { DetectionPreview } from '@/components/sortify/detection-preview';
+import { parseBox } from '@/services/recognition';
 import {
   Button,
   C,
@@ -22,6 +24,9 @@ export default function ResultScreen() {
     confidence?: string;
     source?: string;
     scanId?: string;
+    imageUri?: string;
+    bbox?: string;
+    detectorClass?: string;
   }>();
   const { state, update, notify, saveScan } = useApp();
   const [savedId, setSavedId] = useState(params.scanId || '');
@@ -32,7 +37,11 @@ export default function ResultScreen() {
   const saved = state.scans.find((s) => s.id === savedId);
   const confidence = saved?.confidence ?? Number(params.confidence || 0);
   const low = confidence > 0 && confidence < 70 && !confirmed && !saved;
-  const source = params.source === 'demo' || saved?.source === 'demo' ? 'demo' : 'manual';
+  const source =
+    saved?.source ||
+    (params.source === 'demo' ? 'demo' : params.source === 'model' ? 'model' : 'manual');
+  const detectionBox = parseBox(params.bbox);
+  const detectorLabel = params.detectorClass?.replaceAll('_', ' ') || item?.name || 'detected item';
   if (!item)
     return (
       <Empty
@@ -94,17 +103,28 @@ export default function ResultScreen() {
             <CategoryBadge category={item.category} />
             {confidence > 0 && (
               <Txt size={12} color={C.muted}>
-                Demo confidence: {confidence}%
+                {source === 'demo' ? 'Demo' : 'Model'} confidence: {confidence}%
               </Txt>
             )}
           </Row>
         </View>
       </Row>
+      {!!params.imageUri && !!detectionBox && (
+        <Card style={{ gap: 10, marginBottom: 16, padding: 14 }}>
+          <Txt size={13} weight="600">
+            Detected item
+          </Txt>
+          <DetectionPreview uri={params.imageUri} box={detectionBox} label={detectorLabel} />
+          <Txt size={12} color={C.muted}>
+            The outline marks the object selected by the detector.
+          </Txt>
+        </Card>
+      )}
       {low && (
         <Card style={{ gap: 12, marginBottom: 16, backgroundColor: '#FAF2E4' }}>
           <Txt weight="600">Confirm this item</Txt>
           <Txt size={13} color={C.muted}>
-            The example prediction is uncertain. Check the match before saving.
+            The prediction is uncertain. Check the match before saving.
           </Txt>
           <Row style={{ flexWrap: 'wrap' }}>
             <Button title="Yes, this is my item" onPress={() => setConfirmed(true)} />

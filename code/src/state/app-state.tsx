@@ -7,7 +7,7 @@ export type Scan = {
   itemId: string;
   date: string;
   confidence: number;
-  source: 'demo' | 'manual';
+  source: 'demo' | 'manual' | 'model';
   sorted: boolean;
 };
 export type Feedback = {

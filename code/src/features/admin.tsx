@@ -296,6 +296,10 @@ export default function AdminScreen() {
               label: 'Manual selections saved',
               value: state.scans.filter((s) => s.source === 'manual').length,
             },
+            {
+              label: 'Model predictions saved',
+              value: state.scans.filter((s) => s.source === 'model').length,
+            },
             { label: 'Corrections submitted', value: state.feedback.length },
             {
               label: 'Corrections reviewed',

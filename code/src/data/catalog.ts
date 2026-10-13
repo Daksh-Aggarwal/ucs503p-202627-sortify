@@ -96,7 +96,7 @@ export const catalog: WasteItem[] = [
   {
     id: 'battery',
     name: 'Household battery',
-    category: 'Hazardous',
+    category: 'E-waste',
     material: 'Mixed metals and electrolytes',
     description: 'Batteries need a dedicated collection route.',
     steps: [
@@ -175,6 +175,19 @@ export const catalog: WasteItem[] = [
     keywords: ['wrapper', 'chips', 'packet', 'snack'],
   },
   {
+    id: 'plastic-bag',
+    name: 'Plastic bag',
+    category: 'General waste',
+    material: 'Flexible plastic film',
+    description: 'Flexible bags are not accepted in most everyday dry-recycling streams.',
+    steps: [
+      'Empty the bag and remove food residue.',
+      'Check whether a dedicated flexible-plastic collection point accepts it.',
+      'If no collection exists, place it in general waste.',
+    ],
+    keywords: ['plastic bag', 'bag', 'carry bag', 'polybag'],
+  },
+  {
     id: 'charger',
     name: 'Phone charger',
     category: 'E-waste',
@@ -214,6 +227,21 @@ export const catalog: WasteItem[] = [
     ],
     caution: 'Do not flush medicines or empty them into drains.',
     keywords: ['medicine', 'pills', 'tablet', 'pharmaceutical'],
+  },
+  {
+    id: 'medical-waste',
+    name: 'Medical waste',
+    category: 'Hazardous',
+    material: 'Potentially contaminated clinical material',
+    description: 'Potentially infectious items need a dedicated disposal route.',
+    steps: [
+      'Avoid touching sharp or contaminated material directly.',
+      'Keep it separate from household and recycling bins.',
+      'Contact an authorized medical-waste collection service for safe disposal.',
+    ],
+    caution:
+      'Do not place sharps, syringes, or potentially infectious material in household waste.',
+    keywords: ['medical', 'syringe', 'needle', 'clinical', 'hazardous'],
   },
   {
     id: 'paper',
