@@ -37,7 +37,7 @@ export default function AssistantScreen() {
     let response =
       'I don’t have a reliable match for that question in the demo guide. Try a specific item such as “plastic bottle”, “phone charger”, or “battery”, or use the waste guide to choose a category.';
     if (item)
-      response = `${item.name} belongs in ${item.category.toLowerCase()}.\n\n${item.steps.map((step, i) => `${i + 1}. ${step}`).join('\n\n')}${item.caution ? `\n\nTake care: ${item.caution}` : ''}\n\nCheck accepted materials with your collector in ${state.location}. Local collection points are not connected yet.`;
+      response = `${item.name} belongs in ${item.category.toLowerCase()}.\n\n${item.steps.map((step, i) => `${i + 1}. ${step}`).join('\n\n')}${item.caution ? `\n\nTake care: ${item.caution}` : ''}\n\nCheck accepted materials with your local collector${state.location && state.location !== 'Location detected' ? ` in ${state.location}` : ''}. For specialist items, check the result screen for nearby options.`;
     else if (words.includes('recycling') || words.includes('recycle') || words.includes('sort'))
       response =
         'Start by separating food scraps from clean, dry materials. Keep batteries and electronics aside for dedicated collection. Acceptance varies by location, so look up the exact item in the waste guide before choosing a bin.\n\nWhat item would you like to sort?';

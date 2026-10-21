@@ -1,3 +1,4 @@
+import { requestLocationPermission } from '@/services/nearby-disposal';
 import { Segments } from '@/components/sortify/controls';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -12,6 +13,26 @@ export default function ProfileScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
+  const [locationBusy, setLocationBusy] = useState(false);
+  async function toggleNearby() {
+    if (state.nearbyDisposalEnabled) {
+      update((s) => ({ ...s, nearbyDisposalEnabled: false, location: '' }));
+      return;
+    }
+    setLocationBusy(true);
+    try {
+      const granted = await requestLocationPermission();
+      if (granted) update((s) => ({ ...s, nearbyDisposalEnabled: true }));
+      else
+        notify(
+          'Location permission was not granted. Enable it in device settings to use nearby search.',
+        );
+    } catch {
+      notify('Could not request location permission on this device.');
+    } finally {
+      setLocationBusy(false);
+    }
+  }
   function submit() {
     setError('');
     if ((mode === 'register' || state.profile) && name.trim().length < 2) {
@@ -125,6 +146,33 @@ export default function ProfileScreen() {
                 }}
               />
             )}
+          </Card>
+          <Card style={{ gap: 12, marginTop: 16 }}>
+            <Txt size={18} weight="500">
+              Nearby disposal options
+            </Txt>
+            <Txt size={12} color={C.muted}>
+              Your device location updates the header while the app is open and is used for nearby
+              searches. On web, coordinates are sent to OpenStreetMap Nominatim to identify your
+              area. Nearby searches send coordinates to OpenStreetMap Overpass services. Your
+              location is not saved in your profile.
+            </Txt>
+            <Button
+              title={
+                locationBusy
+                  ? 'Requesting permission…'
+                  : state.nearbyDisposalEnabled
+                    ? 'Turn off nearby options'
+                    : 'Enable nearby options'
+              }
+              variant="secondary"
+              disabled={locationBusy}
+              onPress={toggleNearby}
+            />
+            <Txt size={12} color={C.muted}>
+              Currently {state.nearbyDisposalEnabled ? 'on' : 'off'}. Device location permission can
+              be changed in system settings.
+            </Txt>
           </Card>
         </>
       ) : (

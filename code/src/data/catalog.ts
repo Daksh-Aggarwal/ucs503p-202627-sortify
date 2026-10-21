@@ -188,6 +188,22 @@ export const catalog: WasteItem[] = [
     keywords: ['plastic bag', 'bag', 'carry bag', 'polybag'],
   },
   {
+    id: 'mobile-phone',
+    name: 'Old mobile phone',
+    category: 'E-waste',
+    material: 'Electronics and rechargeable battery',
+    description:
+      'A phone can often be reused or recycled through an electronics take-back program.',
+    steps: [
+      'Consider repair or reuse if the phone is safe and working.',
+      'Back up and erase personal data, and remove your SIM card.',
+      'Take the intact device to an authorized electronics recycler or retailer take-back program.',
+    ],
+    caution:
+      'Do not dismantle the phone or puncture its battery. Seek specialist advice if it is swollen, leaking, or hot.',
+    keywords: ['mobile phone', 'smartphone', 'cell phone', 'handset'],
+  },
+  {
     id: 'charger',
     name: 'Phone charger',
     category: 'E-waste',
@@ -284,7 +300,6 @@ export const catalog: WasteItem[] = [
     keywords: ['ceramic', 'mug', 'plate', 'broken'],
   },
 ];
-export const locations = ['Patiala, Punjab', 'Chandigarh', 'New Delhi', 'Other location'];
 export function locationGuidance(location: string, category: Category) {
   const stream =
     category === 'Organic'
@@ -296,7 +311,7 @@ export function locationGuidance(location: string, category: Category) {
           : category === 'Hazardous'
             ? 'specialist collection services'
             : 'general-waste collection';
-  return `For ${location}, confirm ${stream} with your local collector${location.startsWith('Patiala') ? ' or campus facilities team' : ''}. Verified local schedules and collection points are not connected in this prototype.`;
+  return `Confirm ${stream} with your local collector${location && location !== 'Location detected' ? ` in ${location}` : ''}. Local schedules are not verified in this prototype.`;
 }
 export const lessons = [
   {

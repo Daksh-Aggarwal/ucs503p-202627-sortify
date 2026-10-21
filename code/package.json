@@ -13,6 +13,7 @@
     "expo-image": "~57.0.4",
     "expo-image-picker": "~57.0.16",
     "expo-linking": "~57.0.9",
+    "expo-location": "~57.0.16",
     "expo-router": "~57.0.19",
     "expo-splash-screen": "~57.0.8",
     "expo-status-bar": "~57.0.1",
@@ -39,6 +40,7 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
+    "postinstall": "node ./scripts/patch-expo-modules-jsi.js",
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "generate-assets": "node ./scripts/generate-assets.js",

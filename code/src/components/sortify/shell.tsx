@@ -11,7 +11,6 @@ import {
 import { router, usePathname, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/state/app-state';
-import { locations } from '@/data/catalog';
 import { Badge, Button, C, Icon, IconButton, Row, Txt } from './ui';
 const links = [
   { href: '/', label: 'Overview', icon: 'home' },
@@ -26,7 +25,7 @@ export function Shell({ children }: React.PropsWithChildren) {
   const { width } = useWindowDimensions();
   const desktop = width >= 1000;
   const insets = useSafeAreaInsets();
-  const { state, update, notice } = useApp();
+  const { state, notice, refreshLocation, locationBusy, locationError } = useApp();
   const pathname = usePathname();
   const [locationOpen, setLocationOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -192,14 +191,14 @@ export function Shell({ children }: React.PropsWithChildren) {
             <Row style={{ gap: desktop ? 20 : 8 }}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Change location"
+                accessibilityLabel="Location details"
                 onPress={() => setLocationOpen(true)}
                 style={{ minHeight: 44, justifyContent: 'center', flexShrink: 1 }}
               >
                 <Row style={{ gap: 7, flexShrink: 1 }}>
                   <Icon name="pin" size={15} color={C.muted} />
                   <Txt size={12} numberOfLines={1} style={{ maxWidth: width < 400 ? 110 : 200 }}>
-                    {state.location}
+                    {locationBusy ? 'Finding location…' : state.location || 'Location unavailable'}
                   </Txt>
                   <Icon name="down" size={12} />
                 </Row>
@@ -333,22 +332,39 @@ export function Shell({ children }: React.PropsWithChildren) {
                 onPress={() => setLocationOpen(false)}
               />
             </Row>
-            <Txt color={C.muted}>Choose your area.</Txt>
-            {locations.map((l) => (
+            <Txt color={C.muted}>
+              {state.nearbyDisposalEnabled
+                ? 'Your device location is used for nearby searches and refreshed when you return to the app.'
+                : 'Enable nearby disposal options in your profile to use your device location.'}
+            </Txt>
+            {state.nearbyDisposalEnabled ? (
+              <>
+                <Txt weight="500">
+                  {locationBusy ? 'Finding location…' : state.location || 'Location unavailable'}
+                </Txt>
+                {!!locationError && (
+                  <Txt size={12} color="#AE5B41">
+                    {locationError}
+                  </Txt>
+                )}
+                <Button
+                  title={locationBusy ? 'Updating…' : 'Refresh location'}
+                  disabled={locationBusy}
+                  icon="pin"
+                  onPress={() => {
+                    void refreshLocation();
+                  }}
+                />
+              </>
+            ) : (
               <Button
-                key={l}
-                title={l}
-                icon={l === state.location ? 'check' : 'pin'}
-                variant={l === state.location ? 'primary' : 'secondary'}
+                title="Open profile settings"
                 onPress={() => {
-                  update((s) => ({ ...s, location: l }));
                   setLocationOpen(false);
+                  router.push('/profile');
                 }}
               />
-            ))}
-            <Txt size={11} color={C.muted}>
-              Local collection details are illustrative in this demo.
-            </Txt>
+            )}
           </View>
         </View>
       </Modal>

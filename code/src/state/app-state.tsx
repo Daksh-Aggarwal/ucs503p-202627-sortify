@@ -1,5 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
+import { currentLocation } from '@/services/nearby-disposal';
+import { Coordinates, locationLabel } from '@/services/location-label';
 import { catalog, WasteItem } from '@/data/catalog';
 
 export type Scan = {
@@ -21,6 +24,8 @@ export type Message = { id: string; role: 'user' | 'assistant'; text: string; it
 type State = {
   profile: { name: string; email: string } | null;
   location: string;
+  nearbyDisposalEnabled: boolean;
+  catalogVersion: number;
   scans: Scan[];
   feedback: Feedback[];
   messages: Message[];
@@ -28,7 +33,9 @@ type State = {
 };
 const seed: State = {
   profile: null,
-  location: 'Patiala, Punjab',
+  location: '',
+  nearbyDisposalEnabled: false,
+  catalogVersion: 2,
   scans: [
     {
       id: 'seed-1',
@@ -67,6 +74,9 @@ type Context = {
   notify: (text: string) => void;
   update: (fn: (previous: State) => State) => void;
   reset: () => void;
+  refreshLocation: (coords?: Coordinates) => Promise<void>;
+  locationBusy: boolean;
+  locationError: string;
   saveScan: (
     itemId: string,
     confidence: number,
@@ -80,6 +90,9 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const [state, setState] = useState<State>(seed);
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState('');
+  const [locationBusy, setLocationBusy] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  const locationRequest = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const writes = useRef(Promise.resolve());
   useEffect(() => {
@@ -95,7 +108,17 @@ export function AppProvider({ children }: React.PropsWithChildren) {
             Array.isArray(parsed.messages) &&
             typeof parsed.location === 'string'
           )
-            setState({ ...seed, ...parsed });
+            setState({
+              ...seed,
+              ...parsed,
+              location: '',
+              catalogVersion: 2,
+              items:
+                parsed.catalogVersion === 2 ||
+                parsed.items.some((item: WasteItem) => item.id === 'mobile-phone')
+                  ? parsed.items
+                  : [...parsed.items, catalog.find((item) => item.id === 'mobile-phone')!],
+            });
         }
       })
       .catch(() => {
@@ -112,7 +135,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   useEffect(() => {
     if (ready) {
       writes.current = writes.current
-        .then(() => AsyncStorage.setItem(KEY, JSON.stringify(state)))
+        .then(() => AsyncStorage.setItem(KEY, JSON.stringify({ ...state, location: '' })))
         .catch(() =>
           setNotice(
             'Changes are available for this session, but could not be saved on this device.',
@@ -120,6 +143,47 @@ export function AppProvider({ children }: React.PropsWithChildren) {
         );
     }
   }, [state, ready]);
+  const refreshLocation = useCallback(async (coords?: Coordinates) => {
+    const request = ++locationRequest.current;
+    setLocationBusy(true);
+    setLocationError('');
+    try {
+      const position = coords || (await currentLocation());
+      const label = await locationLabel(position);
+      if (request === locationRequest.current) {
+        setState((previous) =>
+          previous.nearbyDisposalEnabled ? { ...previous, location: label } : previous,
+        );
+      }
+    } catch (error) {
+      if (request === locationRequest.current) {
+        setState((previous) => ({ ...previous, location: '' }));
+        setLocationError(
+          error instanceof Error ? error.message : 'Could not determine your location.',
+        );
+      }
+    } finally {
+      if (request === locationRequest.current) setLocationBusy(false);
+    }
+  }, []);
+  const invalidateLocation = useCallback(() => {
+    locationRequest.current++;
+  }, []);
+  useEffect(() => {
+    if (!ready) return;
+    if (!state.nearbyDisposalEnabled) return;
+    const initialRefresh = setTimeout(() => {
+      void refreshLocation();
+    }, 0);
+    const subscription = AppState.addEventListener('change', (status) => {
+      if (status === 'active') void refreshLocation();
+    });
+    return () => {
+      clearTimeout(initialRefresh);
+      subscription.remove();
+      invalidateLocation();
+    };
+  }, [ready, state.nearbyDisposalEnabled, refreshLocation, invalidateLocation]);
   const notify = (text: string) => {
     setNotice(text);
     clearTimeout(timer.current);
@@ -142,6 +206,9 @@ export function AppProvider({ children }: React.PropsWithChildren) {
         state,
         ready,
         notice,
+        refreshLocation,
+        locationBusy: state.nearbyDisposalEnabled && locationBusy,
+        locationError: state.nearbyDisposalEnabled ? locationError : '',
         notify,
         update: setState,
         reset: () => {

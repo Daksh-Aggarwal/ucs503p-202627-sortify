@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { uniqueId, useApp } from '@/state/app-state';
 import { locationGuidance } from '@/data/catalog';
+import { NearbyDisposal } from '@/components/sortify/nearby-disposal';
 import { DetectionPreview } from '@/components/sortify/detection-preview';
 import { parseBox } from '@/services/recognition';
 import {
@@ -195,8 +196,16 @@ export default function ResultScreen() {
           </Row>
         )}
       </Card>
+      <NearbyDisposal key={item.id} item={item} />
       <View style={{ marginTop: 16 }}>
-        <Disclosure title={`Local guidance · ${state.location}`} icon="pin">
+        <Disclosure
+          title={
+            state.location && state.location !== 'Location detected'
+              ? `Local guidance · ${state.location}`
+              : 'Local guidance'
+          }
+          icon="pin"
+        >
           <Txt size={13} color={C.muted}>
             {locationGuidance(state.location, item.category)}
           </Txt>

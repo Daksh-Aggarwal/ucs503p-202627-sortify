@@ -47,21 +47,21 @@ The API allows a `.pkl` only after `ALLOW_PICKLE=true` is explicitly set and onl
 1. **Overview** — a scan shortcut, compact stats, and the next sorting milestone. Full history, charts, learning content, and chat live on dedicated pages.
 2. **Scan an item** — use the **Photo** tab to capture/upload, then identify it through the configured detector, or use **Samples** to try the demo without an API. Images are validated for size and dimensions.
 3. **Result** — see the mapped item and category, model confidence, detector bounding box, preparation steps, safety notes, and selected-area context. Confirm an uncertain match, save the item, mark it sorted, or submit a correction.
-4. **Waste guide** — search 15 starter entries, filter by category, and browse six compact results per page. The separate **Learn** page contains the educational guides.
+4. **Waste guide** — search starter entries, filter by category, and browse six compact results per page. The separate **Learn** page contains the educational guides.
 5. **History / Activity** — history uses paginated rows and per-item removal. Activity keeps stats and progressive milestones, with **This week** and **Categories** tabs for the charts.
 6. **Sortify assistant** — ask about a supported item or enter from a result. The scripted assistant matches catalog keywords, links to guidance, preserves conversations, and offers a fallback for unknown questions.
-7. **Settings & profile** — the **Profile** tab contains account forms; **Data & privacy** contains local storage details and the reset control.
+7. **Settings & profile** — the **Profile** tab contains account forms and the nearby-disposal opt-in; **Data & privacy** contains local storage details and the reset control.
 8. **Admin demo** — add, edit, and delete catalog entries; update disposal and safety guidance; review submitted corrections; inspect usage totals.
 
 On mobile, **Home**, **Guide**, **Scan**, and **Activity** are always available in the bottom bar. **More** opens navigation to History, Assistant, Learn, profile/settings, and admin. Desktop uses the sidebar.
 
-Use the header location picker to switch between Patiala, Chandigarh, New Delhi, and another location. In **Samples**, open **Demo options** to access the **Low-confidence result** and **Service unavailable** switches to demonstrate recovery paths.
+When nearby options are enabled, the header shows the detected device area and can refresh it. In **Samples**, open **Demo options** to access the **Low-confidence result** and **Service unavailable** switches to demonstrate recovery paths.
 
 ## Prototype boundaries
 
 - **A model artifact is required for live recognition.** The FastAPI service and client integration are included, but no model file is committed. Until the service is configured, photo scans show an actionable connection error. Samples remain deterministic demo predictions.
 - **No real authentication or access control.** Both account forms create a local profile. Passwords are neither stored nor verified. The admin preview is intentionally open.
-- **No verified location services.** Location changes the displayed context; municipal rules, schedules, and facilities need a verified source before production use.
+- **Nearby options are unverified.** When enabled in Profile, a specialist result can search OpenStreetMap via public Overpass services using a one-time foreground location. Coordinates are sent to the services, not stored in the app. If search fails or returns no nearby results, users can open a separate Google Maps search; Google Maps handles location according to its own settings. Battery and electronics results depend on mapped recycling tags; medicine and medical results are contacts for advice, not confirmed drop-off sites. Coverage may be incomplete, and users should confirm acceptance and opening hours. The header refreshes the device area when the app returns to the foreground; on web, OpenStreetMap Nominatim converts coordinates to an area name.
 - **No live conversational AI.** Replies use simple keyword matching against the local guide and are not a substitute for an integrated retrieval service.
 - **Local shared storage.** AsyncStorage persists profile, catalog edits, history, feedback, and messages under `sortify-prototype-v1`. Data belongs to the device/browser, not an authenticated account. Guest mode can save history. Photos remain in the picker session and are not stored in history.
 - Activity includes clearly identified starter records. No CO₂, weight, classification-accuracy, or other unmeasured impact numbers are invented.
