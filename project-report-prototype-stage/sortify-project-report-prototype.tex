@@ -1,12 +1,51 @@
-\documentclass{tietreport}
+\documentclass[12pt,a4paper]{report}
 
 \usepackage{graphicx}
+\usepackage{placeins}
 \usepackage{float}
 \usepackage{enumitem}
 \usepackage{array}
 \usepackage{tabularx}
-\hypersetup{hidelinks}
+\usepackage[hidelinks]{hyperref}
 \setlist{nosep}
+
+% Self-contained replacement for the unavailable tietreport.cls custom class.
+\newcommand{\TitlePageHeader}[1]{\def\ReportHeader{#1}}
+\newcommand{\ProjectTitle}[1]{\def\ReportProjectTitle{#1}}
+\newcommand{\ProjectSubTitle}[1]{\def\ReportProjectSubTitle{#1}}
+\newcommand{\TitlePageSubText}[1]{\def\ReportSubText{#1}}
+\newcommand{\AdvisorName}[1]{\def\ReportAdvisorName{#1}}
+\newcommand{\TitlePageFooterText}[1]{\def\ReportFooterText{#1}}
+\makeatletter
+\renewcommand{\maketitle}{%
+  \begin{titlepage}
+    \centering
+    \vspace*{1.2cm}
+    {\Large\bfseries \ReportHeader\par}
+    \vspace{2.2cm}
+    {\huge\bfseries \ReportProjectTitle\par}
+    \vspace{0.6cm}
+    {\Large \ReportProjectSubTitle\par}
+    \vspace{1.8cm}
+    {\large\ReportSubText\par}
+    \vspace{1.0cm}
+    {\large\bfseries Submitted by\par}
+    \vspace{0.4cm}
+    {\large\@author\par}
+    \vspace{0.8cm}
+    {\large\bfseries Faculty Advisor\par}
+    \vspace{0.2cm}
+    {\large\ReportAdvisorName\par}
+    \vfill
+    {\large\ReportFooterText\par}
+  \end{titlepage}
+}
+\makeatother
+% Keep the report compilable even if proposal diagram files are not present.
+\newcommand{\optionalfigure}[2]{%
+  \IfFileExists{#1}{\includegraphics[width=#2\textwidth]{#1}}%
+  {\fbox{\parbox[c][4cm][c]{0.78\textwidth}{\centering Diagram not included in this package.\\[4pt]\texttt{\detokenize{#1}}}}}%
+}
 
 % Course/Lab header
 \TitlePageHeader{%
@@ -88,7 +127,7 @@ The project proposal defines Sortify as a system combining a mobile application,
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.76\textwidth]{../docs/diagrams/data_flow_diagram/level1.png}
+  \optionalfigure{../docs/diagrams/data_flow_diagram/level1.png}{0.76}
   \caption{Level-1 Data Flow Diagram for Sortify}
   \label{fig:level1-dfd}
 \end{figure}
@@ -108,7 +147,7 @@ The implemented demo follows the core proposal workflow in prototype form:
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.66\textwidth]{../docs/diagrams/activity_diagram/activity.png}
+  \optionalfigure{../docs/diagrams/activity_diagram/activity.png}{0.66}
   \caption{Activity Diagram for the Sortify Workflow}
   \label{fig:activity-diagram}
 \end{figure}
@@ -119,7 +158,7 @@ The implemented prototype currently represents the standard user flow and an ope
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.58\textwidth]{../docs/diagrams/use_case_diagram/use_case_diagram.png}
+  \optionalfigure{../docs/diagrams/use_case_diagram/use_case_diagram.png}{0.58}
   \caption{Use Case Diagram for Sortify}
   \label{fig:use-case-diagram}
 \end{figure}
@@ -130,7 +169,7 @@ The prototype uses local application state rather than a production database. Th
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.68\textwidth]{../docs/diagrams/er_diagram/er.png}
+  \optionalfigure{../docs/diagrams/er_diagram/er.png}{0.68}
   \caption{Entity Relationship Diagram for Sortify}
   \label{fig:er-diagram}
 \end{figure}
@@ -146,6 +185,13 @@ The implemented demo is built as an Expo/React Native application using TypeScri
 The application has routed screens for Home, Waste Guide, Scan, Activity, History, Assistant, Learn, Profile, Admin, and Result. On iOS, the app uses native tabs. On other platforms, it uses a custom shell around the routed screens.
 
 The Home screen greets the user when a local demo profile exists, provides a primary action to scan an item, and shows progress summaries and milestone information based on locally saved scans.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[height=0.62\textheight,keepaspectratio]{sortify-prototype-screenshots/overview.jpeg}
+  \caption{Sortify home screen showing the primary scan action and locally tracked progress.}
+  \label{fig:sortify-home-screen}
+\end{figure}
 
 \section{Waste Catalog and Guide}
 
@@ -167,6 +213,15 @@ The initial catalog includes examples such as plastic bottle, banana peel, cardb
 The scan screen implements two modes: photo and sample. In photo mode, the app can request camera permission, open the camera on supported platforms, open the image library, preview a selected image, reject images larger than 10 MB, and reject images smaller than 100 by 100 pixels.
 
 The current identification step is simulated. The app lets the user choose a demo item and then opens the result screen after a short delay. The selected sample determines the result, and the app explicitly states that photos stay on the device.
+
+Figure~\ref{fig:sortify-scan-screen} shows the photo and sample entry points available in the scan interface.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[height=0.62\textheight,keepaspectratio]{sortify-prototype-screenshots/scan.jpeg}
+  \caption{Scan screen with photo capture, upload, sample mode, and links to supporting guidance.}
+  \label{fig:sortify-scan-screen}
+\end{figure}
 
 The scan demo also includes two controlled scenarios:
 
@@ -191,11 +246,25 @@ Implemented result actions include:
 
 The location guidance is implemented as generated local text. It does not connect to verified local schedules or collection-point services.
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[height=0.62\textheight,keepaspectratio]{sortify-prototype-screenshots/result-guide.jpeg}
+  \caption{Waste guide item details for a plastic bottle, including disposal steps and user actions.}
+  \label{fig:sortify-result-guide}
+\end{figure}
+
 \section{History and Activity}
 
 The history screen lists saved scans and supports searching, filtering by sorted status, pagination, opening a saved result, and removing an item from history. Saved scans store item ID, date, confidence, source, and sorted status.
 
 The activity screen summarizes locally saved activity. It includes a seven-day saved-item bar view and a category breakdown using the waste categories in the catalog. These summaries are based only on local demo data.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[height=0.62\textheight,keepaspectratio]{sortify-prototype-screenshots/activity.jpeg}
+  \caption{Activity screen showing explored and sorted item counts, milestone progress, and a weekly activity chart.}
+  \label{fig:sortify-activity-screen}
+\end{figure}
 
 \section{Profile and Local Data Settings}
 
@@ -220,6 +289,13 @@ The admin screen is implemented as an open-access demo area. It includes three s
 \end{itemize}
 
 The analytics section explicitly avoids fabricating model-performance values. It notes that accuracy, F1 score, inference latency, and confusion matrix results require a trained model and held-out evaluation set.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[height=0.62\textheight,keepaspectratio]{sortify-prototype-screenshots/admin.jpeg}
+  \caption{Admin demo showing the searchable waste catalog and catalog-management controls.}
+  \label{fig:sortify-admin-screen}
+\end{figure}
 
 \chapter{Results and Evaluation}
 
