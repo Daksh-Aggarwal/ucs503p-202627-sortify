@@ -11,6 +11,8 @@ export type BoundingBox = {
 };
 
 export type DetectorClass =
+  | 'paper_cardboard'
+  | 'flexible_plastic'
   | 'paper'
   | 'cardboard'
   | 'glass'
@@ -20,45 +22,148 @@ export type DetectorClass =
   | 'sanitary_ppe_waste'
   | 'organic'
   | 'battery_ewaste'
-  | 'hazardous_medical';
+  | 'hazardous_medical'
+  | string;
 
 export type RecognitionPrediction = {
   classId: number;
   className: DetectorClass;
+  /** Raw prediction class label returned directly from the model */
+  modelClassName: string;
+  /** Clean human-readable label */
+  displayName: string;
   itemId: string;
+  /** Guaranteed mapped to one of Sortify's 5 major categories */
   category: Category;
   confidence: number;
   box: BoundingBox;
 };
 
-type ClassMapping = Omit<RecognitionPrediction, 'classId' | 'confidence' | 'box'>;
+export type ModelOption = {
+  id: string;
+  name: string;
+  is_default?: boolean;
+};
+
+export type ConfidenceTier = 'low' | 'medium' | 'high';
+
+export type ConfidenceOption = {
+  id: ConfidenceTier;
+  label: string;
+  value: number;
+  thresholdPercent: number;
+  description: string;
+};
+
+export const CONFIDENCE_LEVELS: ConfidenceOption[] = [
+  {
+    id: 'low',
+    label: 'Low',
+    value: 0.15,
+    thresholdPercent: 15,
+    description: '15% min - Sensitive, detects faint or partially occluded items',
+  },
+  {
+    id: 'medium',
+    label: 'Medium',
+    value: 0.35,
+    thresholdPercent: 35,
+    description: '35% min - Balanced, recommended default for daily waste sorting',
+  },
+  {
+    id: 'high',
+    label: 'High',
+    value: 0.60,
+    thresholdPercent: 60,
+    description: '60% min - Strict, requires high certainty detection',
+  },
+];
 
 /**
- * This order is part of the trained YOLOv11 dataset contract. Keep it in sync with
- * `server/app/main.py` and the model's data.yaml file when the model is retrained.
+ * Mapping for the 8-class YOLOv11 model (from Sortify-ML/yolov11/best.pt)
+ * Classes:
+ *   0: paper_cardboard   -> Recyclable
+ *   1: plastic_bottle    -> Recyclable
+ *   2: metal             -> Recyclable
+ *   3: flexible_plastic  -> General waste
+ *   4: sanitary_ppe_waste-> General waste
+ *   5: organic           -> Organic
+ *   6: battery_ewaste    -> E-waste
+ *   7: hazardous_medical -> Hazardous
  */
-export const DETECTOR_CLASS_MAPPING: Record<number, ClassMapping> = {
-  0: { className: 'paper', itemId: 'paper', category: 'Recyclable' },
-  1: { className: 'cardboard', itemId: 'box', category: 'Recyclable' },
-  2: { className: 'glass', itemId: 'jar', category: 'Recyclable' },
-  3: { className: 'metal', itemId: 'can', category: 'Recyclable' },
-  4: { className: 'plastic_bottle', itemId: 'bottle', category: 'Recyclable' },
-  5: { className: 'plastic_bag', itemId: 'plastic-bag', category: 'General waste' },
-  6: { className: 'sanitary_ppe_waste', itemId: 'tissue', category: 'General waste' },
-  7: { className: 'organic', itemId: 'scraps', category: 'Organic' },
-  8: { className: 'battery_ewaste', itemId: 'battery', category: 'E-waste' },
-  9: { className: 'hazardous_medical', itemId: 'medical-waste', category: 'Hazardous' },
+export const STREAMLINED_8_CLASS_MAPPING: Record<
+  number,
+  { className: string; displayName: string; itemId: string; category: Category }
+> = {
+  0: { className: 'paper_cardboard', displayName: 'Paper & Cardboard', itemId: 'box', category: 'Recyclable' },
+  1: { className: 'plastic_bottle', displayName: 'Plastic Bottle', itemId: 'bottle', category: 'Recyclable' },
+  2: { className: 'metal', displayName: 'Metal Can / Tin', itemId: 'can', category: 'Recyclable' },
+  3: { className: 'flexible_plastic', displayName: 'Flexible Plastic', itemId: 'plastic-bag', category: 'General waste' },
+  4: { className: 'sanitary_ppe_waste', displayName: 'Sanitary / PPE Waste', itemId: 'tissue', category: 'General waste' },
+  5: { className: 'organic', displayName: 'Organic Waste', itemId: 'scraps', category: 'Organic' },
+  6: { className: 'battery_ewaste', displayName: 'Battery & E-waste', itemId: 'battery', category: 'E-waste' },
+  7: { className: 'hazardous_medical', displayName: 'Hazardous Medical', itemId: 'medical-waste', category: 'Hazardous' },
+};
+
+/**
+ * Mapping for the 10-class dataset YOLOv11 model
+ */
+export const UNIFIED_10_CLASS_MAPPING: Record<
+  number,
+  { className: string; displayName: string; itemId: string; category: Category }
+> = {
+  0: { className: 'paper', displayName: 'Paper', itemId: 'paper', category: 'Recyclable' },
+  1: { className: 'cardboard', displayName: 'Cardboard Box', itemId: 'box', category: 'Recyclable' },
+  2: { className: 'glass', displayName: 'Glass Container', itemId: 'jar', category: 'Recyclable' },
+  3: { className: 'metal', displayName: 'Metal Can', itemId: 'can', category: 'Recyclable' },
+  4: { className: 'plastic_bottle', displayName: 'Plastic Bottle', itemId: 'bottle', category: 'Recyclable' },
+  5: { className: 'plastic_bag', displayName: 'Plastic Bag', itemId: 'plastic-bag', category: 'General waste' },
+  6: { className: 'sanitary_ppe_waste', displayName: 'Sanitary / PPE Waste', itemId: 'tissue', category: 'General waste' },
+  7: { className: 'organic', displayName: 'Organic Waste', itemId: 'scraps', category: 'Organic' },
+  8: { className: 'battery_ewaste', displayName: 'Battery / E-waste', itemId: 'battery', category: 'E-waste' },
+  9: { className: 'hazardous_medical', displayName: 'Hazardous Medical', itemId: 'medical-waste', category: 'Hazardous' },
+};
+
+type RawDetection = {
+  class_id?: unknown;
+  class_name?: string;
+  model_class_name?: string;
+  display_name?: string;
+  category?: Category;
+  item_id?: string;
+  confidence?: unknown;
+  bbox?: Partial<BoundingBox>;
 };
 
 type PredictionResponse = {
-  detections?: {
-    class_id?: unknown;
-    confidence?: unknown;
-    bbox?: Partial<BoundingBox>;
-  }[];
+  model?: string;
+  model_profile?: string;
+  detections?: RawDetection[];
 };
 
-const apiUrl = process.env.EXPO_PUBLIC_INFERENCE_API_URL?.replace(/\/$/, '');
+const apiUrl = process.env.EXPO_PUBLIC_INFERENCE_API_URL?.replace(/\/$/, '') || 'http://localhost:8000';
+
+export async function fetchAvailableModels(): Promise<ModelOption[]> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(`${apiUrl}/v1/models`, { signal: controller.signal });
+    clearTimeout(timer);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.models) && data.models.length > 0) {
+        return data.models;
+      }
+    }
+  } catch {
+    // API not reachable; return static fallback list
+  }
+  return [
+    { id: 'best.pt', name: 'YOLOv11 Streamlined (8 Classes - Default)', is_default: true },
+    { id: 'yolov11_8class.pt', name: 'YOLOv11 (8 Classes - Streamlined)' },
+    { id: 'yolov11_10class.pt', name: 'YOLOv11 (10 Classes - Unified)' },
+  ];
+}
 
 function asNormalizedBox(box: Partial<BoundingBox> | undefined): BoundingBox | null {
   const values = [box?.x, box?.y, box?.width, box?.height];
@@ -73,34 +178,57 @@ function getPrediction(response: PredictionResponse): RecognitionPrediction {
     .map((detection) => {
       const classId = typeof detection.class_id === 'number' ? detection.class_id : NaN;
       const confidence = typeof detection.confidence === 'number' ? detection.confidence : NaN;
-      const mapping = DETECTOR_CLASS_MAPPING[classId];
       const box = asNormalizedBox(detection.bbox);
-      return mapping && box && Number.isFinite(confidence)
-        ? {
-            ...mapping,
-            classId,
-            confidence: Math.round(Math.max(0, Math.min(1, confidence)) * 100),
-            box,
-          }
-        : null;
+      if (!box || !Number.isFinite(confidence)) return null;
+
+      // Check if server already provided 5-class category mapping
+      if (detection.category && detection.item_id) {
+        return {
+          classId,
+          className: (detection.class_name || detection.model_class_name || 'waste') as DetectorClass,
+          modelClassName: detection.model_class_name || detection.class_name || 'waste',
+          displayName: detection.display_name || (detection.model_class_name || 'waste').replaceAll('_', ' '),
+          itemId: detection.item_id,
+          category: detection.category,
+          confidence: Math.round(Math.max(0, Math.min(1, confidence)) * 100),
+          box,
+        };
+      }
+
+      // Client-side fallback mapping for 8-class vs 10-class
+      const is8Class = response.model_profile === 'sortify-8class' || classId <= 7;
+      const mapping = is8Class
+        ? STREAMLINED_8_CLASS_MAPPING[classId]
+        : UNIFIED_10_CLASS_MAPPING[classId];
+
+      if (!mapping) return null;
+      return {
+        classId,
+        className: mapping.className,
+        modelClassName: mapping.className,
+        displayName: mapping.displayName,
+        itemId: mapping.itemId,
+        category: mapping.category,
+        confidence: Math.round(Math.max(0, Math.min(1, confidence)) * 100),
+        box,
+      };
     })
     .filter((prediction): prediction is RecognitionPrediction => prediction !== null)
     .sort((a, b) => b.confidence - a.confidence);
-  if (!candidates[0])
-    throw new Error(
-      'No supported waste item was detected. Try a clearer photo with one item in frame.',
-    );
+
+  if (!candidates[0]) {
+    throw new Error('No supported waste item was detected. Try a clearer photo with one item in frame.');
+  }
   return candidates[0];
 }
 
-export async function recognizeImage(uri: string): Promise<RecognitionPrediction> {
-  if (!apiUrl)
-    throw new Error(
-      'The recognition service is not configured. Add EXPO_PUBLIC_INFERENCE_API_URL to connect the FastAPI detector.',
-    );
-
-  const targetUrl = `${apiUrl}/v1/detections`;
-  console.log('[Sortify] Calling recognition service:', targetUrl);
+export async function recognizeImage(
+  uri: string,
+  selectedModel: string = 'best.pt',
+  confidenceThreshold: number = 0.35,
+): Promise<RecognitionPrediction> {
+  const targetUrl = `${apiUrl}/v1/detections?model=${encodeURIComponent(selectedModel)}&confidence=${encodeURIComponent(String(confidenceThreshold))}`;
+  console.log('[Sortify] Calling recognition service with model:', selectedModel, 'confidence:', confidenceThreshold, 'URL:', targetUrl);
 
   if (Platform.OS === 'web') {
     let response: Response;
@@ -162,22 +290,27 @@ export async function recognizeImage(uri: string): Promise<RecognitionPrediction
 }
 
 export function demoPrediction(itemId: string, confidence: number): RecognitionPrediction {
-  const classIdByItem: Record<string, number> = {
-    bottle: 4,
-    banana: 7,
-    box: 1,
-    battery: 8,
-    can: 3,
+  const itemMappings: Record<string, { classId: number; className: string; displayName: string; category: Category }> = {
+    bottle: { classId: 1, className: 'plastic_bottle', displayName: 'Plastic Bottle', category: 'Recyclable' },
+    banana: { classId: 5, className: 'organic', displayName: 'Organic Waste', category: 'Organic' },
+    box: { classId: 0, className: 'paper_cardboard', displayName: 'Paper & Cardboard', category: 'Recyclable' },
+    battery: { classId: 6, className: 'battery_ewaste', displayName: 'Battery & E-waste', category: 'E-waste' },
+    can: { classId: 2, className: 'metal', displayName: 'Metal Can', category: 'Recyclable' },
   };
-  const classId = classIdByItem[itemId];
-  const mapping = DETECTOR_CLASS_MAPPING[classId];
-  if (!mapping) throw new Error('This sample is not represented in the detector mapping.');
+
+  const sample = itemMappings[itemId] || {
+    classId: 0,
+    className: 'paper_cardboard',
+    displayName: 'Paper & Cardboard',
+    category: 'Recyclable',
+  };
+
   return {
-    ...mapping,
+    ...sample,
+    modelClassName: sample.className,
     itemId,
-    classId,
     confidence,
-    box: { x: 0.2, y: 0.15, width: 0.6, height: 0.7 },
+    box: { x: 0.18, y: 0.12, width: 0.64, height: 0.72 },
   };
 }
 

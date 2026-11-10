@@ -1,6 +1,6 @@
 import { BoundingBox } from '@/services/recognition';
-import { Image, LayoutChangeEvent, NativeSyntheticEvent, View } from 'react-native';
-import { useState } from 'react';
+import { Image, LayoutChangeEvent, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { C, Txt } from './ui';
 
 type Size = { width: number; height: number };
@@ -15,19 +15,55 @@ export function DetectionPreview({
   label: string;
 }) {
   const [frame, setFrame] = useState<Size>({ width: 0, height: 0 });
-  const [image, setImage] = useState<Size>({ width: 0, height: 0 });
-  const onLayout = (event: LayoutChangeEvent) => setFrame(event.nativeEvent.layout);
-  const onLoad = (event: NativeSyntheticEvent<{ source: Size }>) =>
-    setImage(event.nativeEvent.source);
-  const scale =
-    image.width && image.height
-      ? Math.min(frame.width / image.width, frame.height / image.height)
-      : 0;
-  const displayed = { width: image.width * scale, height: image.height * scale };
-  const offset = {
-    x: (frame.width - displayed.width) / 2,
-    y: (frame.height - displayed.height) / 2,
+  const [imageSize, setImageSize] = useState<Size>({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (!uri) return;
+    Image.getSize(
+      uri,
+      (w, h) => {
+        if (w && h) {
+          setImageSize({ width: w, height: h });
+        }
+      },
+      () => {
+        // Fallback or ignore if getSize fails
+      },
+    );
+  }, [uri]);
+
+  const onLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    if (width && height) {
+      setFrame({ width, height });
+    }
   };
+
+  const onLoad = (event: any) => {
+    const src = event?.nativeEvent?.source;
+    if (src?.width && src?.height) {
+      setImageSize({ width: src.width, height: src.height });
+    }
+  };
+
+  const hasImage = !!(imageSize && imageSize.width > 0 && imageSize.height > 0);
+  const hasFrame = !!(frame && frame.width > 0 && frame.height > 0);
+
+  const scale =
+    hasImage && hasFrame
+      ? Math.min(frame.width / imageSize.width, frame.height / imageSize.height)
+      : 0;
+
+  const displayed = {
+    width: hasImage ? imageSize.width * scale : 0,
+    height: hasImage ? imageSize.height * scale : 0,
+  };
+
+  const offset = {
+    x: hasFrame ? (frame.width - displayed.width) / 2 : 0,
+    y: hasFrame ? (frame.height - displayed.height) / 2 : 0,
+  };
+
   return (
     <View
       accessibilityLabel={`Detected ${label}`}
@@ -40,7 +76,7 @@ export function DetectionPreview({
         onLoad={onLoad}
         style={{ width: '100%', height: '100%' }}
       />
-      {!!scale && (
+      {scale > 0 && (
         <View
           pointerEvents="none"
           style={{

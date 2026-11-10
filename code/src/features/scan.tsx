@@ -1,11 +1,20 @@
 import { Disclosure, Segments } from '@/components/sortify/controls';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Platform, Pressable, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useApp } from '@/state/app-state';
-import { Button, C, Card, Heading, Icon, ItemArt, Row, Txt } from '@/components/sortify/ui';
-import { demoPrediction, recognizeImage, serializeBox } from '@/services/recognition';
+import { Badge, Button, C, Card, Heading, Icon, ItemArt, Row, Txt } from '@/components/sortify/ui';
+import {
+  CONFIDENCE_LEVELS,
+  ConfidenceTier,
+  demoPrediction,
+  fetchAvailableModels,
+  ModelOption,
+  recognizeImage,
+  serializeBox,
+} from '@/services/recognition';
+
 export default function ScanScreen() {
   const { state } = useApp();
   const [mode, setMode] = useState('Photo');
@@ -15,6 +24,34 @@ export default function ScanScreen() {
   const [busy, setBusy] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const [failed, setFailed] = useState(false);
+
+  // Confidence threshold
+  const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceTier>('medium');
+  const [showConfidencePicker, setShowConfidencePicker] = useState<boolean>(false);
+
+  // Model switching
+  const [models, setModels] = useState<ModelOption[]>([
+    { id: 'best.pt', name: 'YOLOv11 Streamlined (8 Classes - Default)', is_default: true },
+    { id: 'yolov11_8class.pt', name: 'YOLOv11 (8 Classes - Streamlined)' },
+    { id: 'yolov11_10class.pt', name: 'YOLOv11 (10 Classes - Unified)' },
+  ]);
+  const [selectedModel, setSelectedModel] = useState<string>('best.pt');
+  const [showModelPicker, setShowModelPicker] = useState<boolean>(false);
+
+  useEffect(() => {
+    fetchAvailableModels()
+      .then((available) => {
+        if (available && available.length > 0) {
+          setModels(available);
+          const defaultModel = available.find((m) => m.is_default)?.id || available[0].id;
+          setSelectedModel(defaultModel);
+        }
+      })
+      .catch(() => {
+        // use initial fallback
+      });
+  }, []);
+
   async function pick(camera: boolean) {
     setError('');
     try {
@@ -49,6 +86,7 @@ export default function ScanScreen() {
       );
     }
   }
+
   function openResult(
     prediction: ReturnType<typeof demoPrediction>,
     source: 'demo' | 'model',
@@ -61,11 +99,17 @@ export default function ScanScreen() {
         confidence: String(prediction.confidence),
         source,
         detectorClass: prediction.className,
+        modelClass: prediction.modelClassName,
+        displayName: prediction.displayName,
+        modelUsed: selectedModel,
+        confidenceTier: selectedConfidence,
+        confidenceThreshold: String(currentConfidenceObj.thresholdPercent),
         bbox: serializeBox(prediction.box),
         ...(imageUri ? { imageUri } : {}),
       },
     });
   }
+
   function analyzeSample() {
     setBusy(true);
     setError('');
@@ -80,12 +124,14 @@ export default function ScanScreen() {
       openResult(demoPrediction(sample, uncertain ? 46 : 98), 'demo');
     }, 1600);
   }
+
   async function analyzePhoto() {
     if (!uri) return;
     setBusy(true);
     setError('');
     try {
-      openResult(await recognizeImage(uri), 'model', uri);
+      const prediction = await recognizeImage(uri, selectedModel, currentConfidenceObj.value);
+      openResult(prediction, 'model', uri);
     } catch (reason) {
       setError(
         reason instanceof Error
@@ -96,9 +142,15 @@ export default function ScanScreen() {
       setBusy(false);
     }
   }
+
   const samples = state.items.filter((i) =>
     ['bottle', 'banana', 'box', 'battery', 'can'].includes(i.id),
   );
+
+  const currentConfidenceObj =
+    CONFIDENCE_LEVELS.find((c) => c.id === selectedConfidence) || CONFIDENCE_LEVELS[1];
+  const currentModelObj = models.find((m) => m.id === selectedModel) || models[0];
+
   return (
     <View style={{ maxWidth: 760, width: '100%', alignSelf: 'center' }}>
       <Heading title="Scan an item" />
@@ -110,7 +162,170 @@ export default function ScanScreen() {
           setError('');
         }}
       />
+
       <Card style={{ gap: 16, padding: 20 }}>
+        {/* Detection Controls: Confidence Threshold (left) and Model Switcher (right) */}
+        <View style={{ borderBottomWidth: 1, borderColor: C.line, paddingBottom: 14, gap: 10 }}>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+            {/* Confidence Threshold Dropdown (to the left of models) */}
+            <Row style={{ gap: 6, alignItems: 'center' }}>
+              <Icon name="filter" size={14} color={C.green} />
+              <Txt size={12} weight="600" color={C.ink}>
+                Confidence:
+              </Txt>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Set Confidence Threshold"
+                onPress={() => {
+                  setShowConfidencePicker(!showConfidencePicker);
+                  setShowModelPicker(false);
+                }}
+                style={({ pressed, hovered }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: C.line,
+                  backgroundColor: hovered ? '#EFF3E8' : '#FAFBF7',
+                  opacity: pressed ? 0.75 : 1,
+                })}
+              >
+                <Txt size={12} weight="600" color={C.green}>
+                  {currentConfidenceObj.label} ({currentConfidenceObj.thresholdPercent}%)
+                </Txt>
+                <Icon name={showConfidencePicker ? 'down' : 'chevron'} size={14} color={C.muted} />
+              </Pressable>
+            </Row>
+
+            {/* Model Switcher Dropdown (to the right of confidence) */}
+            <Row style={{ gap: 6, alignItems: 'center' }}>
+              <Icon name="sparkle" size={14} color={C.green} />
+              <Txt size={12} weight="600" color={C.ink}>
+                Model:
+              </Txt>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Switch Model"
+                onPress={() => {
+                  setShowModelPicker(!showModelPicker);
+                  setShowConfidencePicker(false);
+                }}
+                style={({ pressed, hovered }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: C.line,
+                  backgroundColor: hovered ? '#EFF3E8' : '#FAFBF7',
+                  opacity: pressed ? 0.75 : 1,
+                })}
+              >
+                <Txt size={12} weight="600" color={C.green}>
+                  {currentModelObj?.name || selectedModel}
+                </Txt>
+                <Icon name={showModelPicker ? 'down' : 'chevron'} size={14} color={C.muted} />
+              </Pressable>
+            </Row>
+          </Row>
+
+          {/* Confidence Threshold Picker Popover */}
+          {showConfidencePicker && (
+            <View
+              style={{
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: C.line,
+                backgroundColor: '#FFFFFF',
+                overflow: 'hidden',
+              }}
+            >
+              {CONFIDENCE_LEVELS.map((level) => {
+                const isSelected = level.id === selectedConfidence;
+                return (
+                  <Pressable
+                    key={level.id}
+                    onPress={() => {
+                      setSelectedConfidence(level.id);
+                      setShowConfidencePicker(false);
+                    }}
+                    style={({ pressed, hovered }) => ({
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      backgroundColor: isSelected ? '#EFF4E7' : hovered ? '#F8F9F4' : 'transparent',
+                      borderBottomWidth: 1,
+                      borderColor: '#F0F2EB',
+                      opacity: pressed ? 0.7 : 1,
+                    })}
+                  >
+                    <View style={{ gap: 2 }}>
+                      <Row style={{ gap: 6, alignItems: 'center' }}>
+                        <Txt size={12} weight={isSelected ? '600' : '500'} color={isSelected ? C.green : C.ink}>
+                          {level.label} ({level.thresholdPercent}% Threshold)
+                        </Txt>
+                      </Row>
+                      <Txt size={11} color={C.muted}>
+                        {level.description}
+                      </Txt>
+                    </View>
+                    {isSelected && <Badge text="Selected" />}
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+
+          {/* Model Switcher Picker Popover */}
+          {showModelPicker && (
+            <View
+              style={{
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: C.line,
+                backgroundColor: '#FFFFFF',
+                overflow: 'hidden',
+              }}
+            >
+              {models.map((m) => {
+                const isSelected = m.id === selectedModel;
+                return (
+                  <Pressable
+                    key={m.id}
+                    onPress={() => {
+                      setSelectedModel(m.id);
+                      setShowModelPicker(false);
+                    }}
+                    style={({ pressed, hovered }) => ({
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      backgroundColor: isSelected ? '#EFF4E7' : hovered ? '#F8F9F4' : 'transparent',
+                      borderBottomWidth: 1,
+                      borderColor: '#F0F2EB',
+                      opacity: pressed ? 0.7 : 1,
+                    })}
+                  >
+                    <Txt size={12} weight={isSelected ? '600' : '400'} color={isSelected ? C.green : C.ink}>
+                      {m.name}
+                    </Txt>
+                    {isSelected && <Badge text="Active" />}
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </View>
+
         {mode === 'Photo' && (
           <>
             <View
@@ -210,7 +425,7 @@ export default function ScanScreen() {
           <>
             <Button title="Identify item" icon="scan" loading={busy} onPress={analyzePhoto} />
             <Txt size={12} color={C.muted}>
-              Your photo is sent only to the configured Sortify recognition service for this scan.
+              Your photo is analyzed with {currentModelObj?.name || 'the selected model'}.
             </Txt>
           </>
         )}

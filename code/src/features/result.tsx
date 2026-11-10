@@ -8,6 +8,7 @@ import { NearbyDisposal } from '@/components/sortify/nearby-disposal';
 import { DetectionPreview } from '@/components/sortify/detection-preview';
 import { parseBox } from '@/services/recognition';
 import {
+  Badge,
   Button,
   C,
   Card,
@@ -19,6 +20,7 @@ import {
   Row,
   Txt,
 } from '@/components/sortify/ui';
+
 export default function ResultScreen() {
   const params = useLocalSearchParams<{
     id: string;
@@ -28,12 +30,18 @@ export default function ResultScreen() {
     imageUri?: string;
     bbox?: string;
     detectorClass?: string;
+    modelClass?: string;
+    displayName?: string;
+    modelUsed?: string;
+    confidenceTier?: string;
+    confidenceThreshold?: string;
   }>();
   const { state, update, notify, saveScan } = useApp();
   const [savedId, setSavedId] = useState(params.scanId || '');
   const [correcting, setCorrecting] = useState(false);
   const [correction, setCorrection] = useState('');
   const [confirmed, setConfirmed] = useState(false);
+
   const item = state.items.find((i) => i.id === params.id);
   const saved = state.scans.find((s) => s.id === savedId);
   const confidence = saved?.confidence ?? Number(params.confidence || 0);
@@ -42,7 +50,36 @@ export default function ResultScreen() {
     saved?.source ||
     (params.source === 'demo' ? 'demo' : params.source === 'model' ? 'model' : 'manual');
   const detectionBox = parseBox(params.bbox);
-  const detectorLabel = params.detectorClass?.replaceAll('_', ' ') || item?.name || 'detected item';
+
+  // Confidence assessment & styling
+  const confidenceScore = Math.max(0, Math.min(100, Math.round(confidence)));
+  const confidenceTierLabel =
+    confidenceScore >= 75
+      ? 'High Confidence'
+      : confidenceScore >= 50
+        ? 'Moderate Confidence'
+        : 'Low Confidence';
+  const confidenceColor =
+    confidenceScore >= 75 ? '#2E7D32' : confidenceScore >= 50 ? '#D97706' : '#DC2626';
+  const confidenceBg =
+    confidenceScore >= 75 ? '#EFF8EE' : confidenceScore >= 50 ? '#FFFBEB' : '#FEF2F2';
+  const confidenceBorder =
+    confidenceScore >= 75 ? '#C8E6C9' : confidenceScore >= 50 ? '#FDE68A' : '#FECACA';
+  const confidenceDescription =
+    confidenceScore >= 75
+      ? 'The model is highly confident in this categorization.'
+      : confidenceScore >= 50
+        ? 'The model detected this item with moderate confidence. Reviewing the item is recommended.'
+        : 'The model has low confidence for this image. Please confirm before sorting.';
+
+  // Labels
+  const rawModelClass = params.modelClass || params.detectorClass || '';
+  const detectorLabel =
+    params.displayName ||
+    rawModelClass.replaceAll('_', ' ') ||
+    item?.name ||
+    'detected item';
+
   if (!item)
     return (
       <Empty
@@ -51,6 +88,7 @@ export default function ResultScreen() {
         action={<Button title="Open waste guide" onPress={() => router.replace('/explore')} />}
       />
     );
+
   function save(sorted = false) {
     if (saved) {
       if (sorted)
@@ -63,6 +101,7 @@ export default function ResultScreen() {
       sorted ? 'Marked as sorted. A small action worth celebrating.' : 'Saved to your history.',
     );
   }
+
   function feedback() {
     if (!correction.trim()) return;
     update((s) => ({
@@ -82,6 +121,7 @@ export default function ResultScreen() {
     setCorrection('');
     notify('Correction saved. You can review it in the admin demo.');
   }
+
   return (
     <View style={{ maxWidth: 850, width: '100%', alignSelf: 'center' }}>
       <Button
@@ -100,27 +140,109 @@ export default function ResultScreen() {
           <Txt size={13} color={C.muted}>
             {item.material}
           </Txt>
-          <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+          <Row style={{ flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
             <CategoryBadge category={item.category} />
             {confidence > 0 && (
-              <Txt size={12} color={C.muted}>
-                {source === 'demo' ? 'Demo' : 'Model'} confidence: {confidence}%
-              </Txt>
+              <Badge
+                text={`${confidenceScore}% • ${confidenceTierLabel}`}
+                background={confidenceBg}
+                color={confidenceColor}
+              />
+            )}
+            {!!rawModelClass && (
+              <Badge
+                text={`Model Class: ${rawModelClass.replaceAll('_', ' ')}`}
+                background="#EFF4E7"
+                color={C.green}
+              />
             )}
           </Row>
         </View>
       </Row>
-      {!!params.imageUri && !!detectionBox && (
-        <Card style={{ gap: 10, marginBottom: 16, padding: 14 }}>
-          <Txt size={13} weight="600">
-            Detected item
-          </Txt>
-          <DetectionPreview uri={params.imageUri} box={detectionBox} label={detectorLabel} />
-          <Txt size={12} color={C.muted}>
-            The outline marks the object selected by the detector.
-          </Txt>
+
+      {/* Model Confidence Card */}
+      {confidence > 0 && (
+        <Card
+          style={{
+            marginBottom: 16,
+            padding: 16,
+            gap: 12,
+            borderWidth: 1,
+            borderColor: confidenceBorder,
+            backgroundColor: confidenceBg,
+          }}
+        >
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <Row style={{ gap: 8, alignItems: 'center' }}>
+              <Icon name="target" size={18} color={confidenceColor} />
+              <Txt size={14} weight="600" color={confidenceColor}>
+                {confidenceTierLabel} ({confidenceScore}%)
+              </Txt>
+            </Row>
+            {!!params.confidenceThreshold && (
+              <Badge
+                text={`Filter: ${params.confidenceTier ? params.confidenceTier.toUpperCase() : ''} (≥${params.confidenceThreshold}%)`}
+                background="#FFFFFF"
+                color={C.muted}
+              />
+            )}
+          </Row>
+
+          {/* Visual progress meter bar */}
+          <View
+            style={{
+              height: 8,
+              width: '100%',
+              backgroundColor: '#E2E6DC',
+              borderRadius: 4,
+              overflow: 'hidden',
+            }}
+          >
+            <View
+              style={{
+                height: '100%',
+                width: `${confidenceScore}%`,
+                backgroundColor: confidenceColor,
+                borderRadius: 4,
+              }}
+            />
+          </View>
+
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+            <Txt size={12} color={C.muted} style={{ flex: 1 }}>
+              {confidenceDescription}
+            </Txt>
+            {!!params.modelUsed && (
+              <Txt size={11} color={C.muted}>
+                Engine: {params.modelUsed}
+              </Txt>
+            )}
+          </Row>
         </Card>
       )}
+
+      {/* Detection bounding box preview */}
+      {!!params.imageUri && !!detectionBox && (
+        <Card style={{ gap: 10, marginBottom: 16, padding: 14 }}>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <Txt size={13} weight="600">
+              Detected item & Bounding Box
+            </Txt>
+            {!!params.modelUsed && (
+              <Txt size={11} color={C.muted}>
+                Engine: {params.modelUsed}
+              </Txt>
+            )}
+          </Row>
+          <DetectionPreview uri={params.imageUri} box={detectionBox} label={detectorLabel} />
+          <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+            <Txt size={12} color={C.muted}>
+              Original detection: <Txt size={12} weight="600" color={C.ink}>{detectorLabel}</Txt> → mapped to <Txt size={12} weight="600" color={C.green}>{item.category}</Txt>
+            </Txt>
+          </Row>
+        </Card>
+      )}
+
       {low && (
         <Card style={{ gap: 12, marginBottom: 16, backgroundColor: '#FAF2E4' }}>
           <Txt weight="600">Confirm this item</Txt>
@@ -138,6 +260,7 @@ export default function ResultScreen() {
           </Row>
         </Card>
       )}
+
       <Card style={{ padding: 20, gap: 18 }}>
         <Txt size={17} weight="600">
           Disposal steps
