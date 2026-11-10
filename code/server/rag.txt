@@ -1,0 +1,52 @@
+# Sortify Knowledge Base (RAG Reference Document)
+# Format: [Item Name / Topic] followed by Category, Disposal Instructions, and Cautions.
+
+[Plastic Water Bottles & Beverage Containers]
+Category: Recyclable
+Disposal Instructions: Empty all liquids completely and rinse lightly. Leave the plastic cap screwed on or remove according to municipal instructions (most automated facilities prefer caps screwed on). Crush the bottle flat to conserve space in the recycling bin. Place in the yellow or blue commingled recycling bin.
+Caution: Bottles containing automotive fluids, pesticides, or toxic chemicals cannot be recycled in municipal bins. Take them to hazardous waste disposal.
+
+[Cardboard Boxes & Corrugated Packaging]
+Category: Recyclable / Compostable
+Disposal Instructions: Flatten all cardboard boxes before placing them in the paper recycling bin. Remove plastic bubble wrap, polystyrene foam peanuts, and heavy packing tape. Keep cardboard dry and clean. Clean cardboard is 100% recyclable into new paper products.
+Caution: Greasy cardboard (such as greasy pizza box bottoms) cannot be recycled because oil binds to paper fibers and ruins the pulp. Tear off the clean lid to recycle, and compost or discard the greasy bottom.
+
+[Lithium-Ion & Household Batteries]
+Category: E-waste / Hazardous
+Disposal Instructions: Never place any battery in standard household rubbish or curbside recycling bins. Tape the contact terminals of lithium, 9V, and button-cell batteries with clear non-conductive tape (electrical or packing tape) to prevent short circuits. Take them to designated battery drop-off bins at supermarkets, electronics stores, or local council collection points.
+Caution: Punctured, damaged, or compressed lithium batteries cause dangerous thermal runaways and fires in recycling trucks and facilities.
+
+[Food Scraps & Kitchen Organic Waste]
+Category: Organic / Compost
+Disposal Instructions: Collect vegetable peelings, fruit cores, coffee grounds, loose tea leaves, eggshells, and plate scrapings in a kitchen caddy lined with a certified compostable liner (look for AS 4736 or EN 13432). Empty into the green organics/FOGO bin or your home backyard compost bin.
+Caution: Do not place conventional plastic bags, treated timber, disposable nappies, or pet droppings into municipal organic collection bins.
+
+[Glass Bottles & Food Jars]
+Category: Recyclable
+Disposal Instructions: Empty contents and rinse clean of food sauces and residue. Metal lids and jar caps can be removed and recycled with metals or left loosely screwed. Place clean glass bottles and jars into the glass or commingled recycling bin.
+Caution: Do not mix drinking glasses, Pyrex cookware, window glass, mirrors, or ceramics with bottle glass. They have different melting points and will contaminate the recycling batch.
+
+[Aluminum Beverage Cans & Steel Food Tins]
+Category: Recyclable
+Disposal Instructions: Empty drink cans and rinse food tins clean. For food cans, push the lid into the body so sharp edges are concealed. Aluminum and steel are infinitely recyclable without degradation. Place in the curbside recycling bin.
+Caution: Aerosol cans must be entirely empty before disposal. If any pressure or liquid remains, treat as hazardous waste.
+
+[Electronic Waste, Smartphones & Cables]
+Category: E-waste
+Disposal Instructions: Wipe all private data and perform a factory reset on smartphones, tablets, and computers. Bundle accessories and power cables together. Bring unwanted electronics to certified e-waste drop-off kiosks, civic recycling centers, or retail take-back programs (e.g. MobileMuster or National Television and Computer Recycling Scheme).
+Caution: E-waste contains toxic heavy metals like lead, mercury, and cadmium which leach into soil and groundwater if sent to landfill.
+
+[Plastic Bags, Soft Plastics & Wrappers]
+Category: General waste / Specialized Store Drop-off
+Disposal Instructions: Soft plastics such as bread bags, bubble wrap, cereal liners, and plastic shopping bags do NOT belong in standard household curbside recycling bins because they wrap around sorting machinery rollers. Bring them to specialized supermarket soft plastic collection bins where available, or dispose of in general waste.
+Caution: Never bag your recyclable items in a plastic bag before placing them in the yellow bin; recyclables must be placed loose.
+
+[Expired Medications & Pharmaceutical Sharps]
+Category: Hazardous
+Disposal Instructions: Return all unused or expired prescription and over-the-counter medicines to a participating pharmacy for safe disposal via pharmaceutical take-back programs. Place used needles, syringes, and lancets into a certified puncture-proof sharps container.
+Caution: Never flush medicines down the toilet or wash them down household sinks. Pharmaceuticals contaminate the aquatic environment and water supply.
+
+[Clothing, Footwear & Textiles]
+Category: Donation / Textile Recycling / General waste
+Disposal Instructions: Clean, wearable clothes and shoes in good condition should be donated to charitable thrift stores or deposited into textile collection bins. Severely worn or stained rags can be converted into industrial cleaning cloths or insulation.
+Caution: Textiles placed in curbside recycling bins are unprocessable contaminants that tangle sorting equipment.

@@ -20,7 +20,39 @@ export type Feedback = {
   status: 'Pending' | 'Reviewed';
   date: string;
 };
-export type Message = { id: string; role: 'user' | 'assistant'; text: string; itemId?: string };
+export type RagChunk = {
+  id: string;
+  title?: string;
+  category?: string;
+  score?: number;
+  text: string;
+};
+export type RagTrace = {
+  trace_id?: string;
+  timestamp?: string;
+  model?: string;
+  query?: string;
+  retrieval_ms?: number;
+  generation_ms?: number;
+  total_ms?: number;
+  retrieval_score?: number;
+  sources?: RagChunk[];
+  pipeline_steps?: {
+    step: string;
+    status: string;
+    duration_ms?: number;
+    details?: Record<string, unknown>;
+  }[];
+  system_prompt?: string;
+};
+export type Message = {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  itemId?: string;
+  ragContext?: string;
+  ragTraces?: RagTrace;
+};
 type State = {
   profile: { name: string; email: string } | null;
   location: string;

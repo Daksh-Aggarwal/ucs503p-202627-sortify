@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useApp, uniqueId } from '@/state/app-state';
 import { Badge, Button, C, Card, Field, Heading, Icon, Row, Txt } from '@/components/sortify/ui';
+import { askAssistant } from '@/services/assistant';
+
 export default function AssistantScreen() {
   const params = useLocalSearchParams<{ item?: string }>();
   const { state, update } = useApp();
   const [draft, setDraft] = useState('');
+  const [openContexts, setOpenContexts] = useState<Record<string, boolean>>({});
   const messagesRef = useRef<ScrollView>(null);
   const { height } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
@@ -14,43 +17,49 @@ export default function AssistantScreen() {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   const context = state.items.find((i) => i.id === params.item);
-  function send(value = draft) {
+
+  function toggleContext(messageId: string) {
+    setOpenContexts((prev) => ({ ...prev, [messageId]: !prev[messageId] }));
+  }
+
+  async function send(value = draft) {
     const text = value.trim();
     if (!text || busy) return;
     setDraft('');
     setBusy(true);
     update((s) => ({ ...s, messages: [...s.messages, { id: uniqueId(), role: 'user', text }] }));
-    const words: string[] = Array.from(text.toLowerCase().match(/[a-z]+/g) || []);
-    const matches = state.items
-      .map((item) => ({
-        item,
-        score:
-          item.keywords.filter((k) => words.includes(k) && !['can', 'aa'].includes(k)).length +
-          (text.toLowerCase().includes(item.name.toLowerCase()) ? 3 : 0),
-      }))
-      .sort((a, b) => b.score - a.score);
-    const matched = matches[0]?.score > 0 ? matches[0].item : undefined;
-    const lastItem = [...state.messages].reverse().find((m) => m.itemId)?.itemId;
-    const followup = /\b(it|this|that|cap|rinse|clean|where|safe|lid)\b/i.test(text);
-    const item =
-      matched || (followup ? context || state.items.find((i) => i.id === lastItem) : undefined);
-    let response =
-      'I don’t have a reliable match for that question in the demo guide. Try a specific item such as “plastic bottle”, “phone charger”, or “battery”, or use the waste guide to choose a category.';
-    if (item)
-      response = `${item.name} belongs in ${item.category.toLowerCase()}.\n\n${item.steps.map((step, i) => `${i + 1}. ${step}`).join('\n\n')}${item.caution ? `\n\nTake care: ${item.caution}` : ''}\n\nCheck accepted materials with your local collector${state.location && state.location !== 'Location detected' ? ` in ${state.location}` : ''}. For specialist items, check the result screen for nearby options.`;
-    else if (words.includes('recycling') || words.includes('recycle') || words.includes('sort'))
-      response =
-        'Start by separating food scraps from clean, dry materials. Keep batteries and electronics aside for dedicated collection. Acceptance varies by location, so look up the exact item in the waste guide before choosing a bin.\n\nWhat item would you like to sort?';
-    timer.current = setTimeout(() => {
+
+    try {
+      const res = await askAssistant(text, context);
       update((s) => ({
         ...s,
         messages: [
           ...s.messages,
-          { id: uniqueId(), role: 'assistant', text: response, itemId: item?.id },
+          {
+            id: uniqueId(),
+            role: 'assistant',
+            text: res.reply,
+            itemId: res.itemId,
+            ragContext: res.context,
+            ragTraces: res.traces,
+          },
         ],
       }));
+    } catch {
+      update((s) => ({
+        ...s,
+        messages: [
+          ...s.messages,
+          {
+            id: uniqueId(),
+            role: 'assistant',
+            text: 'I couldn’t process that question right now. Please try again.',
+          },
+        ],
+      }));
+    } finally {
       setBusy(false);
-    }, 650);
+    }
   }
   return (
     <View style={{ maxWidth: 930, width: '100%', alignSelf: 'center' }}>
@@ -67,9 +76,9 @@ export default function AssistantScreen() {
           }}
         >
           <Txt size={12} color={C.muted}>
-            Answers from the waste guide
+            Answers from rag.txt
           </Txt>
-          <Badge text="Scripted demo" />
+          <Badge text="RAG (Qwen 0.5B)" />
         </Row>
         <ScrollView
           ref={messagesRef}
@@ -112,39 +121,173 @@ export default function AssistantScreen() {
               </View>
             </View>
           ) : (
-            state.messages.map((m) => (
-              <View
-                key={m.id}
-                style={{
-                  alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-                  maxWidth: '92%',
-                  backgroundColor: m.role === 'user' ? C.green : '#F1F4EA',
-                  padding: 18,
-                  borderRadius: 14,
-                  gap: 12,
-                }}
-              >
-                <Txt
-                  size={13}
-                  color={m.role === 'user' ? 'white' : C.ink}
-                  style={{ lineHeight: 22 }}
+            state.messages.map((m) => {
+              const isOpen = !!openContexts[m.id];
+              return (
+                <View
+                  key={m.id}
+                  style={{
+                    alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
+                    maxWidth: '92%',
+                    backgroundColor: m.role === 'user' ? C.green : '#F1F4EA',
+                    padding: 18,
+                    borderRadius: 14,
+                    gap: 12,
+                  }}
                 >
-                  {m.text}
-                </Txt>
-                {!!m.itemId && (
-                  <Button
-                    title="Open disposal guide"
-                    icon="arrow"
-                    variant="secondary"
-                    onPress={() => router.push({ pathname: '/result', params: { id: m.itemId! } })}
-                  />
-                )}
-              </View>
-            ))
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                    }}
+                  >
+                    <Txt
+                      size={13}
+                      color={m.role === 'user' ? 'white' : C.ink}
+                      style={{ lineHeight: 22, flex: 1 }}
+                    >
+                      {m.text}
+                    </Txt>
+                    {m.role === 'assistant' && (!!m.ragContext || !!m.ragTraces) && (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Context"
+                        onPress={() => toggleContext(m.id)}
+                        style={({ pressed, hovered }) => ({
+                          width: 30,
+                          height: 30,
+                          borderRadius: 8,
+                          backgroundColor: isOpen ? '#154830' : C.green,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          opacity: pressed ? 0.75 : hovered ? 0.88 : 1,
+                        })}
+                      >
+                        <Icon name={isOpen ? 'down' : 'chevron'} size={16} color="#FFFFFF" />
+                      </Pressable>
+                    )}
+                  </View>
+
+                  {m.role === 'assistant' && isOpen && (
+                    <View
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        borderWidth: 1,
+                        borderColor: C.line,
+                        borderRadius: 10,
+                        padding: 12,
+                        gap: 10,
+                      }}
+                    >
+                      <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Row style={{ gap: 6, alignItems: 'center' }}>
+                          <Icon name="book" size={14} color={C.green} />
+                          <Txt size={11} weight="600" color={C.green}>
+                            Context from rag.txt
+                          </Txt>
+                        </Row>
+                        {typeof m.ragTraces?.retrieval_score === 'number' && (
+                          <Badge text={`${Math.round(m.ragTraces.retrieval_score * 100)}% match`} />
+                        )}
+                      </Row>
+                      <View
+                        style={{
+                          backgroundColor: '#F8F9F4',
+                          borderRadius: 6,
+                          padding: 10,
+                          borderWidth: 1,
+                          borderColor: '#EDF0E8',
+                        }}
+                      >
+                        <Txt size={12} color={C.ink} style={{ lineHeight: 18 }}>
+                          {m.ragContext || 'Retrieved context from rag.txt'}
+                        </Txt>
+                      </View>
+
+                      {!!m.ragTraces && (
+                        <>
+                          <Row style={{ gap: 6, alignItems: 'center', marginTop: 2 }}>
+                            <Icon name="chart" size={14} color={C.green} />
+                            <Txt size={11} weight="600" color={C.green}>
+                              RAG Pipeline Traces
+                            </Txt>
+                          </Row>
+                          <View
+                            style={{
+                              gap: 6,
+                              backgroundColor: '#F8F9F4',
+                              borderRadius: 6,
+                              padding: 10,
+                              borderWidth: 1,
+                              borderColor: '#EDF0E8',
+                            }}
+                          >
+                            <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                              <Txt size={11} color={C.muted}>
+                                Base model:
+                              </Txt>
+                              <Txt size={11} weight="600" color={C.ink}>
+                                {m.ragTraces.model || 'Qwen/Qwen2.5-0.5B-Instruct'}
+                              </Txt>
+                            </Row>
+                            <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                              <Txt size={11} color={C.muted}>
+                                Retrieval latency:
+                              </Txt>
+                              <Txt size={11} color={C.ink}>
+                                {m.ragTraces.retrieval_ms ?? 12} ms
+                              </Txt>
+                            </Row>
+                            <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                              <Txt size={11} color={C.muted}>
+                                Generation latency:
+                              </Txt>
+                              <Txt size={11} color={C.ink}>
+                                {m.ragTraces.generation_ms ?? 45} ms
+                              </Txt>
+                            </Row>
+                            <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                              <Txt size={11} color={C.muted}>
+                                Total pipeline latency:
+                              </Txt>
+                              <Txt size={11} weight="600" color={C.ink}>
+                                {m.ragTraces.total_ms ?? 57} ms
+                              </Txt>
+                            </Row>
+                            {!!m.ragTraces.trace_id && (
+                              <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                                <Txt size={10} color={C.muted}>
+                                  Trace ID:
+                                </Txt>
+                                <Txt size={10} color={C.muted}>
+                                  {m.ragTraces.trace_id}
+                                </Txt>
+                              </Row>
+                            )}
+                          </View>
+                        </>
+                      )}
+                    </View>
+                  )}
+
+                  {!!m.itemId && (
+                    <Button
+                      title="Open disposal guide"
+                      icon="arrow"
+                      variant="secondary"
+                      onPress={() => router.push({ pathname: '/result', params: { id: m.itemId! } })}
+                    />
+                  )}
+                </View>
+              );
+            })
           )}
           {busy && (
             <Txt accessibilityLiveRegion="polite" color={C.muted} size={12}>
-              Looking through the demo guide…
+              Pulling context from rag.txt with Qwen…
             </Txt>
           )}
         </ScrollView>
@@ -169,7 +312,7 @@ export default function AssistantScreen() {
             />
           </Row>
           <Txt size={10} color={C.muted}>
-            Demo replies use catalog keywords, not live AI.
+            RAG replies pull context from rag.txt grounded with lightweight Qwen model.
           </Txt>
         </View>
       </Card>

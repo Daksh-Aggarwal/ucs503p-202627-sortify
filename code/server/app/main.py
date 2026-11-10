@@ -14,7 +14,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, UnidentifiedImageError
 from ultralytics import YOLO
@@ -201,3 +201,36 @@ async def detect(image: UploadFile = File(...)) -> dict[str, Any]:
         "model_profile": loaded_model.profile,
         "detections": detections,
     }
+
+
+@app.post("/v1/assistant/chat")
+async def assistant_chat(request: Request) -> dict[str, Any]:
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body.") from None
+
+    query = str(body.get("message", "")).strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="Query cannot be empty.")
+
+    from app.rag import asdict, rag_engine
+
+    reply, context, trace = rag_engine.answer_query(query)
+    return {
+        "reply": reply,
+        "context": context,
+        "traces": asdict(trace),
+    }
+
+
+@app.get("/v1/assistant/rag-info")
+def rag_info() -> dict[str, Any]:
+    from app.rag import rag_engine
+
+    return {
+        "rag_file": str(rag_engine.rag_file_path.name) if rag_engine.rag_file_path else None,
+        "chunks_count": len(rag_engine.chunks),
+        "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    }
+
