@@ -59,23 +59,23 @@ export const CONFIDENCE_LEVELS: ConfidenceOption[] = [
   {
     id: 'low',
     label: 'Low',
-    value: 0.15,
-    thresholdPercent: 15,
-    description: '15% min - Sensitive, detects faint or partially occluded items',
+    value: 0.35,
+    thresholdPercent: 35,
+    description: '35% min - Sensitive, detects faint or partially occluded items',
   },
   {
     id: 'medium',
     label: 'Medium',
-    value: 0.35,
-    thresholdPercent: 35,
-    description: '35% min - Balanced, recommended default for daily waste sorting',
+    value: 0.50,
+    thresholdPercent: 50,
+    description: '50% min - Balanced, recommended default for daily waste sorting',
   },
   {
     id: 'high',
     label: 'High',
-    value: 0.60,
-    thresholdPercent: 60,
-    description: '60% min - Strict, requires high certainty detection',
+    value: 0.70,
+    thresholdPercent: 70,
+    description: '70% min - Strict, requires high certainty detection',
   },
 ];
 
@@ -232,7 +232,7 @@ export function getPrediction(response: PredictionResponse): RecognitionPredicti
 export async function recognizeImage(
   uri: string,
   selectedModel: string = 'best.pt',
-  confidenceThreshold: number = 0.35,
+  confidenceThreshold: number = 0.50,
 ): Promise<RecognitionPrediction[]> {
   const targetUrl = `${apiUrl}/v1/detections?model=${encodeURIComponent(selectedModel)}&confidence=${encodeURIComponent(String(confidenceThreshold))}`;
   console.log('[Sortify] Calling recognition service with model:', selectedModel, 'confidence:', confidenceThreshold, 'URL:', targetUrl);

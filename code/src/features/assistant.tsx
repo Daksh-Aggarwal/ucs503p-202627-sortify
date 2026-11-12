@@ -5,19 +5,19 @@ import { useApp, uniqueId } from '@/state/app-state';
 import { Badge, Button, C, Card, Field, Heading, Icon, Row, Txt } from '@/components/sortify/ui';
 import { askAssistant } from '@/services/assistant';
 
-// Strip unicode emojis (e.g. ⚠️, ♻️, etc.) to enforce zero-emoji rule
-function stripEmojis(str: string): string {
+// Strip unicode emojis to enforce zero-emoji rule
+export function stripEmojis(str: string): string {
   return str.replace(
-    /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{2300}-\u{23FF}\u{2B50}\u{2B55}\u{203C}\u{2049}\u{25AA}-\u{25FE}]/gu,
+    /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{2300}-\u{23FF}\u{2B50}\u{2B55}\u{203C}\u{2049}\u{25AA}-\u{25FE}]/gu,
     '',
   );
 }
 
-// Parses inline bold and italic without raw asterisks
-function renderInlineFormatted(rawText: string, baseColor = C.ink) {
+// Parses inline bold, italic, and code without raw asterisks or backticks
+export function renderInlineFormatted(rawText: string, baseColor = C.ink) {
   const clean = stripEmojis(rawText);
-  // Match **bold** or __bold__ or *italic* or _italic_
-  const parts = clean.split(/(\*\*[^*]+?\*\*|__[^_]+?__|\*[^*]+?\*|_[^_]+?_)/g);
+  // Match **bold** or __bold__ or *italic* or _italic_ or `code`
+  const parts = clean.split(/(\*\*[^*]+?\*\*|__[^_]+?__|\*(?!\s)[^*]+?(?<!\s)\*|_(?!\s)[^_]+?(?<!\s)_|`[^`]+?`)/g);
   return parts.map((part, i) => {
     if (
       (part.startsWith('**') && part.endsWith('**') && part.length >= 4) ||
@@ -39,6 +39,24 @@ function renderInlineFormatted(rawText: string, baseColor = C.ink) {
         </Txt>
       );
     }
+    if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
+      return (
+        <Txt
+          key={i}
+          color={baseColor}
+          size={12}
+          style={{
+            fontFamily: 'monospace',
+            backgroundColor: 'rgba(0, 0, 0, 0.05)',
+            paddingHorizontal: 4,
+            paddingVertical: 1,
+            borderRadius: 4,
+          }}
+        >
+          {part.slice(1, -1)}
+        </Txt>
+      );
+    }
     return (
       <Txt key={i} color={baseColor} size={13}>
         {part}
@@ -47,7 +65,7 @@ function renderInlineFormatted(rawText: string, baseColor = C.ink) {
   });
 }
 
-function AssistantMessageRenderer({ text }: { text: string }) {
+export function AssistantMessageRenderer({ text }: { text: string }) {
   const clean = stripEmojis(text);
   const rawLines = clean
     .split(/\r?\n/)
@@ -57,11 +75,13 @@ function AssistantMessageRenderer({ text }: { text: string }) {
   return (
     <View style={{ gap: 8, width: '100%' }}>
       {rawLines.map((line, idx) => {
-        // 1. Header with title and optional category: **Title** (Category) or **Title**:
-        const headerMatch = line.match(/^\*\*(.*?)\*\*(?::\s*|\s*)(?:\((.*?)\))?$/);
-        if (headerMatch) {
-          const title = headerMatch[1];
-          const category = headerMatch[2];
+        // 1. Header with title and optional category: **Title** (Category) or **Title**: (Category) or **Title** (Category):
+        const headerMatch = line.match(
+          /^(?:#{1,4}\s+)?\*\*(.*?)\*\*(?:\s*[:\–\-]\s*|\s+)?(?:\((.*?)\))?\s*:?\s*$/,
+        );
+        if (headerMatch && (headerMatch[1] || headerMatch[2])) {
+          const title = headerMatch[1].trim();
+          const category = headerMatch[2]?.trim();
           return (
             <View
               key={idx}
@@ -81,8 +101,10 @@ function AssistantMessageRenderer({ text }: { text: string }) {
           );
         }
 
-        // 2. Caution / Warning block: e.g. Caution: ... or **Caution**: ... or Warning: ...
-        const cautionMatch = line.match(/^(?:\*\*Caution\*\*|Caution|Warning)(?::\s*|\s+)(.*)$/i);
+        // 2. Caution / Warning block: e.g. Caution: ... or **Caution**: ... or • Caution: ...
+        const cautionMatch = line.match(
+          /^(?:[•\-*]\s*)?(?:\*\*(?:Caution|Warning)\*\*|(?:Caution|Warning))(?:[:\s]+\s*)(.*)$/i,
+        );
         if (cautionMatch) {
           const cautionBody = cautionMatch[1].trim();
           return (
@@ -111,13 +133,14 @@ function AssistantMessageRenderer({ text }: { text: string }) {
           );
         }
 
-        // 3. Related note block: e.g. Note (...): ... or *Related note on ...*: ...
+        // 3. Related note / Material note / Regional note block
         const noteMatch = line.match(
-          /^(?:\*?Related note(?:\s+on\s+([^:*]+))?\*?|Note(?:\s*\(([^)]+)\))?)(?::\s*|\s+)(.*)$/i,
+          /^(?:[•\-*]\s*)?(?:\*?(Related\s+(?:note|category)|Material\s+note|Regional\s+note|Note)(?:\s+(?:on|for)\s+([^*:]+)|\s*\(([^)]+)\))?\*?)(?:[:\s]+\s*)(.*)$/i,
         );
         if (noteMatch) {
-          const topic = (noteMatch[1] || noteMatch[2] || '').trim();
-          const noteBody = noteMatch[3].trim();
+          const kind = noteMatch[1].trim();
+          const topic = (noteMatch[2] || noteMatch[3] || '').trim();
+          const noteBody = noteMatch[4].trim();
           return (
             <View
               key={idx}
@@ -133,7 +156,7 @@ function AssistantMessageRenderer({ text }: { text: string }) {
               }}
             >
               <Txt size={11} weight="700" color={C.green}>
-                {topic ? `Related: ${topic}` : 'NOTE'}
+                {topic ? `Related: ${topic}` : kind ? kind.toUpperCase() : 'NOTE'}
               </Txt>
               <Txt size={12} color={C.ink} style={{ lineHeight: 18 }}>
                 {renderInlineFormatted(noteBody, C.ink)}
@@ -166,7 +189,7 @@ function AssistantMessageRenderer({ text }: { text: string }) {
         }
 
         // 5. Numbered list: starts with 1., 2., etc.
-        const numMatch = line.match(/^(\d+)\.\s+(.*)$/);
+        const numMatch = line.match(/^(\d+)[\.\)]\s+(.*)$/);
         if (numMatch) {
           return (
             <View
@@ -188,8 +211,31 @@ function AssistantMessageRenderer({ text }: { text: string }) {
           );
         }
 
-        // 6. If multiple sentences are in one paragraph (e.g. unformatted instructions):
-        const sentences = line.split(/(?<=[.!?])\s+(?=[A-Z])/).filter((s) => s.trim().length > 0);
+        // 6. Section header like Disposal Instructions: ...
+        const sectionMatch = line.match(/^(?:Disposal\s+Instructions|Instructions|Overview):\s*(.*)$/i);
+        if (sectionMatch && sectionMatch[1]) {
+          return (
+            <View
+              key={idx}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 8,
+                paddingLeft: 2,
+              }}
+            >
+              <Txt size={13} color={C.green} weight="700" style={{ lineHeight: 20 }}>
+                •
+              </Txt>
+              <Txt size={13} color={C.ink} style={{ flex: 1, lineHeight: 20 }}>
+                {renderInlineFormatted(sectionMatch[1])}
+              </Txt>
+            </View>
+          );
+        }
+
+        // 7. If multiple sentences are in one paragraph (e.g. unformatted instructions):
+        const sentences = line.split(/(?<=[.!?])\s+(?=[A-Z0-9])/).filter((s) => s.trim().length > 0);
         if (sentences.length > 1 && !line.startsWith('I ') && !line.startsWith('You ')) {
           return (
             <View key={idx} style={{ gap: 6, marginVertical: 2 }}>
@@ -215,7 +261,7 @@ function AssistantMessageRenderer({ text }: { text: string }) {
           );
         }
 
-        // 7. Regular paragraph with styled bold/italic tokens
+        // 8. Regular paragraph with styled bold/italic tokens
         return (
           <Txt key={idx} size={13} color={C.ink} style={{ lineHeight: 21 }}>
             {renderInlineFormatted(line)}
@@ -236,16 +282,21 @@ export default function AssistantScreen() {
   const [busy, setBusy] = useState(false);
 
   const context = state.items.find((i) => i.id === params.item);
-  const itemName = context?.name || params.itemName || '';
+  const itemName = params.itemName || context?.name || '';
 
-  // Ephemeral conversations: reset previous messages when entering with an item query
-  const scanItemRef = useRef<string | undefined>(undefined);
+  // Ephemeral conversations: reset previous messages when entering with an item query or new scan
+  const scanKeyRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (params.item && params.item !== scanItemRef.current) {
-      scanItemRef.current = params.item;
+    const currentKey = params.fromScan
+      ? `scan-${params.fromScan}`
+      : params.item
+        ? `item-${params.item}`
+        : undefined;
+    if (currentKey && currentKey !== scanKeyRef.current) {
+      scanKeyRef.current = currentKey;
       update((s) => ({ ...s, messages: [] }));
     }
-  }, [params.item, update]);
+  }, [params.fromScan, params.item, update]);
 
   // 2 Floating suggestion chips
   const suggestionChips = itemName
@@ -260,6 +311,7 @@ export default function AssistantScreen() {
   }
 
   function resetConversation() {
+    setOpenContexts({});
     update((s) => ({ ...s, messages: [] }));
   }
 
@@ -371,10 +423,10 @@ export default function AssistantScreen() {
             <View style={{ alignItems: 'center', paddingVertical: 20, gap: 18 }}>
               <Icon name="chat" size={28} strokeWidth={1.5} />
               <Txt size={20} weight="500" style={{ textAlign: 'center' }}>
-                What are you sorting?
+                {itemName ? `Ask about ${itemName}` : 'What are you sorting?'}
               </Txt>
               <Txt size={13} color={C.muted} style={{ textAlign: 'center' }}>
-                Ask about an item or choose a question below.
+                Choose a question below or type your own question.
               </Txt>
               <View
                 style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}

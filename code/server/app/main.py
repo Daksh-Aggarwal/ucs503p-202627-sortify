@@ -96,7 +96,7 @@ COCO_TO_SORTIFY_CLASS_IDS = {
 }
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
-MODEL_CONFIDENCE = float(os.getenv("MODEL_CONFIDENCE", "0.25"))
+MODEL_CONFIDENCE = float(os.getenv("MODEL_CONFIDENCE", "0.50"))
 MODEL_IOU = float(os.getenv("MODEL_IOU", "0.45"))
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 

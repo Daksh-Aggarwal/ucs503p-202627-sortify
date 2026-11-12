@@ -18,6 +18,7 @@ export function DetectionPreview({
   boxes,
   activeIndex = 0,
   onSelectIndex,
+  onCaptureNewImage,
 }: {
   uri: string;
   box?: BoundingBox;
@@ -25,6 +26,7 @@ export function DetectionPreview({
   boxes?: DetectionBoxItem[];
   activeIndex?: number;
   onSelectIndex?: (index: number) => void;
+  onCaptureNewImage?: () => void;
 }) {
   const [frame, setFrame] = useState<Size>({ width: 0, height: 0 });
   const [imageSize, setImageSize] = useState<Size>({ width: 0, height: 0 });
@@ -136,46 +138,13 @@ export function DetectionPreview({
                 shadowOpacity: 0.35,
                 shadowRadius: 6,
               }}
-            >
-              {/* Focused identification badge on the active box */}
-              <View
-                style={{
-                  alignSelf: 'flex-start',
-                  backgroundColor: '#143825',
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderBottomRightRadius: 8,
-                  borderTopLeftRadius: 7,
-                  borderWidth: 1,
-                  borderLeftWidth: 0,
-                  borderTopWidth: 0,
-                  borderColor: 'rgba(46, 194, 126, 0.45)',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 5,
-                }}
-              >
-                <View
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: 3.5,
-                    backgroundColor: '#2EC27E',
-                  }}
-                />
-                <Txt size={11} weight="700" color="#FFFFFF">
-                  {totalItems > 1 ? `#${safeActiveIndex + 1} ` : ''}
-                  {activeItem.label}
-                  {activeItem.confidence ? ` (${activeItem.confidence}%)` : ''}
-                </Txt>
-              </View>
-            </View>
+            />
           );
         })()
       )}
 
-      {/* Sleek bottom overlay pagination bar for multi-item stepping */}
-      {totalItems > 1 && (
+      {/* Sleek bottom overlay pagination & capture bar */}
+      {totalItems > 0 && (
         <View
           style={{
             position: 'absolute',
@@ -195,7 +164,7 @@ export function DetectionPreview({
           }}
         >
           {/* Active Item Title & Quick Jump Dots */}
-          <Row style={{ gap: 8, alignItems: 'center' }}>
+          <Row style={{ gap: 8, alignItems: 'center', flexShrink: 1 }}>
             <View
               style={{
                 width: 22,
@@ -210,73 +179,91 @@ export function DetectionPreview({
                 {safeActiveIndex + 1}
               </Txt>
             </View>
-            <Txt size={12} weight="600" color="#FFFFFF">
-              {activeItem?.label || 'Item'}
+            <Txt size={12} weight="600" color="#FFFFFF" numberOfLines={1}>
+              {totalItems > 1 ? activeItem?.label || 'Item' : `${activeItem?.label || 'Item'} detected`}
             </Txt>
 
-            {/* Direct jump dot indicators */}
-            <Row style={{ gap: 4, alignItems: 'center', marginLeft: 4 }}>
-              {itemsToRender.map((_, dotIdx) => {
-                const isCurrent = dotIdx === safeActiveIndex;
-                return (
-                  <Pressable
-                    key={dotIdx}
-                    onPress={() => onSelectIndex?.(dotIdx)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Go to item ${dotIdx + 1}`}
-                    hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                    style={{
-                      width: isCurrent ? 14 : 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: isCurrent ? '#2EC27E' : 'rgba(255, 255, 255, 0.28)',
-                    }}
-                  />
-                );
-              })}
-            </Row>
+            {/* Direct jump dot indicators for multiple items */}
+            {totalItems > 1 && (
+              <Row style={{ gap: 4, alignItems: 'center', marginLeft: 4 }}>
+                {itemsToRender.map((_, dotIdx) => {
+                  const isCurrent = dotIdx === safeActiveIndex;
+                  return (
+                    <Pressable
+                      key={dotIdx}
+                      onPress={() => onSelectIndex?.(dotIdx)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Go to item ${dotIdx + 1}`}
+                      hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                      style={{
+                        width: isCurrent ? 14 : 6,
+                        height: 6,
+                        borderRadius: 3,
+                        backgroundColor: isCurrent ? '#2EC27E' : 'rgba(255, 255, 255, 0.28)',
+                      }}
+                    />
+                  );
+                })}
+              </Row>
+            )}
           </Row>
 
-          {/* Stepper buttons */}
-          <Row style={{ gap: 6, alignItems: 'center' }}>
-            <Pressable
-              disabled={safeActiveIndex === 0}
-              onPress={() => onSelectIndex?.(Math.max(0, safeActiveIndex - 1))}
-              accessibilityRole="button"
-              accessibilityLabel="Previous detected item"
-              style={({ pressed }) => ({
-                paddingHorizontal: 9,
-                paddingVertical: 5,
-                borderRadius: 12,
-                backgroundColor: safeActiveIndex === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.12)',
-                opacity: safeActiveIndex === 0 ? 0.35 : pressed ? 0.7 : 1,
-              })}
-            >
-              <Txt size={11} weight="600" color="#FFFFFF">
-                ‹ Prev
-              </Txt>
-            </Pressable>
+          {/* Stepper buttons or Capture new image action */}
+          <Row style={{ gap: 6, alignItems: 'center', flexShrink: 0 }}>
+            {totalItems > 1 && safeActiveIndex > 0 && (
+              <Pressable
+                onPress={() => onSelectIndex?.(safeActiveIndex - 1)}
+                accessibilityRole="button"
+                accessibilityLabel="Previous detected item"
+                style={({ pressed }) => ({
+                  paddingHorizontal: 9,
+                  paddingVertical: 5,
+                  borderRadius: 12,
+                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <Txt size={11} weight="600" color="#FFFFFF">
+                  ‹ Prev
+                </Txt>
+              </Pressable>
+            )}
 
-            <Pressable
-              disabled={safeActiveIndex === totalItems - 1}
-              onPress={() => onSelectIndex?.(Math.min(totalItems - 1, safeActiveIndex + 1))}
-              accessibilityRole="button"
-              accessibilityLabel="Next detected item"
-              style={({ pressed }) => ({
-                paddingHorizontal: 9,
-                paddingVertical: 5,
-                borderRadius: 12,
-                backgroundColor:
-                  safeActiveIndex === totalItems - 1
-                    ? 'transparent'
-                    : '#1B5E3F',
-                opacity: safeActiveIndex === totalItems - 1 ? 0.35 : pressed ? 0.7 : 1,
-              })}
-            >
-              <Txt size={11} weight="600" color="#FFFFFF">
-                Next ›
-              </Txt>
-            </Pressable>
+            {totalItems > 1 && safeActiveIndex < totalItems - 1 ? (
+              <Pressable
+                onPress={() => onSelectIndex?.(safeActiveIndex + 1)}
+                accessibilityRole="button"
+                accessibilityLabel="Next detected item"
+                style={({ pressed }) => ({
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 12,
+                  backgroundColor: '#1B5E3F',
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <Txt size={11} weight="600" color="#FFFFFF">
+                  Next ›
+                </Txt>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={onCaptureNewImage}
+                accessibilityRole="button"
+                accessibilityLabel="Capture new image"
+                style={({ pressed }) => ({
+                  paddingHorizontal: 11,
+                  paddingVertical: 5,
+                  borderRadius: 12,
+                  backgroundColor: '#1B5E3F',
+                  opacity: pressed ? 0.75 : 1,
+                })}
+              >
+                <Txt size={11} weight="700" color="#FFFFFF">
+                  Capture new image
+                </Txt>
+              </Pressable>
+            )}
           </Row>
         </View>
       )}
