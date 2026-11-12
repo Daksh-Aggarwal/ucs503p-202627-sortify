@@ -193,9 +193,18 @@ export default function ScanScreen() {
       <Card style={{ gap: 16, padding: 20 }}>
         {/* Detection Controls: Confidence Threshold (left) and Model Switcher (right) */}
         <View style={{ borderBottomWidth: 1, borderColor: C.line, paddingBottom: 14, gap: 10 }}>
-          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 10,
+              width: '100%',
+            }}
+          >
             {/* Confidence Threshold Dropdown (to the left of models) */}
-            <Row style={{ gap: 6, alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
               <Icon name="filter" size={14} color={C.green} />
               <Txt size={12} weight="600" color={C.ink}>
                 Confidence:
@@ -225,10 +234,19 @@ export default function ScanScreen() {
                 </Txt>
                 <Icon name={showConfidencePicker ? 'down' : 'chevron'} size={14} color={C.muted} />
               </Pressable>
-            </Row>
+            </View>
 
             {/* Model Switcher Dropdown (to the right of confidence) */}
-            <Row style={{ gap: 6, alignItems: 'center' }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                flex: 1,
+                minWidth: 180,
+                maxWidth: '100%',
+              }}
+            >
               <Icon name="sparkle" size={14} color={C.green} />
               <Txt size={12} weight="600" color={C.ink}>
                 Model:
@@ -243,6 +261,7 @@ export default function ScanScreen() {
                 style={({ pressed, hovered }) => ({
                   flexDirection: 'row',
                   alignItems: 'center',
+                  justifyContent: 'space-between',
                   gap: 6,
                   paddingHorizontal: 10,
                   paddingVertical: 6,
@@ -251,15 +270,25 @@ export default function ScanScreen() {
                   borderColor: C.line,
                   backgroundColor: hovered ? '#EFF3E8' : '#FAFBF7',
                   opacity: pressed ? 0.75 : 1,
+                  flex: 1,
+                  minWidth: 0,
+                  maxWidth: '100%',
                 })}
               >
-                <Txt size={12} weight="600" color={C.green}>
+                <Txt
+                  size={12}
+                  weight="600"
+                  color={C.green}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={{ flex: 1, minWidth: 0 }}
+                >
                   {currentModelObj?.name || selectedModel}
                 </Txt>
                 <Icon name={showModelPicker ? 'down' : 'chevron'} size={14} color={C.muted} />
               </Pressable>
-            </Row>
-          </Row>
+            </View>
+          </View>
 
           {/* Confidence Threshold Picker Popover */}
           {showConfidencePicker && (
@@ -270,6 +299,8 @@ export default function ScanScreen() {
                 borderColor: C.line,
                 backgroundColor: '#FFFFFF',
                 overflow: 'hidden',
+                width: '100%',
+                marginTop: 4,
               }}
             >
               {CONFIDENCE_LEVELS.map((level) => {
@@ -293,17 +324,21 @@ export default function ScanScreen() {
                       opacity: pressed ? 0.7 : 1,
                     })}
                   >
-                    <View style={{ gap: 2 }}>
+                    <View style={{ flex: 1, flexShrink: 1, gap: 2, marginRight: 8 }}>
                       <Row style={{ gap: 6, alignItems: 'center' }}>
                         <Txt size={12} weight={isSelected ? '600' : '500'} color={isSelected ? C.green : C.ink}>
                           {level.label} ({level.thresholdPercent}% Threshold)
                         </Txt>
                       </Row>
-                      <Txt size={11} color={C.muted}>
+                      <Txt size={11} color={C.muted} style={{ lineHeight: 16 }}>
                         {level.description}
                       </Txt>
                     </View>
-                    {isSelected && <Badge text="Selected" />}
+                    {isSelected && (
+                      <View style={{ flexShrink: 0 }}>
+                        <Badge text="Selected" />
+                      </View>
+                    )}
                   </Pressable>
                 );
               })}
@@ -319,6 +354,8 @@ export default function ScanScreen() {
                 borderColor: C.line,
                 backgroundColor: '#FFFFFF',
                 overflow: 'hidden',
+                width: '100%',
+                marginTop: 4,
               }}
             >
               {models.map((m) => {
@@ -342,10 +379,21 @@ export default function ScanScreen() {
                       opacity: pressed ? 0.7 : 1,
                     })}
                   >
-                    <Txt size={12} weight={isSelected ? '600' : '400'} color={isSelected ? C.green : C.ink}>
-                      {m.name}
-                    </Txt>
-                    {isSelected && <Badge text="Active" />}
+                    <View style={{ flex: 1, flexShrink: 1, marginRight: 8 }}>
+                      <Txt
+                        size={12}
+                        weight={isSelected ? '600' : '400'}
+                        color={isSelected ? C.green : C.ink}
+                        style={{ lineHeight: 17 }}
+                      >
+                        {m.name}
+                      </Txt>
+                    </View>
+                    {isSelected && (
+                      <View style={{ flexShrink: 0 }}>
+                        <Badge text="Active" />
+                      </View>
+                    )}
                   </Pressable>
                 );
               })}

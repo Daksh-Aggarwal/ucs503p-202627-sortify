@@ -340,13 +340,13 @@ export default function ResultScreen() {
             >
               <Icon name="scan" size={16} color="#FFFFFF" />
             </View>
-            <View>
-              <Txt size={14} weight="700" color={C.ink}>
+            <View style={{ flex: 1, flexShrink: 1, minWidth: 0 }}>
+              <Txt size={14} weight="700" color={C.ink} numberOfLines={1} ellipsizeMode="tail">
                 {detectedItems.length > 1
                   ? `Detection Summary (${detectedItems.length} items detected)`
                   : 'Detection Summary (1 item detected)'}
               </Txt>
-              <Txt size={11} color={C.muted}>
+              <Txt size={11} color={C.muted} numberOfLines={1} ellipsizeMode="tail">
                 {detectedItems.length > 1
                   ? `Inspecting item ${activeIndex + 1} of ${detectedItems.length}: ${detectorLabel} (${confidenceScore}%)`
                   : 'Scan complete • Ready to sort or capture a new image'}
@@ -575,7 +575,7 @@ export default function ResultScreen() {
             </Row>
 
             {/* Changeable Confidence Selector */}
-            <Row style={{ gap: 6, alignItems: 'center' }}>
+            <Row style={{ gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
               <Txt size={11} weight="600" color={C.muted}>
                 Confidence:
               </Txt>
