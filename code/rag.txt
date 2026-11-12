@@ -1,52 +1,685 @@
-# Sortify Knowledge Base (RAG Reference Document)
-# Format: [Item Name / Topic] followed by Category, Disposal Instructions, and Cautions.
+# Sortify Comprehensive Waste Knowledge Base (RAG Reference Document)
+# Format: [Item Name / Topic] followed by Category, Disposal Instructions, Material & Recycling Context, Caution, and Regional Notes.
+# Rule: No emojis anywhere in this document.
 
-[Plastic Water Bottles & Beverage Containers]
+[Plastic Water Bottles & PET Beverage Containers]
 Category: Recyclable
-Disposal Instructions: Empty all liquids completely and rinse lightly. Leave the plastic cap screwed on or remove according to municipal instructions (most automated facilities prefer caps screwed on). Crush the bottle flat to conserve space in the recycling bin. Place in the yellow or blue commingled recycling bin.
-Caution: Bottles containing automotive fluids, pesticides, or toxic chemicals cannot be recycled in municipal bins. Take them to hazardous waste disposal.
+Disposal Instructions:
+- Empty all remaining liquids completely and rinse briefly to prevent contamination.
+- Keep the plastic cap screwed onto the bottle to ensure both cap and bottle are processed together at the recovery facility.
+- Flatten the bottle gently to conserve volume in transport and storage.
+- Place directly into the yellow-lid or blue commingled recycling bin loose, never inside a tied plastic bag.
+Material & Recycling Context:
+- Made of Polyethylene Terephthalate (resin code 1).
+- PET is shredded into flakes, washed, and pelletized into food-grade rPET pellets for new bottles, polyester textiles, and fleece jackets.
+Caution:
+- Bottles that previously stored motor oils, lawn pesticides, or toxic solvents cannot be recycled curbside and must go to household chemical cleanup events.
+Regional Notes:
+- Eligible beverage bottles can be returned through Container Deposit Scheme (CDS) refund kiosks for a 10-cent refund where available.
+
+[HDPE Milk Bottles, Shampoo Jugs & Detergent Containers]
+Category: Recyclable
+Disposal Instructions:
+- Empty residue thoroughly and rinse with warm water.
+- Remove pump dispensers that contain internal metal springs, as mixed-metal pumps jam granulators.
+- Place the HDPE bottle into curbside recycling loose.
+Material & Recycling Context:
+- High-Density Polyethylene (resin code 2) offers high tensile strength and chemical resistance.
+- Recycled HDPE is reprocessed into plastic lumber, outdoor playground equipment, agricultural drainage pipes, and non-food detergent jugs.
+Caution:
+- Do not mix motor oil containers with dairy jugs even if both are marked HDPE; oil penetrates plastic pores.
+Regional Notes:
+- Standard curbside collection accepts all clear and colored HDPE bottles.
+
+[PVC Pipes, Rigid Plastic Tubing & Vinyl Packaging]
+Category: General waste / Construction Drop-off
+Disposal Instructions:
+- Do not place rigid PVC or vinyl packaging into domestic yellow recycling bins.
+- For small domestic offcuts, place in the general waste red-lid bin.
+- For large construction pipes and vinyl siding, transport to specialized construction and demolition resource recovery centers.
+Material & Recycling Context:
+- Polyvinyl Chloride (resin code 3) contains high chlorine content and plasticizers.
+- Even minor PVC contamination in a batch of PET or HDPE produces corrosive hydrochloric acid gas and degrades entire recycled resin batches.
+Caution:
+- Never burn PVC waste under any circumstances, as combustion emits hazardous dioxins and acidic vapors.
+Regional Notes:
+- Some plumbing trade suppliers offer PVC take-back bins for clean unglued pipe cutoffs.
+
+[LDPE Plastic Bags, Bubble Wrap & Squeeze Bottles]
+Category: General waste / Specialized Store Drop-off
+Disposal Instructions:
+- Keep all flexible soft plastics out of curbside yellow bins.
+- Collect clean, dry bread bags, bubble wrap, produce bags, and dry cleaning film into a dedicated container.
+- Bring collected soft plastics to dedicated commercial supermarket return drop-offs where such programs operate.
+- If no dedicated soft plastic drop-off is accessible in your municipality, discard with general rubbish.
+Material & Recycling Context:
+- Low-Density Polyethylene (resin code 4) is lightweight and flexible.
+- When placed in standard automated sorting machines, film plastics wrap around rotating screens and conveyors, forcing facility shutdowns.
+Caution:
+- Wet or food-soiled plastic films spoil soft plastic recycling and should be placed in red-lid rubbish.
+Regional Notes:
+- Never tie recyclables inside a plastic garbage bag before throwing them in the recycling bin.
+
+[PP Polypropylene Yogurt Tubs, Takeaway Containers & Bottle Caps]
+Category: Recyclable
+Disposal Instructions:
+- Scrape away lingering food sauces and dairy solids, rinsing briefly.
+- Replace clean PP lids onto matching tubs so they do not fall through sorting grates.
+- Deposit clean containers loose into your commingled curbside recycling bin.
+Material & Recycling Context:
+- Polypropylene (resin code 5) has high thermal tolerance and flexural fatigue resistance.
+- Reprocessed PP pellets are manufactured into automotive battery cases, toolboxes, compost bins, storage totes, and broom bristles.
+Caution:
+- Avoid placing black plastic PP takeaway containers into single-stream recycling unless optical sorters in your area use black-spectrum infrared sensors.
+Regional Notes:
+- Accepted in almost all metropolitan municipal recycling services across Australia and Europe.
+
+[Polystyrene Foam, Styrofoam Packaging & Foam Peanuts]
+Category: General waste / Specialized Drop-off
+Disposal Instructions:
+- Keep all expanded polystyrene (EPS) foam blocks, meat trays, and foam cups out of curbside recycling bins.
+- Break large packaging blocks from electronic appliances and check if your local council transfer station has an EPS densifier machine.
+- If transfer drop-off is unavailable, break down foam blocks and place in the general waste red-lid bin.
+- For packaging foam peanuts, reuse for mailing or verify if they are starch-based (dissolves quickly under tap water) to dissolve or compost.
+Material & Recycling Context:
+- Polystyrene (resin code 6) consists of 95% to 98% air.
+- Standard sorting machinery fragments EPS into thousands of static beads that contaminate all other material streams.
+Caution:
+- Foam is combustible and easily windblown into stormwater drains and marine habitats.
+Regional Notes:
+- Many civic waste management depots accept clean, white molded appliance foam for free.
+
+[Other Mixed Plastics, Multi-layer Pouches & PLA Bioplastics]
+Category: General waste
+Disposal Instructions:
+- Items stamped with resin code 7 (Other) or made of multiple laminated foil-plastic layers must go into the general waste bin.
+- Squeezy condiment pouches, metallized chip packets, and composite coffee bags belong in general waste.
+- PLA (polylactic acid) bio-plastics must not be put into plastic recycling or standard home compost.
+Material & Recycling Context:
+- Category 7 includes mixed resins, polycarbonate, fiberglass, and plant-derived polymers that cannot be melted down with common commodity plastics.
+- Mixing PLA into a batch of PET degrades the tensile strength of the recycled resin.
+Caution:
+- Compostable bioplastics require commercial composting heat levels exceeding 55 degrees Celsius to decompose.
+Regional Notes:
+- Dispose in municipal red-lid general waste unless an industrial composting service explicitly collects PLA.
 
 [Cardboard Boxes & Corrugated Packaging]
 Category: Recyclable / Compostable
-Disposal Instructions: Flatten all cardboard boxes before placing them in the paper recycling bin. Remove plastic bubble wrap, polystyrene foam peanuts, and heavy packing tape. Keep cardboard dry and clean. Clean cardboard is 100% recyclable into new paper products.
-Caution: Greasy cardboard (such as greasy pizza box bottoms) cannot be recycled because oil binds to paper fibers and ruins the pulp. Tear off the clean lid to recycle, and compost or discard the greasy bottom.
+Disposal Instructions:
+- Flatten all corrugated cardboard boxes completely to conserve space in collection trucks.
+- Strip away plastic packing tape, styrofoam inserts, and clear plastic shipping sleeves.
+- Keep cardboard dry; damp cardboard weakens paper pulp fibers and harbors mold.
+- Place flattened clean boxes in your curbside paper and cardboard recycling bin.
+Material & Recycling Context:
+- Cardboard is composed of strong, unbleached kraft cellulose fibers.
+- Cellulose can be repulped up to 5 to 7 times into new shipping boxes, egg cartons, and paperboard packaging.
+Caution:
+- Cardboard soaked in motor oil, paints, or thick animal grease cannot be repulped and must be placed in general waste.
+Regional Notes:
+- Clean shredded plain cardboard without glossy ink can also serve as brown carbon material in home backyard compost piles.
 
-[Lithium-Ion & Household Batteries]
+[Greasy Pizza Boxes & Oil-Contaminated Paperboard]
+Category: Organic / Compost / General waste
+Disposal Instructions:
+- Inspect the pizza box: separate the clean cardboard top from the grease-soaked bottom.
+- Tear off the clean top half and place it with paper and cardboard recycling.
+- If your municipality has a green-lid FOGO (Food Organics and Garden Organics) service that accepts food-soiled paper, place the greasy bottom into the green bin.
+- If FOGO is not available or does not allow paperboard, discard the greasy bottom into the general waste red-lid bin.
+Material & Recycling Context:
+- Vegetable oils and cheese grease adhere tightly to paper fibers.
+- In paper recycling water vats, oil fails to separate from the slurry, causing weak spots and holes in newly rolled paper sheets.
+Caution:
+- Never put cheese or grease-soaked cardboard into the dry recycling bin.
+Regional Notes:
+- Check your local council rules, as many modern FOGO processing plants accept all unlined pizza boxes.
+
+[Office Paper, Envelopes, Newspapers & Magazines]
+Category: Recyclable
+Disposal Instructions:
+- Place loose office paper, notebook pages, envelopes, and newsprint directly into the paper recycling bin.
+- Remove large plastic spiral bindings and plastic document covers; small metal staples and envelope plastic address windows are acceptable as they are filtered during pulping.
+- Keep paper flat or lightly folded; avoid shredding paper unless necessary for confidential data.
+Material & Recycling Context:
+- High-grade white office paper contains virgin chemical pulp that is recycled into printing paper and facial tissues.
+- Shredded paper fibers become too short to weave into strong paper and frequently slip through facility screen filters.
+Caution:
+- Waxed paper, parchment baking paper, and carbon receipts are not recyclable in the paper bin.
+Regional Notes:
+- If you have shredded paper, place it inside an unsoiled paper grocery bag or compost it at home.
+
+[Beverage Cartons, Liquid Paperboard & Tetra Pak]
+Category: Recyclable / Specialized Drop-off
+Disposal Instructions:
+- Empty milk, juice, or plant-based beverage cartons completely.
+- Push the straw back into juice boxes or keep plastic screw caps attached.
+- Flatten carton and place in the commingled recycling bin if accepted by your local municipality, or take to a CDS depot.
+Material & Recycling Context:
+- Liquid paperboard cartons consist of multi-layer laminates: approximately 75% paperboard, 20% polyethylene, and 5% aluminum barrier foil.
+- Specialized hydropulping mills separate paper fibers for building insulation and ceiling tiles, while recovering plastic and aluminum (PolyAl).
+Caution:
+- Do not soak cartons in water prior to collection.
+Regional Notes:
+- In several regions, beverage cartons earn a 10-cent container deposit refund at authorized recycling drop points.
+
+[Glass Bottles, Beverage Jars & Wine Bottles]
+Category: Recyclable
+Disposal Instructions:
+- Empty all liquid or food sauce residue and give a brief rinse with cold water.
+- Metal bottle caps and jar lids can be removed and dropped into metal recycling, or screwed back onto the clean glass bottle.
+- Place glass containers directly into your designated glass-only purple bin or mixed recycling bin.
+Material & Recycling Context:
+- Container glass (soda-lime silica) is 100% recyclable infinitely without loss of quality, strength, or clarity.
+- Recycled crushed glass cullet melts at lower furnace temperatures, saving significant energy and reducing industrial carbon dioxide emissions.
+Caution:
+- Broken glass should be wrapped safely in newspaper and placed in general waste to protect sanitation collection workers.
+Regional Notes:
+- Do not mix drinking cups, ceramics, or mirrors with bottle glass due to incompatible melting temperatures.
+
+[Ceramics, Pyrex, Window Panes & Drinking Glassware]
+Category: General waste / Specialized Masonry Drop-off
+Disposal Instructions:
+- Wrap broken crockery, ceramic mugs, porcelain plates, Pyrex dishes, and drinking tumblers in newspaper.
+- Place securely into your red-lid general waste rubbish bin.
+- Intact crockery and glassware in good usable condition should be donated to charitable thrift stores.
+Material & Recycling Context:
+- Borosilicate glass (Pyrex), lead crystal, and ceramics have significantly higher melting temperatures than container bottle glass.
+- A single ceramic shard in a batch of molten bottle glass forms an unmelted inclusion that causes bottles to fracture under pressure during bottling.
+Caution:
+- Never dispose of ovenware, light fittings, or window glass in curbside glass recycling bins.
+Regional Notes:
+- Large quantities of architectural window glass can be accepted at dedicated building salvagers.
+
+[Aluminum Beverage Cans, Clean Foil & Baking Trays]
+Category: Recyclable
+Disposal Instructions:
+- Empty beverage cans completely; do not insert cigarette butts, tissues, or trash inside the can.
+- For clean aluminum cooking foil, pie dishes, and chocolate wrappers, roll and crunch them together into a solid fist-sized ball.
+- Place loose cans and foil balls directly into the commingled recycling bin.
+Material & Recycling Context:
+- Aluminum is 100% recyclable infinitely.
+- Recycling aluminum requires 95% less energy and produces 95% fewer emissions compared to refining raw bauxite ore into new metal.
+- Individual small pieces of foil get blown into paper sorting lines; balling them together ensures eddy-current sorters detect them.
+Caution:
+- Foil coated in thick cheese, barbecue grease, or baked-on crust that cannot be wiped clean belongs in general waste.
+Regional Notes:
+- Beverage cans are eligible for cash refunds at Container Deposit Scheme depots.
+
+[Steel Food Tins, Aerosol Cans & Metal Paint Cans]
+Category: Recyclable / Chemical Drop-off
+Disposal Instructions:
+- Rinse food soup, pet food, and tomato paste cans clean of residue.
+- Place the metal lid inside the tin and squeeze the top of the can slightly to keep the sharp lid contained inside.
+- Aerosol cans (deodorant, whipped cream, hairspray) must be completely emptied of propellant and pressure before curbside recycling.
+Material & Recycling Context:
+- Steel and tin-plated iron are magnetic metals sorted efficiently with overhead electro-magnets at materials recovery facilities.
+- Recycled steel is fed into electric arc furnaces to forge steel beams, automotive frames, and household appliances.
+Caution:
+- Aerosols containing pesticide, spray paint, or solvent residue, or aerosols that still hiss under pressure, must go to household hazardous waste depots.
+Regional Notes:
+- Empty, dry metal paint cans with cured dried paint residue can be accepted at metal scrap yards or municipal collection stations.
+
+[Household Lithium-Ion & Rechargeable Batteries]
 Category: E-waste / Hazardous
-Disposal Instructions: Never place any battery in standard household rubbish or curbside recycling bins. Tape the contact terminals of lithium, 9V, and button-cell batteries with clear non-conductive tape (electrical or packing tape) to prevent short circuits. Take them to designated battery drop-off bins at supermarkets, electronics stores, or local council collection points.
-Caution: Punctured, damaged, or compressed lithium batteries cause dangerous thermal runaways and fires in recycling trucks and facilities.
+Disposal Instructions:
+- Never place any battery in standard household rubbish or curbside recycling bins.
+- Place clear insulating tape or electrical tape across the positive and negative terminals of lithium, button-cell, and 9V batteries.
+- Deposit taped batteries into dedicated battery drop-off bins located at supermarkets, hardware stores, and electronics retailers.
+Material & Recycling Context:
+- Modern electronics rely on lithium cobalt oxide, nickel-manganese-cobalt, or lithium iron phosphate chemistries.
+- Specialized recyclers dismantle cells to extract high-purity lithium, cobalt, nickel, and copper for manufacturing new battery cells.
+Caution:
+- Punctured, crushed, or short-circuited lithium batteries experience thermal runaway fires that endanger waste collection trucks and sorting facilities.
+Regional Notes:
+- B-cycle and national battery stewardship schemes provide thousands of free neighborhood drop-off points nationwide.
 
-[Food Scraps & Kitchen Organic Waste]
-Category: Organic / Compost
-Disposal Instructions: Collect vegetable peelings, fruit cores, coffee grounds, loose tea leaves, eggshells, and plate scrapings in a kitchen caddy lined with a certified compostable liner (look for AS 4736 or EN 13432). Empty into the green organics/FOGO bin or your home backyard compost bin.
-Caution: Do not place conventional plastic bags, treated timber, disposable nappies, or pet droppings into municipal organic collection bins.
+[Single-Use Alkaline & Zinc-Carbon Batteries]
+Category: E-waste / Hazardous
+Disposal Instructions:
+- Do not dispose of AA, AAA, C, D, or 9V alkaline batteries in the household rubbish bin.
+- Store depleted alkaline batteries in a dry plastic container out of direct heat and away from children.
+- Tape terminals on 9V batteries to prevent residual current loops.
+- Drop off at community battery recycling collection units in grocery stores or civic waste stations.
+Material & Recycling Context:
+- Alkaline batteries contain zinc, manganese dioxide, steel, and potassium hydroxide electrolyte.
+- Hydrometallurgical processing reclaims zinc and manganese compounds for reuse in agricultural micronutrient fertilizers and industrial steel manufacturing.
+Caution:
+- Leaking alkaline batteries should be handled with gloves; place leaking units inside a sealed clear ziplock bag before drop-off.
+Regional Notes:
+- Free drop-off bins are hosted in major grocery chains including ALDI, Woolworths, and Coles.
 
-[Glass Bottles & Food Jars]
-Category: Recyclable
-Disposal Instructions: Empty contents and rinse clean of food sauces and residue. Metal lids and jar caps can be removed and recycled with metals or left loosely screwed. Place clean glass bottles and jars into the glass or commingled recycling bin.
-Caution: Do not mix drinking glasses, Pyrex cookware, window glass, mirrors, or ceramics with bottle glass. They have different melting points and will contaminate the recycling batch.
+[Automotive Lead-Acid Batteries]
+Category: Hazardous / Automotive Drop-off
+Disposal Instructions:
+- Keep car, motorcycle, and marine boat batteries upright at all times to prevent acidic electrolyte spills.
+- Never place vehicle batteries into curbside bins or general waste skips.
+- Transport to an auto parts retailer, mechanic workshop, scrap metal merchant, or council transfer station.
+Material & Recycling Context:
+- Lead-acid batteries achieve a recovery rate over 98% in closed-loop industrial recycling.
+- Battery cases (polypropylene) are melted into new cases, sulfuric acid is neutralized into sodium sulfate for detergents, and lead is smelted into pure ingots.
+Caution:
+- Batteries contain concentrated sulfuric acid that causes chemical burns and lead that is a potent neurotoxin.
+Regional Notes:
+- Most automotive parts retailers offer free battery take-back, and scrap metal yards often pay cash for old car batteries.
 
-[Aluminum Beverage Cans & Steel Food Tins]
-Category: Recyclable
-Disposal Instructions: Empty drink cans and rinse food tins clean. For food cans, push the lid into the body so sharp edges are concealed. Aluminum and steel are infinitely recyclable without degradation. Place in the curbside recycling bin.
-Caution: Aerosol cans must be entirely empty before disposal. If any pressure or liquid remains, treat as hazardous waste.
-
-[Electronic Waste, Smartphones & Cables]
+[Smartphones, Tablets & Mobile Electronics]
 Category: E-waste
-Disposal Instructions: Wipe all private data and perform a factory reset on smartphones, tablets, and computers. Bundle accessories and power cables together. Bring unwanted electronics to certified e-waste drop-off kiosks, civic recycling centers, or retail take-back programs (e.g. MobileMuster or National Television and Computer Recycling Scheme).
-Caution: E-waste contains toxic heavy metals like lead, mercury, and cadmium which leach into soil and groundwater if sent to landfill.
+Disposal Instructions:
+- Back up personal photographs and documents to cloud storage or an external hard drive.
+- Perform a complete factory reset and remove SIM cards, memory cards, and security passcodes.
+- Bring the mobile phone, tablet, accessories, and charging cables to an authorized e-waste drop-off point or MobileMuster kiosk.
+Material & Recycling Context:
+- Circuit boards contain precious metals including gold, silver, palladium, and copper, as well as critical rare earth elements in vibration motors and speakers.
+- Recycling 50,000 mobile phones recovers approximately 1 kilogram of gold and 350 kilograms of copper, avoiding raw mining extraction.
+Caution:
+- Never throw smart devices into red rubbish bins; their lithium pouches are easily pierced by garbage truck compactors.
+Regional Notes:
+- MobileMuster collection units accept phones, smartwatches, modems, landlines, and tablet computers at post offices and telecommunication shops.
 
-[Plastic Bags, Soft Plastics & Wrappers]
-Category: General waste / Specialized Store Drop-off
-Disposal Instructions: Soft plastics such as bread bags, bubble wrap, cereal liners, and plastic shopping bags do NOT belong in standard household curbside recycling bins because they wrap around sorting machinery rollers. Bring them to specialized supermarket soft plastic collection bins where available, or dispose of in general waste.
-Caution: Never bag your recyclable items in a plastic bag before placing them in the yellow bin; recyclables must be placed loose.
+[Laptops, Desktop Computers, Keyboards & Mice]
+Category: E-waste
+Disposal Instructions:
+- Back up data and securely wipe the storage drive using a disk sanitization utility, or physically remove the drive for destruction.
+- Coil cables and peripheral wires alongside computer keyboards, mice, and webcams.
+- Take computer hardware to a National Television and Computer Recycling Scheme (NTCRS) drop-off depot or designated electronics retailer.
+Material & Recycling Context:
+- Computers contain a diverse mixture of engineering plastics (ABS-PC), aluminum heat sinks, copper wiring, and multi-layer circuit boards.
+- Modern shredding and sorting lines use magnetic, air-knife, and optical sorting to separate plastics, ferrous metals, and non-ferrous metals.
+Caution:
+- Avoid cracking or breaking laptop display screens, as older models may contain mercury cold-cathode lamps.
+Regional Notes:
+- Major hardware chains and office supply retailers offer free e-waste recycling kiosks for small computer peripherals.
 
-[Expired Medications & Pharmaceutical Sharps]
+[Televisions, Computer Monitors & Flat Panels]
+Category: E-waste
+Disposal Instructions:
+- Keep screens intact without cracking or shattering glass panels.
+- Do not cut power cords off the units, as intact equipment is safer for recycling facility handlers.
+- Deliver flat-panel LED, OLED, and LCD televisions and computer monitors to an NTCRS depot or council e-waste event.
+Material & Recycling Context:
+- Flat panel displays contain circuit driver chips, high-grade optical acrylic diffuser sheets, aluminum frames, and circuitry.
+- Facilities dismantle panels into steel backplates, copper circuit boards, and clean plastics for granulating.
+Caution:
+- Older CRT (cathode-ray tube) televisions contain up to 2 kilograms of lead within the funnel glass and must be handled with care.
+Regional Notes:
+- Free drop-off is provided for households and small businesses under government-supported stewardship initiatives.
+
+[Power Cables, Phone Chargers & Electronic Adapters]
+Category: E-waste
+Disposal Instructions:
+- Bundle cords and power plugs together; secure loosely with a rubber band or twist tie.
+- Do not put electrical cables into curbside recycling bins; wires tangle around spinning sorting shafts, causing machinery jams.
+- Drop into e-waste recycling bins at civic transfer stations, electronics stores, or office supply stores.
+Material & Recycling Context:
+- Power cables contain high-purity electrical copper conductors surrounded by PVC or thermoplastic elastomer insulation.
+- Mechanical wire strippers and granulators cleanly separate copper granules from outer plastic jacket polymers.
+Caution:
+- Damaged, frayed, or scorched cables should be taken out of home service immediately to prevent electrical fires.
+Regional Notes:
+- Office supply stores such as Officeworks provide dedicated cable recycling collection boxes.
+
+[Small Kitchen Appliances: Toasters, Kettles & Blenders]
+Category: E-waste
+Disposal Instructions:
+- Unplug appliance and clean out breadcrumbs, liquid remnants, or food residue.
+- Wrap the power cord around the base of the appliance.
+- Take small electrical appliances to designated small-appliance collection bins at council waste centers or participating electrical retailers.
+Material & Recycling Context:
+- Small household appliances contain electric heating elements, copper-wound electric motors, stainless steel housings, and heat-resistant plastics.
+- Shredders fragment whole units, followed by magnetic separators to recover steel and eddy-current separators for non-ferrous metals.
+Caution:
+- Never throw electrical appliances into curbside yellow recycling or red rubbish bins.
+Regional Notes:
+- Working appliances in clean cosmetic condition can be donated to community reuse centers or repair cafes.
+
+[Fluorescent Light Tubes & Compact Fluorescent Lamps (CFLs)]
+Category: Hazardous / E-waste
+Disposal Instructions:
+- Handle carefully by the base to prevent cracking or shattering the glass tube.
+- Never place fluorescent tubes or CFL globes in curbside domestic rubbish or recycling bins.
+- Place in original cardboard packaging or wrap safely in bubble wrap, and take to a hazardous waste or light globe recycling point.
+Material & Recycling Context:
+- Fluorescent lamps contain phosphorus powder and small quantities of elemental mercury vapor.
+- Distillation chambers use vacuum heat recovery to vaporize and capture pure liquid mercury, while separating clean glass and aluminum end caps.
+Caution:
+- If a fluorescent tube breaks indoors, ventilate the room for 15 minutes, avoid vacuuming, and scoop debris with cardboard into a sealed jar.
+Regional Notes:
+- Hardware retailers including Bunnings host free light globe and tube collection units in customer entry areas.
+
+[LED Light Bulbs & Incandescent Bulbs]
+Category: E-waste / General waste
+Disposal Instructions:
+- Traditional incandescent and halogen bulbs contain non-hazardous tungsten filaments and should be wrapped in paper and placed in general waste.
+- Modern LED light bulbs contain electronic driver circuit boards and aluminum heat sinks; they should be taken to an e-waste or lighting drop-off point.
+- Do not place any light bulb into household curbside glass recycling bins.
+Material & Recycling Context:
+- Light globe glass has different thermal properties than container bottles and will ruin bottle recycling melts.
+- LED bulbs contain valuable microchips, heat-sink aluminum, and copper wiring that recyclers process alongside other electronics.
+Caution:
+- Ensure globes are cool to the touch before unscrewing or handling for disposal.
+Regional Notes:
+- Many supermarkets and hardware chains accept all types of household light globes for recycling.
+
+[Kitchen Vegetable Peelings, Fruit Cores & Plant Scraps]
+Category: Organic / Compost
+Disposal Instructions:
+- Collect carrot peelings, apple cores, potato skins, cabbage leaves, and fruit trimmings in a kitchen caddy.
+- Line the caddy with newspaper or a certified compostable liner (look for AS 4736 seedling or AS 5810 home compostable logos).
+- Empty contents into your green-lid FOGO organics bin or your backyard home compost bin.
+Material & Recycling Context:
+- Food scraps are rich in nitrogen, water, and organic matter.
+- In commercial composting facilities, aerobic digestion pasteurizes organic waste at temperatures above 55 degrees Celsius, creating nutrient-dense soil compost.
+- Diverting organics from landfills prevents anaerobic decomposition that generates methane, a greenhouse gas 28 times more potent than carbon dioxide.
+Caution:
+- Remove all plastic price-look-up (PLU) stickers and rubber bands from fruit before discarding.
+Regional Notes:
+- Check your local council guidelines, as modern FOGO collection services are available across many municipal areas.
+
+[Cooked Food Scraps, Meat Scraps & Bones]
+Category: Organic / General waste
+Disposal Instructions:
+- If your municipality provides a FOGO service that accepts all food organics, place cooked leftovers, meat scraps, poultry bones, and seafood shells into the green bin.
+- If your council green bin is for garden prunings only, or if you only have a standard home compost bin, place meat scraps and bones into the red general waste bin.
+- Freeze meat and seafood scraps in a small container until collection day to prevent odors and flies in summer.
+Material & Recycling Context:
+- Commercial industrial composting facilities reach sustained high temperatures that break down animal proteins, fats, and pathogens completely.
+- Home compost bins usually do not achieve adequate temperatures to process meat and bones quickly, which can attract vermin and pests.
+Caution:
+- Never put plastic food packaging, cling wrap, or Styrofoam trays into organic bins.
+Regional Notes:
+- Always check council FOGO literature to verify whether meat, dairy, and bones are permitted in your specific area.
+
+[Coffee Grounds, Unbleached Filters & Loose Tea Leaves]
+Category: Organic / Compost
+Disposal Instructions:
+- Empty espresso coffee pucks, loose drip grounds, unbleached paper coffee filters, and loose tea leaves directly into your kitchen caddy or home compost.
+- Coffee grounds can also be sprinkled sparingly and directly onto garden soil around acid-loving plants such as azaleas, camellias, and blueberries.
+- For single-use coffee pods, check if they are certified compostable; aluminum pods belong in specialized brand mail-back drop-off programs.
+Material & Recycling Context:
+- Coffee grounds provide valuable organic nitrogen (approx 2% nitrogen by volume), carbon, potassium, and phosphorus.
+- Earthworms thrive on coffee grounds in worm farms, accelerating the generation of rich vermicompost castings.
+Caution:
+- Conventional pyramid tea bags frequently contain plastic polyethylene or polypropylene fibers that do not break down in compost.
+Regional Notes:
+- Standard aluminum or plastic coffee capsules must not go into curbside recycling bins loose.
+
+[Certified Compostable Bags & Bioplastic Packaging]
+Category: Organic / General waste
+Disposal Instructions:
+- Check certification markings: look for the seedling logo with AS 4736 (commercial compostable) or AS 5810 (home compostable).
+- Use AS 4736 bags as kitchen caddy bin liners for municipal green FOGO bins where approved by your council.
+- If a bioplastic product is marked merely degradable or oxo-degradable without certification, place it into the general waste red bin.
+- Do not place any compostable bags or bioplastics into curbside yellow recycling bins.
+Material & Recycling Context:
+- Certified compostable materials are manufactured from plant starches (corn starch, potato starch) or bio-polyesters like PBAT.
+- These materials disintegrate within 12 weeks and biodegrade completely into water, carbon dioxide, and biomass under industrial composting conditions.
+Caution:
+- Oxo-degradable plastics simply fragment into millions of microplastics and cause severe ecological harm.
+Regional Notes:
+- Several councils supply free rolls of certified green FOGO caddy liners to residents annually.
+
+[Garden Waste, Lawn Clippings, Leaves & Tree Prunings]
+Category: Organic / Compost
+Disposal Instructions:
+- Place cut grass, raked autumn leaves, weeds, small branches, and shrub prunings into your green-lid garden organics bin.
+- Prune long branches so they fit comfortably within the bin with the lid completely closed; branches should not exceed 10 centimeters in diameter.
+- Keep organic matter loose inside the bin; do not bind branches with wire or plastic twine.
+Material & Recycling Context:
+- Garden organics are shredded, screened, blended with carbon mulch, and composted according to Australian Standard AS 4454.
+- High-grade mulch and soil conditioners are supplied back to local agriculture, parks, and home gardeners.
+Caution:
+- Do not place treated timber, fence palings, large tree stumps, dirt, rocks, or synthetic turf into garden bins.
+Regional Notes:
+- Many civic waste management facilities accept trailer loads of clean green garden waste for reduced tipping fees.
+
+[Used Cooking Oil & Deep Fryer Grease]
+Category: Specialized Drop-off / General waste
+Disposal Instructions:
+- Allow hot cooking oil to cool completely inside the pan or fryer.
+- For small domestic amounts (under 200 ml), absorb with paper towels and place into general waste, or compost if grease-free.
+- For larger quantities, pour into an empty screw-cap plastic bottle or metal can and take to a council recycling transfer station.
+- Never pour cooking oil, liquid grease, or melted fat down household kitchen sinks or drains.
+Material & Recycling Context:
+- Recovered waste cooking oil is filtered, dewatered, and chemically transesterified into clean-burning renewable biodiesel and bio-lubricants.
+- Biodiesel from recycled vegetable oil produces up to 85% fewer greenhouse gas emissions compared to fossil diesel.
+Caution:
+- Pouring oil down drains creates thick fatbergs that block municipal sewer pipes and cause costly sewage overflows.
+Regional Notes:
+- Most council resource recovery centers accept up to 20 liters of household cooking oil for free.
+
+[Expired Prescription Drugs & Over-The-Counter Medicines]
+Category: Hazardous / Pharmacy Return
+Disposal Instructions:
+- Collect expired tablets, blister packs, liquid medications, ointments, and medicated creams.
+- Take all unwanted medicines to any community retail pharmacy and hand them to the pharmacist.
+- Pharmacists place them into the RUM (Return Unwanted Medicines) collection project bins for safe destruction.
+- Outer cardboard medication boxes can be recycled with paper.
+Material & Recycling Context:
+- Pharmaceutical waste collected through RUM is transported to high-temperature incinerators certified by the EPA.
+- High-temperature destruction completely breaks down complex active chemical molecules into inert ash.
+Caution:
+- Never flush medications down toilets or rinse down sink drains, as wastewater treatment plants cannot filter pharmaceutical compounds from rivers and oceans.
+Regional Notes:
+- The Return Unwanted Medicines program is free and funded across all Australian community pharmacies.
+
+[Medical Sharps, Hypodermic Needles & Lancets]
+Category: Hazardous / Sharps Collection
+Disposal Instructions:
+- Immediately after use, place needles, insulin syringes, lancets, and infusion sets into a rigid, puncture-proof yellow sharps container (AS 4031 compliant).
+- Never recap, bend, or snap needles with your bare hands.
+- Keep sharps containers out of reach of children.
+- Take full sharps containers to a hospital exchange program, designated council drop point, or participating community pharmacy.
+Material & Recycling Context:
+- Sharps containers are sealed, tracked, and treated via commercial medical autoclaves (high-pressure steam sterilization) or dedicated medical incinerators.
+Caution:
+- Never dispose of loose sharps or filled containers into household red, yellow, or green curbside bins; sharps pose life-threatening stick injuries to sanitation staff.
+Regional Notes:
+- Needle and Syringe Programs (NSP) provide free sterile equipment and replacement sharps containers.
+
+[Liquid Paints, Varnishes & Wood Stains]
+Category: Hazardous / Paintback Drop-off
+Disposal Instructions:
+- Never pour liquid paints, enamels, or stains down sinks, street gutters, or stormwater drains.
+- Do not place liquid paint cans into domestic general waste or recycling bins.
+- Transport cans containing wet paint to an authorized Paintback drop-off center or municipal chemical drop event.
+- If a paint tin contains only a dry skim of hardened water-based acrylic, leave the lid off until fully dry, then place the dry can in general waste.
+Material & Recycling Context:
+- Paintback processes collected paint by separating water and acrylic solvents; waste solvent paint is converted into industrial alternative fuels.
+- Steel paint containers are cleaned and recycled into new steel products.
+Caution:
+- Oil-based paints contain volatile organic compounds (VOCs) that are flammable and toxic to inhale in unventilated areas.
+Regional Notes:
+- Paintback accepts up to 100 liters of trade and domestic architectural paint per visit at participating locations for free.
+
+[Mineral Turpentine, Paint Thinners & Solvents]
 Category: Hazardous
-Disposal Instructions: Return all unused or expired prescription and over-the-counter medicines to a participating pharmacy for safe disposal via pharmaceutical take-back programs. Place used needles, syringes, and lancets into a certified puncture-proof sharps container.
-Caution: Never flush medicines down the toilet or wash them down household sinks. Pharmaceuticals contaminate the aquatic environment and water supply.
+Disposal Instructions:
+- Store solvents in their original, tightly closed containers with original warning labels intact.
+- Keep away from heat sources, open flames, and direct sunlight.
+- Deliver unwanted chemical solvents to a council household chemical cleanout program (e.g., Chemical CleanOut or Detox Your Home).
+Material & Recycling Context:
+- Industrial solvent recyclers use fractional distillation to separate pure thinners and cleaning solvents from dissolved paint resins for reuse.
+Caution:
+- Highly flammable and dangerous vapors; never pour solvents into drains, soil, or waterways.
+Regional Notes:
+- Chemical cleanup events take place periodically and are free for household chemical disposal.
 
-[Clothing, Footwear & Textiles]
+[Pesticides, Weedkillers & Garden Fungicides]
+Category: Hazardous
+Disposal Instructions:
+- Keep all concentrated garden chemicals, weedkillers, and insecticides in their clearly marked original packaging.
+- Never mix different chemical containers together.
+- Deliver unwanted garden chemicals to municipal household hazardous waste collection facilities.
+- For commercial agricultural chemical drums, participate in the drumMUSTER collection program after triple-rinsing.
+Material & Recycling Context:
+- Agricultural chemicals undergo high-temperature thermal oxidation to eliminate active toxins safely without producing hazardous residues.
+Caution:
+- Even minor traces of chemical runoff from washing spray equipment can poison aquatic ecosystems and urban waterways.
+Regional Notes:
+- drumMUSTER provides free collection points across regional agricultural centers for eligible cleaned chemical drums.
+
+[Household Bleach, Ammonia & Caustic Drain Cleaners]
+Category: Hazardous / General waste
+Disposal Instructions:
+- Use up remaining cleaning products according to label directions whenever possible.
+- If disposing of leftover concentrated solutions, take to a hazardous chemical collection point.
+- For empty containers: rinse thoroughly with water, replace the plastic cap, and place the clean plastic bottle into curbside recycling.
+Material & Recycling Context:
+- High-strength corrosive chemicals are treated in industrial wastewater facilities through controlled neutralization before discharge.
+Caution:
+- Never mix chlorine bleach with ammonia or acidic cleaners; mixing produces deadly toxic chloramine and chlorine gases instantly.
+Regional Notes:
+- Check municipal chemical cleanout schedules for safe disposal of bulk household cleaning supplies.
+
+[Used Engine Motor Oil & Car Fluids]
+Category: Hazardous / Automotive Drop-off
+Disposal Instructions:
+- Drain used motor oil, transmission fluid, and differential gear oil into a clean, leak-proof plastic or metal container.
+- Do not mix motor oil with brake fluid, antifreeze coolant, water, or solvents, as cross-contamination prevents re-refining.
+- Deliver used oil to an automotive workshop, service station, or council oil recovery depot.
+Material & Recycling Context:
+- Used motor oil does not wear out; it merely collects dirt and oxidation combustion products.
+- Re-refining facilities use vacuum distillation and hydrotreating to purify used oil back into virgin-grade base lubricating oil repeatedly.
+- Recycling just 4 liters of used engine oil produces enough clean base lubricating oil for an entire automobile oil change.
+Caution:
+- Discharging motor oil onto the ground or down storm drains is illegal and severely contaminates groundwater aquifers.
+Regional Notes:
+- Most council waste management facilities feature dedicated oil collection tanks where residents can deposit used engine oil for free.
+
+[Clothing, Wearable Apparel & Clean Footwear]
 Category: Donation / Textile Recycling / General waste
-Disposal Instructions: Clean, wearable clothes and shoes in good condition should be donated to charitable thrift stores or deposited into textile collection bins. Severely worn or stained rags can be converted into industrial cleaning cloths or insulation.
-Caution: Textiles placed in curbside recycling bins are unprocessable contaminants that tangle sorting equipment.
+Disposal Instructions:
+- Clean and wash wearable shirts, pants, jackets, and shoes.
+- Tie matching shoes together by their laces so pairs are not separated during sorting.
+- Deliver clean wearable garments to charity op-shops, clothing donation bins, or community thrift stores.
+- Severely worn, torn, or stained clothes should be taken to dedicated textile recycling drop points or cut into household cleaning rags.
+Material & Recycling Context:
+- Wearable donated clothing directly extends garment life and supports non-profit charitable social programs.
+- Unwearable cottons and synthetics collected by textile recyclers are mechanically shredded into shoddy fibers for vehicle insulation and carpet underlay.
+Caution:
+- Do not place any clothes, blankets, or shoes into curbside yellow recycling bins; textiles tangle conveyor rollers and break plant sorting machinery.
+Regional Notes:
+- Brands such as Zara, H&M, and retail department stores host in-store garment take-back bins for all condition textiles.
+
+[Torn Fabrics, Rags & Damaged Bedding]
+Category: Textile Recycling / General waste
+Disposal Instructions:
+- Cut unwearable cotton shirts and towels into absorbent cleaning rags for workshops, garages, or home cleaning.
+- If textile recycling kiosks are available nearby, drop off clean worn rags for mechanical fiber recovery.
+- If no textile drop-off or reuse opportunity exists, place worn rags into your general waste red bin.
+Material & Recycling Context:
+- Textile shredding lines shred natural and synthetic fabrics into post-consumer filler fibers used in acoustic insulation, moving blankets, and mattress pads.
+Caution:
+- Rags soaked in linseed oil or flammable solvents can undergo spontaneous combustion if bunched up; lay flat to dry outdoors before disposal.
+Regional Notes:
+- Check local municipal resource centers for textile drop-off programs that accept stained or damaged fabric.
+
+[Mattresses, Box Springs & Foam Bedding]
+Category: Bulky Waste / Specialized Drop-off
+Disposal Instructions:
+- Schedule a council bulky waste household collection service, or deliver directly to a resource recovery transfer station.
+- Keep the mattress clean and dry prior to pickup; waterlogged mattresses are heavy and prone to mold, preventing material recovery.
+- If purchasing a replacement mattress, check if the retail delivery service includes removal and recycling of your old mattress.
+Material & Recycling Context:
+- Dedicated mattress recyclers slit the outer fabric to separate polyurethane foam, steel innerspring coils, timber frames, and cotton wadding.
+- Over 75% of a mattress by weight is recovered: steel springs are melted into new metal products, and foam is granulated for carpet underlayment.
+Caution:
+- Never dump mattresses in bushland or public areas; illegal dumping carries heavy fines.
+Regional Notes:
+- Soft Landing operates social enterprise mattress recycling schemes across multiple states and councils.
+
+[Automobile Tires & Bicycle Rubber Tubes]
+Category: Specialized Drop-off / Automotive
+Disposal Instructions:
+- Never place car, motorcycle, or bicycle tires into household red or yellow curbside bins.
+- Leave worn tires with the tire retailer when fitting replacements, or deliver to a licensed council transfer station.
+- Bicycle inner tubes can often be returned to local community bicycle shops participating in rubber recycling schemes.
+Material & Recycling Context:
+- Tire Stewardship programs recover worn rubber by shredding tires into crumb rubber, granules, and steel bead wire.
+- Crumb rubber is vulcanized into playground safety matting, athletic running tracks, brake pads, and rubberized road asphalt.
+Caution:
+- Stockpiling tires creates fire hazards with toxic smoke and provides breeding pools for disease-carrying mosquitoes.
+Regional Notes:
+- Retailers accredited by Tire Stewardship Australia safely recycle recovered consumer tires.
+
+[Treated Timber, Pine Posts & CCA Wood]
+Category: General waste / Demolition Drop-off
+Disposal Instructions:
+- Keep treated timber (copper chrome arsenate, creosote, or LOSP treated) out of green organic and composting bins.
+- Place small pieces in the general waste red bin; transport large fence posts and decking to a council transfer station.
+Material & Recycling Context:
+- Copper Chrome Arsenate (CCA) timber is infused with chemical preservatives to resist rot and termites.
+- CCA wood cannot be mulched into landscape compost or converted into particleboard due to hazardous arsenic and chromium content.
+Caution:
+- Never burn treated timber in home fireplaces, outdoor firepits, or barbecues; combustion releases lethal arsenic smoke and toxic ash.
+Regional Notes:
+- Transfer stations classify treated wood separately from clean untreated firewood or demolition timber.
+
+[Bricks, Concrete, Ceramic Tiles & Masonry Rubble]
+Category: Construction & Demolition Drop-off
+Disposal Instructions:
+- Do not place heavy rubble, masonry bricks, concrete pavers, or porcelain wall tiles into domestic red or yellow curbside bins.
+- Overloading curbside bins can damage truck robotic lift arms.
+- Take masonry waste to a specialized construction and demolition (C&D) recycling depot or hire a dedicated skip bin.
+Material & Recycling Context:
+- C&D facilities crush concrete, bricks, and tiles using jaw crushers and impactors, screening them into graded crushed aggregate and road base.
+- Recycled road base aggregate replaces virgin quarried gravel in highway construction, civil paving, and drainage beds.
+Caution:
+- Structures built before 1990 may contain bonded asbestos fibro sheeting; never disturb or deliver suspect materials without licensed testing.
+Regional Notes:
+- Clean separated concrete is typically accepted at concrete recyclers for significantly lower tipping fees than mixed waste.
+
+[Thermal Receipts & Carbon Copy Paper]
+Category: General waste
+Disposal Instructions:
+- Place supermarket shopping receipts, parking tickets, and ATM receipts into the red-lid general waste bin.
+- Do not put thermal cash register receipts into the paper recycling bin.
+- Switch to digital, SMS, or email receipts where available at retail checkout counters.
+Material & Recycling Context:
+- Thermal receipt paper is coated with reactive chemical dyes and bisphenol compounds (BPA or BPS) that produce print when exposed to heat.
+- Introducing thermal receipts into paper recycling slurry spreads endocrine-disrupting BPA into recycled paper towels, food packaging, and toilet tissue.
+Caution:
+- Do not shred thermal receipts into compost or worm farms.
+Regional Notes:
+- Keep all shiny thermal receipts out of yellow recycling bins.
+
+[Disposable Baby Diapers, Nappies & Wet Wipes]
+Category: General waste
+Disposal Instructions:
+- Roll soiled diapers tightly, fold tabs securely around the bundle, and place into a small bag before disposing into the general waste red bin.
+- Keep all disposable nappies, adult incontinence pads, and sanitary napkins strictly out of recycling and green compost bins.
+- Disposable wet wipes, makeup remover wipes, and disinfecting wipes must also be placed into general rubbish.
+Material & Recycling Context:
+- Conventional disposable diapers consist of multi-component superabsorbent polymer gels (sodium polyacrylate), polypropylene covers, and cellulose fluff.
+- Soiled nappies in recycling streams pose biological biohazard risks to manual sorting personnel.
+Caution:
+- Never flush wet wipes down toilets, even if packaging claims flushable; wipes do not disintegrate and form catastrophic sewer pipe blockages.
+Regional Notes:
+- Some municipalities offer an additional red bin or specialized weekly nappy collection service for families with infants.
+
+[Pet Waste, Cat Litter & Animal Bedding]
+Category: General waste
+Disposal Instructions:
+- Collect canine dog droppings in compostable or standard waste bags and place into the red-lid general waste bin.
+- Used clay, bentonite, silica gel, or paper-based cat litter must be bagged and discarded in the general waste bin.
+- Guinea pig, rabbit, and rodent bedding (sawdust, straw) should be placed in general waste unless your council explicitly approves vegetarian pet bedding in FOGO.
+Material & Recycling Context:
+- Animal feces can carry dangerous pathogens, bacteria (Salmonella, E. coli), and parasites like Toxoplasma gondii.
+- Municipal composting facilities often cannot ensure thermal destruction of Toxoplasma oocysts, which survive in finished compost and harm public health.
+Caution:
+- Never flush cat litter or pet feces down the toilet; municipal water treatment plants cannot eliminate Toxoplasma parasites, which threaten marine life.
+Regional Notes:
+- Dedicated home pet-waste worm digesters installed in backyards can treat canine waste separate from food gardens.
+
+[Cigarette Butts, Ash & Disposable Lighters]
+Category: General waste
+Disposal Instructions:
+- Ensure cigarette butts are fully extinguished in water or an ashtray before disposal.
+- Place cold cigarette filters and tobacco ash into the red-lid general waste rubbish bin.
+- Empty plastic pocket lighters must be completely exhausted of butane fuel before being placed into general waste.
+Material & Recycling Context:
+- Cigarette filters are not cotton or paper; they are manufactured from cellulose acetate, a non-biodegradable synthetic plastic fiber.
+- Discarded butts leach heavy metals, arsenic, lead, and nicotine into waterways and soil, taking over a decade to fragment into microplastics.
+Caution:
+- Never toss burning cigarette butts into garden mulch, bushland, or out of vehicle windows; discarded butts ignite severe bushfires.
+Regional Notes:
+- Specialized TerraCycle mail-in boxes accept cigarette waste for plastic pelletizing and industrial composting of residual tobacco.

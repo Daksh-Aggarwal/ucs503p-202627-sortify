@@ -159,9 +159,12 @@ export async function fetchAvailableModels(): Promise<ModelOption[]> {
     // API not reachable; return static fallback list
   }
   return [
-    { id: 'best.pt', name: 'YOLOv11 Streamlined (8 Classes - Default)', is_default: true },
-    { id: 'yolov11_8class.pt', name: 'YOLOv11 (8 Classes - Streamlined)' },
-    { id: 'yolov11_10class.pt', name: 'YOLOv11 (10 Classes - Unified)' },
+    { id: 'best.pt', name: 'YOLOv11s v3 Generalization (8 Classes - Production Default)', is_default: true },
+    { id: 'yolo11s_8cls_v3_generalization.pt', name: 'YOLOv11s (8 Classes - v3 Generalization Dataset)' },
+    { id: 'yolo11s_8cls_v2_curated.pt', name: 'YOLOv11s (8 Classes - v2 Curated Dataset)' },
+    { id: 'yolo11s_8cls_real_organic.pt', name: 'YOLOv11s (8 Classes - Real Organic Augmentation)' },
+    { id: 'yolo11s_8cls_v1_streamlined_old_dataset.pt', name: 'YOLOv11s (8 Classes - Old 8-Class Streamlined Dataset)' },
+    { id: 'yolo11s_10cls_legacy_old_dataset.pt', name: 'YOLOv11s (10 Classes - Old 10-Class Legacy Dataset)' },
   ];
 }
 
@@ -173,7 +176,7 @@ function asNormalizedBox(box: Partial<BoundingBox> | undefined): BoundingBox | n
   return { x, y, width, height };
 }
 
-function getPrediction(response: PredictionResponse): RecognitionPrediction {
+export function getAllPredictions(response: PredictionResponse): RecognitionPrediction[] {
   const candidates = (response.detections || [])
     .map((detection) => {
       const classId = typeof detection.class_id === 'number' ? detection.class_id : NaN;
@@ -219,14 +222,18 @@ function getPrediction(response: PredictionResponse): RecognitionPrediction {
   if (!candidates[0]) {
     throw new Error('No supported waste item was detected. Try a clearer photo with one item in frame.');
   }
-  return candidates[0];
+  return candidates;
+}
+
+export function getPrediction(response: PredictionResponse): RecognitionPrediction {
+  return getAllPredictions(response)[0];
 }
 
 export async function recognizeImage(
   uri: string,
   selectedModel: string = 'best.pt',
   confidenceThreshold: number = 0.35,
-): Promise<RecognitionPrediction> {
+): Promise<RecognitionPrediction[]> {
   const targetUrl = `${apiUrl}/v1/detections?model=${encodeURIComponent(selectedModel)}&confidence=${encodeURIComponent(String(confidenceThreshold))}`;
   console.log('[Sortify] Calling recognition service with model:', selectedModel, 'confidence:', confidenceThreshold, 'URL:', targetUrl);
 
@@ -252,7 +259,7 @@ export async function recognizeImage(
           : 'The recognition service could not process this image.',
       );
     }
-    return getPrediction((await response.json()) as PredictionResponse);
+    return getAllPredictions((await response.json()) as PredictionResponse);
   }
 
   let uploadResult: FileSystem.FileSystemUploadResult;
@@ -286,7 +293,42 @@ export async function recognizeImage(
   }
 
   const data = JSON.parse(uploadResult.body) as PredictionResponse;
-  return getPrediction(data);
+  return getAllPredictions(data);
+}
+
+export function demoPredictions(itemId: string, confidence: number): RecognitionPrediction[] {
+  const primary = demoPrediction(itemId, confidence);
+  if (itemId === 'bottle') {
+    return [
+      primary,
+      {
+        classId: 0,
+        className: 'paper_cardboard',
+        modelClassName: 'paper_cardboard',
+        displayName: 'Cardboard Box',
+        itemId: 'box',
+        category: 'Recyclable',
+        confidence: 82,
+        box: { x: 0.58, y: 0.38, width: 0.36, height: 0.54 },
+      },
+    ];
+  }
+  if (itemId === 'can') {
+    return [
+      primary,
+      {
+        classId: 3,
+        className: 'flexible_plastic',
+        modelClassName: 'flexible_plastic',
+        displayName: 'Plastic Bag',
+        itemId: 'plastic-bag',
+        category: 'General waste',
+        confidence: 71,
+        box: { x: 0.06, y: 0.44, width: 0.44, height: 0.50 },
+      },
+    ];
+  }
+  return [primary];
 }
 
 export function demoPrediction(itemId: string, confidence: number): RecognitionPrediction {

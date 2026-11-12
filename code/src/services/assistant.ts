@@ -10,18 +10,32 @@ export type AssistantResponse = {
   itemId?: string;
 };
 
+export function stripEmojis(str: string): string {
+  return str
+    .replace(
+      /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}\u{2B50}\u{2B55}\u{FE0F}\u{200D}\u{203C}\u{2049}\u{25AA}-\u{25FE}]/gu,
+      '',
+    )
+    .trim();
+}
+
 // Built-in fallback knowledge chunks matching rag.txt
 const FALLBACK_RAG_CHUNKS = [
   {
     id: 'chunk-1',
-    title: 'Plastic Water Bottles & Beverage Containers',
+    title: 'Plastic Water Bottles & PET Beverage Containers',
     category: 'Recyclable',
     itemId: 'bottle',
-    text: `[Plastic Water Bottles & Beverage Containers]
+    text: `[Plastic Water Bottles & PET Beverage Containers]
 Category: Recyclable
-Disposal Instructions: Empty all liquids completely and rinse lightly. Leave the plastic cap screwed on or remove according to municipal instructions (most automated facilities prefer caps screwed on). Crush the bottle flat to conserve space in the recycling bin. Place in the yellow or blue commingled recycling bin.
-Caution: Bottles containing automotive fluids, pesticides, or toxic chemicals cannot be recycled in municipal bins. Take them to hazardous waste disposal.`,
-    keywords: ['plastic', 'bottle', 'bottles', 'water', 'beverage', 'drink', 'crush', 'cap', 'lid'],
+Disposal Instructions:
+- Empty all remaining liquids completely and rinse briefly to prevent contamination.
+- Keep the plastic cap screwed onto the bottle so both cap and bottle are processed together.
+- Flatten the bottle gently to conserve volume in transport and storage.
+- Place directly into the yellow-lid or blue commingled recycling bin loose, never inside a tied plastic bag.
+Caution:
+- Bottles that previously stored motor oils, lawn pesticides, or toxic solvents cannot be recycled curbside.`,
+    keywords: ['plastic', 'bottle', 'bottles', 'water', 'beverage', 'drink', 'crush', 'cap', 'lid', 'pet'],
   },
   {
     id: 'chunk-2',
@@ -30,96 +44,222 @@ Caution: Bottles containing automotive fluids, pesticides, or toxic chemicals ca
     itemId: 'box',
     text: `[Cardboard Boxes & Corrugated Packaging]
 Category: Recyclable / Compostable
-Disposal Instructions: Flatten all cardboard boxes before placing them in the paper recycling bin. Remove plastic bubble wrap, polystyrene foam peanuts, and heavy packing tape. Keep cardboard dry and clean. Clean cardboard is 100% recyclable into new paper products.
-Caution: Greasy cardboard (such as greasy pizza box bottoms) cannot be recycled because oil binds to paper fibers and ruins the pulp. Tear off the clean lid to recycle, and compost or discard the greasy bottom.`,
-    keywords: ['cardboard', 'box', 'boxes', 'pizza', 'packaging', 'tape', 'flatten', 'paper', 'greasy'],
+Disposal Instructions:
+- Flatten all corrugated cardboard boxes completely to conserve space in collection trucks.
+- Strip away plastic packing tape, styrofoam inserts, and clear plastic shipping sleeves.
+- Keep cardboard dry; damp cardboard weakens paper pulp fibers and harbors mold.
+- Place flattened clean boxes in your curbside paper and cardboard recycling bin.
+Caution:
+- Cardboard soaked in motor oil, paints, or thick animal grease cannot be repulped and belongs in general waste.`,
+    keywords: ['cardboard', 'box', 'boxes', 'packaging', 'tape', 'flatten', 'paper', 'shipping'],
   },
   {
     id: 'chunk-3',
-    title: 'Lithium-Ion & Household Batteries',
-    category: 'E-waste / Hazardous',
-    itemId: 'battery',
-    text: `[Lithium-Ion & Household Batteries]
-Category: E-waste / Hazardous
-Disposal Instructions: Never place any battery in standard household rubbish or curbside recycling bins. Tape the contact terminals of lithium, 9V, and button-cell batteries with clear non-conductive tape (electrical or packing tape) to prevent short circuits. Take them to designated battery drop-off bins at supermarkets, electronics stores, or local council collection points.
-Caution: Punctured, damaged, or compressed lithium batteries cause dangerous thermal runaways and fires in recycling trucks and facilities.`,
-    keywords: ['battery', 'batteries', 'lithium', 'alkaline', 'cell', 'rechargeable', 'terminal', 'tape', 'fire'],
+    title: 'Greasy Pizza Boxes & Oil-Contaminated Paperboard',
+    category: 'Organic / Compost / General waste',
+    itemId: 'box',
+    text: `[Greasy Pizza Boxes & Oil-Contaminated Paperboard]
+Category: Organic / Compost / General waste
+Disposal Instructions:
+- Inspect the pizza box: separate the clean cardboard top from the grease-soaked bottom.
+- Tear off the clean top half and place it with paper and cardboard recycling.
+- If your municipality has a green-lid FOGO service that accepts food-soiled paper, place the greasy bottom into the green bin.
+- If FOGO is not available, discard the greasy bottom into the general waste red-lid bin.
+Caution:
+- Never put cheese or grease-soaked cardboard into the dry recycling bin because oil ruins paper pulp.`,
+    keywords: ['pizza', 'greasy', 'oil', 'cheese', 'soiled', 'box'],
   },
   {
     id: 'chunk-4',
-    title: 'Food Scraps & Kitchen Organic Waste',
-    category: 'Organic / Compost',
-    itemId: 'scraps',
-    text: `[Food Scraps & Kitchen Organic Waste]
-Category: Organic / Compost
-Disposal Instructions: Collect vegetable peelings, fruit cores, coffee grounds, loose tea leaves, eggshells, and plate scrapings in a kitchen caddy lined with a certified compostable liner (look for AS 4736 or EN 13432). Empty into the green organics/FOGO bin or your home backyard compost bin.
-Caution: Do not place conventional plastic bags, treated timber, disposable nappies, or pet droppings into municipal organic collection bins.`,
-    keywords: ['food', 'scraps', 'organic', 'compost', 'vegetable', 'fruit', 'banana', 'apple', 'peel', 'coffee', 'tea'],
+    title: 'Household Lithium-Ion & Rechargeable Batteries',
+    category: 'E-waste / Hazardous',
+    itemId: 'battery',
+    text: `[Household Lithium-Ion & Rechargeable Batteries]
+Category: E-waste / Hazardous
+Disposal Instructions:
+- Never place any battery in standard household rubbish or curbside recycling bins.
+- Place clear insulating tape or electrical tape across the positive and negative terminals.
+- Deposit taped batteries into dedicated battery drop-off bins located at supermarkets, hardware stores, and electronics retailers.
+Caution:
+- Punctured, crushed, or short-circuited lithium batteries experience thermal runaway fires that endanger waste trucks.`,
+    keywords: ['battery', 'batteries', 'lithium', 'alkaline', 'cell', 'rechargeable', 'terminal', 'tape', 'fire'],
   },
   {
     id: 'chunk-5',
-    title: 'Glass Bottles & Food Jars',
-    category: 'Recyclable',
-    itemId: 'jar',
-    text: `[Glass Bottles & Food Jars]
-Category: Recyclable
-Disposal Instructions: Empty contents and rinse clean of food sauces and residue. Metal lids and jar caps can be removed and recycled with metals or left loosely screwed. Place clean glass bottles and jars into the glass or commingled recycling bin.
-Caution: Do not mix drinking glasses, Pyrex cookware, window glass, mirrors, or ceramics with bottle glass. They have different melting points and will contaminate the recycling batch.`,
-    keywords: ['glass', 'jar', 'jars', 'bottle', 'pyrex', 'broken', 'wine', 'sauce'],
+    title: 'Single-Use Alkaline & Zinc-Carbon Batteries',
+    category: 'E-waste / Hazardous',
+    itemId: 'battery',
+    text: `[Single-Use Alkaline & Zinc-Carbon Batteries]
+Category: E-waste / Hazardous
+Disposal Instructions:
+- Do not dispose of AA, AAA, C, D, or 9V alkaline batteries in the household rubbish bin.
+- Store depleted alkaline batteries in a dry plastic container out of direct heat.
+- Tape terminals on 9V batteries to prevent residual current loops.
+- Drop off at community battery recycling collection units in grocery stores or civic waste stations.
+Caution:
+- Leaking alkaline batteries should be handled with gloves and sealed in a clear bag before drop-off.`,
+    keywords: ['aa', 'aaa', 'alkaline', 'battery', 'batteries', 'zinc', 'torch'],
   },
   {
     id: 'chunk-6',
-    title: 'Aluminum Beverage Cans & Steel Food Tins',
-    category: 'Recyclable',
-    itemId: 'can',
-    text: `[Aluminum Beverage Cans & Steel Food Tins]
-Category: Recyclable
-Disposal Instructions: Empty drink cans and rinse food tins clean. For food cans, push the lid into the body so sharp edges are concealed. Aluminum and steel are infinitely recyclable without degradation. Place in the curbside recycling bin.
-Caution: Aerosol cans must be entirely empty before disposal. If any pressure or liquid remains, treat as hazardous waste.`,
-    keywords: ['can', 'cans', 'tin', 'tins', 'aluminum', 'aluminium', 'steel', 'metal', 'soda', 'aerosol'],
+    title: 'Kitchen Vegetable Peelings, Fruit Cores & Scraps',
+    category: 'Organic / Compost',
+    itemId: 'scraps',
+    text: `[Kitchen Vegetable Peelings, Fruit Cores & Scraps]
+Category: Organic / Compost
+Disposal Instructions:
+- Collect carrot peelings, apple cores, potato skins, cabbage leaves, and fruit trimmings in a kitchen caddy.
+- Line the caddy with newspaper or a certified compostable liner (look for AS 4736 or AS 5810 logos).
+- Empty contents into your green-lid FOGO organics bin or your backyard home compost bin.
+Caution:
+- Remove all plastic price-look-up (PLU) stickers and rubber bands from fruit before discarding.`,
+    keywords: ['food', 'scraps', 'organic', 'compost', 'vegetable', 'fruit', 'banana', 'apple', 'peel', 'core'],
   },
   {
     id: 'chunk-7',
-    title: 'Electronic Waste, Smartphones & Cables',
-    category: 'E-waste',
-    itemId: 'mobile-phone',
-    text: `[Electronic Waste, Smartphones & Cables]
-Category: E-waste
-Disposal Instructions: Wipe all private data and perform a factory reset on smartphones, tablets, and computers. Bundle accessories and power cables together. Bring unwanted electronics to certified e-waste drop-off kiosks, civic recycling centers, or retail take-back programs (e.g. MobileMuster or National Television and Computer Recycling Scheme).
-Caution: E-waste contains toxic heavy metals like lead, mercury, and cadmium which leach into soil and groundwater if sent to landfill.`,
-    keywords: ['electronic', 'electronics', 'phone', 'charger', 'cable', 'computer', 'laptop', 'e-waste', 'ewaste', 'device'],
+    title: 'Glass Bottles, Beverage Jars & Wine Bottles',
+    category: 'Recyclable',
+    itemId: 'jar',
+    text: `[Glass Bottles, Beverage Jars & Wine Bottles]
+Category: Recyclable
+Disposal Instructions:
+- Empty all liquid or food sauce residue and give a brief rinse with cold water.
+- Metal bottle caps and jar lids can be removed and dropped into metal recycling, or screwed back onto the clean glass bottle.
+- Place glass containers directly into your designated glass-only purple bin or mixed recycling bin.
+Caution:
+- Broken glass should be wrapped safely in newspaper and placed in general waste to protect workers.`,
+    keywords: ['glass', 'jar', 'jars', 'bottle', 'wine', 'sauce', 'beer'],
   },
   {
     id: 'chunk-8',
+    title: 'Ceramics, Pyrex, Window Panes & Drinking Glassware',
+    category: 'General waste',
+    itemId: 'jar',
+    text: `[Ceramics, Pyrex, Window Panes & Drinking Glassware]
+Category: General waste
+Disposal Instructions:
+- Wrap broken crockery, ceramic mugs, porcelain plates, Pyrex dishes, and drinking tumblers in newspaper.
+- Place securely into your red-lid general waste rubbish bin.
+- Intact crockery and glassware in good usable condition should be donated to charitable thrift stores.
+Caution:
+- Never dispose of ovenware, light fittings, or window glass in curbside glass recycling bins; different melting points ruin bottle batches.`,
+    keywords: ['pyrex', 'ceramic', 'mug', 'plate', 'dish', 'porcelain', 'mirror', 'window'],
+  },
+  {
+    id: 'chunk-9',
+    title: 'Aluminum Beverage Cans, Clean Foil & Trays',
+    category: 'Recyclable',
+    itemId: 'can',
+    text: `[Aluminum Beverage Cans, Clean Foil & Trays]
+Category: Recyclable
+Disposal Instructions:
+- Empty beverage cans completely; do not insert cigarette butts or rubbish inside the can.
+- For clean aluminum cooking foil, roll and crunch it together into a solid fist-sized ball.
+- Place loose cans and foil balls directly into the commingled recycling bin.
+Caution:
+- Foil coated in thick cheese, barbecue grease, or baked-on crust belongs in general waste.`,
+    keywords: ['can', 'cans', 'aluminum', 'aluminium', 'foil', 'soda', 'coke', 'beer'],
+  },
+  {
+    id: 'chunk-10',
+    title: 'Steel Food Tins, Aerosol Cans & Paint Tins',
+    category: 'Recyclable / Chemical Drop-off',
+    itemId: 'can',
+    text: `[Steel Food Tins, Aerosol Cans & Paint Tins]
+Category: Recyclable / Chemical Drop-off
+Disposal Instructions:
+- Rinse food soup, pet food, and tomato paste cans clean of residue.
+- Place the metal lid inside the tin and squeeze the top of the can slightly to keep the sharp lid contained inside.
+- Aerosol cans must be completely emptied of propellant and pressure before curbside recycling.
+Caution:
+- Aerosols containing pesticide, spray paint, or solvent residue, or aerosols that still hiss, must go to hazardous waste depots.`,
+    keywords: ['tin', 'tins', 'steel', 'metal', 'soup', 'pet food', 'aerosol', 'spray'],
+  },
+  {
+    id: 'chunk-11',
+    title: 'Smartphones, Tablets & Mobile Electronics',
+    category: 'E-waste',
+    itemId: 'mobile-phone',
+    text: `[Smartphones, Tablets & Mobile Electronics]
+Category: E-waste
+Disposal Instructions:
+- Back up personal photographs and documents to cloud storage or an external drive.
+- Perform a complete factory reset and remove SIM cards, memory cards, and security passcodes.
+- Bring the mobile phone, tablet, accessories, and charging cables to an authorized e-waste drop-off point or MobileMuster kiosk.
+Caution:
+- Never throw smart devices into red rubbish bins; their lithium pouches are easily pierced by garbage truck compactors.`,
+    keywords: ['electronic', 'electronics', 'phone', 'charger', 'cable', 'computer', 'laptop', 'e-waste', 'ewaste', 'device', 'mobile'],
+  },
+  {
+    id: 'chunk-12',
     title: 'Plastic Bags, Soft Plastics & Wrappers',
     category: 'General waste / Specialized Store Drop-off',
     itemId: 'plastic-bag',
     text: `[Plastic Bags, Soft Plastics & Wrappers]
 Category: General waste / Specialized Store Drop-off
-Disposal Instructions: Soft plastics such as bread bags, bubble wrap, cereal liners, and plastic shopping bags do NOT belong in standard household curbside recycling bins because they wrap around sorting machinery rollers. Bring them to specialized supermarket soft plastic collection bins where available, or dispose of in general waste.
-Caution: Never bag your recyclable items in a plastic bag before placing them in the yellow bin; recyclables must be placed loose.`,
+Disposal Instructions:
+- Keep all flexible soft plastics out of curbside yellow bins.
+- Collect clean, dry bread bags, bubble wrap, produce bags, and dry cleaning film into a dedicated bag.
+- Bring collected soft plastics to dedicated commercial supermarket return drop-offs where available.
+- If no dedicated soft plastic drop-off is accessible in your municipality, discard with general rubbish.
+Caution:
+- Never bag your recyclable items in a plastic bag before placing them in the yellow bin; recyclables must be placed loose.`,
     keywords: ['bag', 'bags', 'plastic bag', 'soft plastic', 'wrapper', 'film', 'bubble wrap', 'packet'],
   },
   {
-    id: 'chunk-9',
+    id: 'chunk-13',
     title: 'Expired Medications & Pharmaceutical Sharps',
     category: 'Hazardous',
     itemId: 'medical-waste',
     text: `[Expired Medications & Pharmaceutical Sharps]
 Category: Hazardous
-Disposal Instructions: Return all unused or expired prescription and over-the-counter medicines to a participating pharmacy for safe disposal via pharmaceutical take-back programs. Place used needles, syringes, and lancets into a certified puncture-proof sharps container.
-Caution: Never flush medicines down the toilet or wash them down household sinks. Pharmaceuticals contaminate the aquatic environment and water supply.`,
+Disposal Instructions:
+- Return all unused or expired prescription and over-the-counter medicines to a participating pharmacy for safe disposal via pharmaceutical take-back programs.
+- Place used needles, syringes, and lancets into a certified puncture-proof sharps container.
+Caution:
+- Never flush medicines down the toilet or wash them down household sinks. Pharmaceuticals contaminate the aquatic environment.`,
     keywords: ['medication', 'medicine', 'pills', 'pharmacy', 'sharps', 'needle', 'syringes', 'medical', 'prescription', 'drugs'],
   },
   {
-    id: 'chunk-10',
-    title: 'Clothing, Footwear & Textiles',
-    category: 'Donation / General waste',
-    text: `[Clothing, Footwear & Textiles]
+    id: 'chunk-14',
+    title: 'Clothing, Footwear & Clean Textiles',
+    category: 'Donation / Textile Recycling / General waste',
+    text: `[Clothing, Footwear & Clean Textiles]
 Category: Donation / Textile Recycling / General waste
-Disposal Instructions: Clean, wearable clothes and shoes in good condition should be donated to charitable thrift stores or deposited into textile collection bins. Severely worn or stained rags can be converted into industrial cleaning cloths or insulation.
-Caution: Textiles placed in curbside recycling bins are unprocessable contaminants that tangle sorting equipment.`,
+Disposal Instructions:
+- Clean and wash wearable shirts, pants, jackets, and shoes.
+- Deliver clean wearable garments to charity op-shops, clothing donation bins, or community thrift stores.
+- Severely worn, torn, or stained clothes should be taken to dedicated textile recycling drop points or cut into household cleaning rags.
+Caution:
+- Do not place any clothes, blankets, or shoes into curbside yellow recycling bins; textiles tangle conveyor rollers.`,
     keywords: ['clothes', 'clothing', 'shoes', 'textile', 'textiles', 'shirt', 'fabric', 'donation'],
+  },
+  {
+    id: 'chunk-15',
+    title: 'Used Engine Motor Oil & Car Fluids',
+    category: 'Hazardous / Automotive Drop-off',
+    text: `[Used Engine Motor Oil & Car Fluids]
+Category: Hazardous / Automotive Drop-off
+Disposal Instructions:
+- Drain used motor oil into a clean, leak-proof plastic or metal container with a tight cap.
+- Do not mix motor oil with brake fluid, antifreeze coolant, water, or solvents.
+- Deliver used oil to an automotive workshop, service station, or council oil recovery depot for free recycling.
+Caution:
+- Pouring motor oil down drains or onto soil is strictly illegal and permanently pollutes aquifers.`,
+    keywords: ['oil', 'motor oil', 'engine', 'car', 'fluid', 'antifreeze', 'coolant'],
+  },
+  {
+    id: 'chunk-16',
+    title: 'Thermal Receipts & Carbon Copy Paper',
+    category: 'General waste',
+    text: `[Thermal Receipts & Carbon Copy Paper]
+Category: General waste
+Disposal Instructions:
+- Place supermarket shopping receipts, parking tickets, and ATM receipts into the red-lid general waste bin.
+- Do not put thermal cash register receipts into the paper recycling bin.
+Caution:
+- Thermal receipt paper is coated with BPA and chemical dyes that contaminate paper recycling pulp and toilet paper.`,
+    keywords: ['receipt', 'receipts', 'thermal', 'docket', 'ticket'],
   },
 ];
 
@@ -177,7 +317,26 @@ function localClientRag(query: string, contextItem?: WasteItem): AssistantRespon
   const normalizedScore = Math.min(0.98, Number((topMatch.score / (words.length * 3.5 || 3)).toFixed(2)));
 
   const matchedItem = catalog.find((c) => c.id === primary.itemId);
-  const reply = `${primary.title} (${primary.category}):\n\n${primary.text.replace(/\[[^\]]+\]\s*/, '')}`;
+
+  const instMatch = primary.text.match(/Disposal Instructions:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)/s);
+  const instructions = instMatch ? instMatch[1].trim() : '';
+  const cautionMatch = primary.text.match(/Caution:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)/s);
+  const caution = cautionMatch ? cautionMatch[1].trim() : '';
+
+  const lines: string[] = [`**${primary.title}** (${primary.category})`];
+  if (instructions) {
+    const rawLines = instructions.split('\n').map((l) => l.trim().replace(/^[-•*]\s*/, '')).filter(Boolean);
+    for (const l of rawLines) {
+      lines.push(`• ${l}`);
+    }
+  }
+  if (caution) {
+    const rawCautionLines = caution.split('\n').map((l) => l.trim().replace(/^[-•*]\s*/, '')).filter(Boolean);
+    for (const c of rawCautionLines) {
+      lines.push(`• Caution: ${c}`);
+    }
+  }
+  const reply = stripEmojis(lines.join('\n\n'));
 
   const trace: RagTrace = {
     trace_id: `trace-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
@@ -254,7 +413,7 @@ export async function askAssistant(
       );
 
       return {
-        reply: data.reply,
+        reply: stripEmojis(data.reply),
         context: data.context || 'Context retrieved from rag.txt',
         traces: data.traces,
         itemId: matched?.id,

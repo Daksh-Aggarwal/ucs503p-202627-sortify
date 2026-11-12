@@ -141,14 +141,14 @@ def detect_profile(names: dict[int, str]) -> str:
 
 
 def get_available_models() -> list[dict[str, Any]]:
-    """Scan the models directory and return available model metadata."""
+    """Scan the models directory and return available model metadata with clear dataset lineage."""
     models = []
     # Primary default model
     default_path = MODELS_DIR / "best.pt"
     if default_path.is_file():
         models.append({
             "id": "best.pt",
-            "name": "YOLOv11 Streamlined (8 Classes - Default)",
+            "name": "YOLOv11s v3 Generalization (8 Classes - Production Default)",
             "is_default": True,
         })
 
@@ -157,11 +157,18 @@ def get_available_models() -> list[dict[str, Any]]:
         for p in sorted(MODELS_DIR.glob("*.pt")):
             if p.name == "best.pt":
                 continue
+            arch = "YOLOv11m" if "11m" in p.name.lower() else "YOLOv11s"
             display_name = p.stem.replace("_", " ").title()
-            if "8class" in p.name.lower():
-                display_name = "YOLOv11 (8 Classes - Streamlined)"
-            elif "10class" in p.name.lower():
-                display_name = "YOLOv11 (10 Classes - Unified)"
+            if "v3" in p.name.lower() or "generalization" in p.name.lower():
+                display_name = f"{arch} (8 Classes - v3 Generalization Dataset)"
+            elif "v2" in p.name.lower():
+                display_name = f"{arch} (8 Classes - v2 Curated Dataset)"
+            elif "real_organic" in p.name.lower():
+                display_name = f"{arch} (8 Classes - Real Organic Augmentation)"
+            elif "streamlined" in p.name.lower() or "v1" in p.name.lower() or "8class" in p.name.lower():
+                display_name = f"{arch} (8 Classes - Old 8-Class Streamlined Dataset)"
+            elif "10cls" in p.name.lower() or "10class" in p.name.lower():
+                display_name = f"{arch} (10 Classes - Old 10-Class Legacy Dataset)"
             models.append({
                 "id": p.name,
                 "name": display_name,

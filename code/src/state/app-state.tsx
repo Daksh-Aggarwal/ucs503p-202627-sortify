@@ -145,6 +145,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
               ...parsed,
               location: '',
               catalogVersion: 2,
+              messages: [], // Assistant conversations are ephemeral
               items:
                 parsed.catalogVersion === 2 ||
                 parsed.items.some((item: WasteItem) => item.id === 'mobile-phone')
@@ -167,7 +168,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   useEffect(() => {
     if (ready) {
       writes.current = writes.current
-        .then(() => AsyncStorage.setItem(KEY, JSON.stringify({ ...state, location: '' })))
+        .then(() => AsyncStorage.setItem(KEY, JSON.stringify({ ...state, messages: [], location: '' })))
         .catch(() =>
           setNotice(
             'Changes are available for this session, but could not be saved on this device.',

@@ -5,21 +5,262 @@ import { useApp, uniqueId } from '@/state/app-state';
 import { Badge, Button, C, Card, Field, Heading, Icon, Row, Txt } from '@/components/sortify/ui';
 import { askAssistant } from '@/services/assistant';
 
+// Strip unicode emojis (e.g. ⚠️, ♻️, etc.) to enforce zero-emoji rule
+function stripEmojis(str: string): string {
+  return str.replace(
+    /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{2300}-\u{23FF}\u{2B50}\u{2B55}\u{203C}\u{2049}\u{25AA}-\u{25FE}]/gu,
+    '',
+  );
+}
+
+// Parses inline bold and italic without raw asterisks
+function renderInlineFormatted(rawText: string, baseColor = C.ink) {
+  const clean = stripEmojis(rawText);
+  // Match **bold** or __bold__ or *italic* or _italic_
+  const parts = clean.split(/(\*\*[^*]+?\*\*|__[^_]+?__|\*[^*]+?\*|_[^_]+?_)/g);
+  return parts.map((part, i) => {
+    if (
+      (part.startsWith('**') && part.endsWith('**') && part.length >= 4) ||
+      (part.startsWith('__') && part.endsWith('__') && part.length >= 4)
+    ) {
+      return (
+        <Txt key={i} weight="700" color={baseColor} size={13}>
+          {part.slice(2, -2)}
+        </Txt>
+      );
+    }
+    if (
+      (part.startsWith('*') && part.endsWith('*') && part.length >= 2) ||
+      (part.startsWith('_') && part.endsWith('_') && part.length >= 2)
+    ) {
+      return (
+        <Txt key={i} color={baseColor} size={13} style={{ fontStyle: 'italic' }}>
+          {part.slice(1, -1)}
+        </Txt>
+      );
+    }
+    return (
+      <Txt key={i} color={baseColor} size={13}>
+        {part}
+      </Txt>
+    );
+  });
+}
+
+function AssistantMessageRenderer({ text }: { text: string }) {
+  const clean = stripEmojis(text);
+  const rawLines = clean
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  return (
+    <View style={{ gap: 8, width: '100%' }}>
+      {rawLines.map((line, idx) => {
+        // 1. Header with title and optional category: **Title** (Category) or **Title**:
+        const headerMatch = line.match(/^\*\*(.*?)\*\*(?::\s*|\s*)(?:\((.*?)\))?$/);
+        if (headerMatch) {
+          const title = headerMatch[1];
+          const category = headerMatch[2];
+          return (
+            <View
+              key={idx}
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 2,
+              }}
+            >
+              <Txt size={14} weight="700" color={C.ink}>
+                {title}
+              </Txt>
+              {category && <Badge text={category} />}
+            </View>
+          );
+        }
+
+        // 2. Caution / Warning block: e.g. Caution: ... or **Caution**: ... or Warning: ...
+        const cautionMatch = line.match(/^(?:\*\*Caution\*\*|Caution|Warning)(?::\s*|\s+)(.*)$/i);
+        if (cautionMatch) {
+          const cautionBody = cautionMatch[1].trim();
+          return (
+            <View
+              key={idx}
+              style={{
+                backgroundColor: '#FFFBEB',
+                borderColor: '#FDE68A',
+                borderWidth: 1,
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 9,
+                marginTop: 2,
+                gap: 3,
+              }}
+            >
+              <Row style={{ gap: 6, alignItems: 'center' }}>
+                <Txt size={11} weight="700" color="#92400E" style={{ letterSpacing: 0.4 }}>
+                  CAUTION
+                </Txt>
+              </Row>
+              <Txt size={12} color="#78350F" style={{ lineHeight: 18 }}>
+                {renderInlineFormatted(cautionBody, '#78350F')}
+              </Txt>
+            </View>
+          );
+        }
+
+        // 3. Related note block: e.g. Note (...): ... or *Related note on ...*: ...
+        const noteMatch = line.match(
+          /^(?:\*?Related note(?:\s+on\s+([^:*]+))?\*?|Note(?:\s*\(([^)]+)\))?)(?::\s*|\s+)(.*)$/i,
+        );
+        if (noteMatch) {
+          const topic = (noteMatch[1] || noteMatch[2] || '').trim();
+          const noteBody = noteMatch[3].trim();
+          return (
+            <View
+              key={idx}
+              style={{
+                backgroundColor: '#F3F6F0',
+                borderColor: '#DDE5D6',
+                borderWidth: 1,
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                marginTop: 2,
+                gap: 3,
+              }}
+            >
+              <Txt size={11} weight="700" color={C.green}>
+                {topic ? `Related: ${topic}` : 'NOTE'}
+              </Txt>
+              <Txt size={12} color={C.ink} style={{ lineHeight: 18 }}>
+                {renderInlineFormatted(noteBody, C.ink)}
+              </Txt>
+            </View>
+          );
+        }
+
+        // 4. Bullet points: starts with •, -, or * (when not **)
+        const bulletMatch = line.match(/^(?:•|\-|\*(?!\*))\s+(.*)$/);
+        if (bulletMatch) {
+          return (
+            <View
+              key={idx}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 8,
+                paddingLeft: 2,
+              }}
+            >
+              <Txt size={13} color={C.green} weight="700" style={{ lineHeight: 20 }}>
+                •
+              </Txt>
+              <Txt size={13} color={C.ink} style={{ flex: 1, lineHeight: 20 }}>
+                {renderInlineFormatted(bulletMatch[1])}
+              </Txt>
+            </View>
+          );
+        }
+
+        // 5. Numbered list: starts with 1., 2., etc.
+        const numMatch = line.match(/^(\d+)\.\s+(.*)$/);
+        if (numMatch) {
+          return (
+            <View
+              key={idx}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 8,
+                paddingLeft: 2,
+              }}
+            >
+              <Txt size={12} color={C.green} weight="700" style={{ lineHeight: 20, minWidth: 16 }}>
+                {numMatch[1]}.
+              </Txt>
+              <Txt size={13} color={C.ink} style={{ flex: 1, lineHeight: 20 }}>
+                {renderInlineFormatted(numMatch[2])}
+              </Txt>
+            </View>
+          );
+        }
+
+        // 6. If multiple sentences are in one paragraph (e.g. unformatted instructions):
+        const sentences = line.split(/(?<=[.!?])\s+(?=[A-Z])/).filter((s) => s.trim().length > 0);
+        if (sentences.length > 1 && !line.startsWith('I ') && !line.startsWith('You ')) {
+          return (
+            <View key={idx} style={{ gap: 6, marginVertical: 2 }}>
+              {sentences.map((sent, sIdx) => (
+                <View
+                  key={sIdx}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'flex-start',
+                    gap: 8,
+                    paddingLeft: 2,
+                  }}
+                >
+                  <Txt size={13} color={C.green} weight="700" style={{ lineHeight: 20 }}>
+                    •
+                  </Txt>
+                  <Txt size={13} color={C.ink} style={{ flex: 1, lineHeight: 20 }}>
+                    {renderInlineFormatted(sent)}
+                  </Txt>
+                </View>
+              ))}
+            </View>
+          );
+        }
+
+        // 7. Regular paragraph with styled bold/italic tokens
+        return (
+          <Txt key={idx} size={13} color={C.ink} style={{ lineHeight: 21 }}>
+            {renderInlineFormatted(line)}
+          </Txt>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function AssistantScreen() {
-  const params = useLocalSearchParams<{ item?: string }>();
+  const params = useLocalSearchParams<{ item?: string; itemName?: string; fromScan?: string }>();
   const { state, update } = useApp();
   const [draft, setDraft] = useState('');
   const [openContexts, setOpenContexts] = useState<Record<string, boolean>>({});
   const messagesRef = useRef<ScrollView>(null);
   const { height } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
-  const [confirmClear, setConfirmClear] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
+
   const context = state.items.find((i) => i.id === params.item);
+  const itemName = context?.name || params.itemName || '';
+
+  // Ephemeral conversations: reset previous messages when entering with an item query
+  const scanItemRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (params.item && params.item !== scanItemRef.current) {
+      scanItemRef.current = params.item;
+      update((s) => ({ ...s, messages: [] }));
+    }
+  }, [params.item, update]);
+
+  // 2 Floating suggestion chips
+  const suggestionChips = itemName
+    ? [
+        `How do I dispose of ${itemName.toLowerCase()}?`,
+        `Which bin does ${itemName.toLowerCase()} go into?`,
+      ]
+    : ['Where does a plastic bottle go?', 'What do I do with old batteries?'];
 
   function toggleContext(messageId: string) {
     setOpenContexts((prev) => ({ ...prev, [messageId]: !prev[messageId] }));
+  }
+
+  function resetConversation() {
+    update((s) => ({ ...s, messages: [] }));
   }
 
   async function send(value = draft) {
@@ -61,6 +302,7 @@ export default function AssistantScreen() {
       setBusy(false);
     }
   }
+
   return (
     <View style={{ maxWidth: 930, width: '100%', alignSelf: 'center' }}>
       <Heading title="Assistant" />
@@ -68,17 +310,44 @@ export default function AssistantScreen() {
         <Row
           style={{
             paddingHorizontal: 20,
-            paddingVertical: 14,
+            paddingVertical: 12,
             borderBottomWidth: 1,
             borderColor: C.line,
             justifyContent: 'space-between',
+            alignItems: 'center',
             flexWrap: 'wrap',
+            gap: 8,
           }}
         >
-          <Txt size={12} color={C.muted}>
-            Answers from rag.txt
-          </Txt>
-          <Badge text="RAG (Qwen 0.5B)" />
+          <Row style={{ gap: 8, alignItems: 'center' }}>
+            <Txt size={12} color={C.muted}>
+              Answers from rag.txt
+            </Txt>
+            <Badge text="RAG (Qwen 0.5B)" />
+          </Row>
+          {state.messages.length > 0 && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Reset conversation"
+              onPress={resetConversation}
+              style={({ pressed, hovered }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 8,
+                backgroundColor: pressed ? '#FEE2E2' : hovered ? '#FEF2F2' : '#F9FAFB',
+                borderWidth: 1,
+                borderColor: '#E5E7EB',
+              })}
+            >
+              <Icon name="reset" size={13} color="#991B1B" />
+              <Txt size={11} weight="600" color="#991B1B">
+                Reset chat
+              </Txt>
+            </Pressable>
+          )}
         </Row>
         <ScrollView
           ref={messagesRef}
@@ -105,17 +374,12 @@ export default function AssistantScreen() {
                 What are you sorting?
               </Txt>
               <Txt size={13} color={C.muted} style={{ textAlign: 'center' }}>
-                Ask about an item or choose a question.
+                Ask about an item or choose a question below.
               </Txt>
               <View
                 style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}
               >
-                {[
-                  context
-                    ? `How do I dispose of ${context.name.toLowerCase()}?`
-                    : 'Where does a plastic bottle go?',
-                  'What do I do with old batteries?',
-                ].map((q) => (
+                {suggestionChips.map((q) => (
                   <Button key={q} title={q} variant="secondary" onPress={() => send(q)} />
                 ))}
               </View>
@@ -143,13 +407,15 @@ export default function AssistantScreen() {
                       gap: 12,
                     }}
                   >
-                    <Txt
-                      size={13}
-                      color={m.role === 'user' ? 'white' : C.ink}
-                      style={{ lineHeight: 22, flex: 1 }}
-                    >
-                      {m.text}
-                    </Txt>
+                    {m.role === 'user' ? (
+                      <Txt size={13} color="white" style={{ lineHeight: 22, flex: 1 }}>
+                        {m.text}
+                      </Txt>
+                    ) : (
+                      <View style={{ flex: 1 }}>
+                        <AssistantMessageRenderer text={m.text} />
+                      </View>
+                    )}
                     {m.role === 'assistant' && (!!m.ragContext || !!m.ragTraces) && (
                       <Pressable
                         accessibilityRole="button"
@@ -225,7 +491,9 @@ export default function AssistantScreen() {
                               borderColor: '#EDF0E8',
                             }}
                           >
-                            <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                            <Row
+                              style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}
+                            >
                               <Txt size={11} color={C.muted}>
                                 Base model:
                               </Txt>
@@ -233,7 +501,9 @@ export default function AssistantScreen() {
                                 {m.ragTraces.model || 'Qwen/Qwen2.5-0.5B-Instruct'}
                               </Txt>
                             </Row>
-                            <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                            <Row
+                              style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}
+                            >
                               <Txt size={11} color={C.muted}>
                                 Retrieval latency:
                               </Txt>
@@ -241,7 +511,9 @@ export default function AssistantScreen() {
                                 {m.ragTraces.retrieval_ms ?? 12} ms
                               </Txt>
                             </Row>
-                            <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                            <Row
+                              style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}
+                            >
                               <Txt size={11} color={C.muted}>
                                 Generation latency:
                               </Txt>
@@ -249,7 +521,9 @@ export default function AssistantScreen() {
                                 {m.ragTraces.generation_ms ?? 45} ms
                               </Txt>
                             </Row>
-                            <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                            <Row
+                              style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}
+                            >
                               <Txt size={11} color={C.muted}>
                                 Total pipeline latency:
                               </Txt>
@@ -258,7 +532,13 @@ export default function AssistantScreen() {
                               </Txt>
                             </Row>
                             {!!m.ragTraces.trace_id && (
-                              <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+                              <Row
+                                style={{
+                                  justifyContent: 'space-between',
+                                  flexWrap: 'wrap',
+                                  gap: 6,
+                                }}
+                              >
                                 <Txt size={10} color={C.muted}>
                                   Trace ID:
                                 </Txt>
@@ -291,7 +571,59 @@ export default function AssistantScreen() {
             </Txt>
           )}
         </ScrollView>
-        <View style={{ padding: 20, borderTopWidth: 1, borderColor: C.line, gap: 10 }}>
+
+        {/* 2 Floating suggestion chips */}
+        <View
+          style={{
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderTopWidth: 1,
+            borderColor: C.line,
+            backgroundColor: '#F8F9F4',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 8,
+            alignItems: 'center',
+          }}
+        >
+          <Txt size={11} weight="600" color={C.muted} style={{ marginRight: 2 }}>
+            Suggested:
+          </Txt>
+          {suggestionChips.map((chip, idx) => (
+            <Pressable
+              key={idx}
+              accessibilityRole="button"
+              accessibilityLabel={chip}
+              disabled={busy}
+              onPress={() => send(chip)}
+              style={({ pressed, hovered }) => ({
+                backgroundColor: pressed ? '#E2EBD6' : hovered ? '#EBF0E4' : '#FFFFFF',
+                borderColor: '#CBD8C2',
+                borderWidth: 1,
+                borderRadius: 20,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                opacity: busy ? 0.5 : 1,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 2,
+                elevation: 1,
+              })}
+            >
+              <Icon name="sparkle" size={13} color={C.green} />
+              <Txt size={12} weight="500" color={C.green}>
+                {chip}
+              </Txt>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Chat input field */}
+        <View style={{ padding: 16, borderTopWidth: 1, borderColor: C.line, gap: 10 }}>
           <Row style={{ alignItems: 'flex-end' }}>
             <View style={{ flex: 1 }}>
               <Field
@@ -317,30 +649,13 @@ export default function AssistantScreen() {
         </View>
       </Card>
       <Row style={{ justifyContent: 'flex-end', marginTop: 12, flexWrap: 'wrap' }}>
-        {confirmClear ? (
-          <>
-            <Txt size={12} color={C.muted}>
-              Clear this local conversation?
-            </Txt>
-            <Button
-              title="Clear conversation"
-              variant="danger"
-              onPress={() => {
-                update((s) => ({ ...s, messages: [] }));
-                setConfirmClear(false);
-              }}
-            />
-            <Button title="Cancel" variant="ghost" onPress={() => setConfirmClear(false)} />
-          </>
-        ) : (
-          <Button
-            title="New conversation"
-            icon="plus"
-            variant="ghost"
-            disabled={busy || !state.messages.length}
-            onPress={() => setConfirmClear(true)}
-          />
-        )}
+        <Button
+          title="New conversation"
+          icon="reset"
+          variant="ghost"
+          disabled={busy || !state.messages.length}
+          onPress={resetConversation}
+        />
       </Row>
     </View>
   );

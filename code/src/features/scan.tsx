@@ -8,9 +8,10 @@ import { Badge, Button, C, Card, Heading, Icon, ItemArt, Row, Txt } from '@/comp
 import {
   CONFIDENCE_LEVELS,
   ConfidenceTier,
-  demoPrediction,
+  demoPredictions,
   fetchAvailableModels,
   ModelOption,
+  RecognitionPrediction,
   recognizeImage,
   serializeBox,
 } from '@/services/recognition';
@@ -31,9 +32,12 @@ export default function ScanScreen() {
 
   // Model switching
   const [models, setModels] = useState<ModelOption[]>([
-    { id: 'best.pt', name: 'YOLOv11 Streamlined (8 Classes - Default)', is_default: true },
-    { id: 'yolov11_8class.pt', name: 'YOLOv11 (8 Classes - Streamlined)' },
-    { id: 'yolov11_10class.pt', name: 'YOLOv11 (10 Classes - Unified)' },
+    { id: 'best.pt', name: 'YOLOv11s v3 Generalization (8 Classes - Production Default)', is_default: true },
+    { id: 'yolo11s_8cls_v3_generalization.pt', name: 'YOLOv11s (8 Classes - v3 Generalization Dataset)' },
+    { id: 'yolo11s_8cls_v2_curated.pt', name: 'YOLOv11s (8 Classes - v2 Curated Dataset)' },
+    { id: 'yolo11s_8cls_real_organic.pt', name: 'YOLOv11s (8 Classes - Real Organic Augmentation)' },
+    { id: 'yolo11s_8cls_v1_streamlined_old_dataset.pt', name: 'YOLOv11s (8 Classes - Old 8-Class Streamlined Dataset)' },
+    { id: 'yolo11s_10cls_legacy_old_dataset.pt', name: 'YOLOv11s (10 Classes - Old 10-Class Legacy Dataset)' },
   ]);
   const [selectedModel, setSelectedModel] = useState<string>('best.pt');
   const [showModelPicker, setShowModelPicker] = useState<boolean>(false);
@@ -88,23 +92,37 @@ export default function ScanScreen() {
   }
 
   function openResult(
-    prediction: ReturnType<typeof demoPrediction>,
+    predictions: RecognitionPrediction[],
     source: 'demo' | 'model',
     imageUri?: string,
   ) {
+    const primary = predictions[0];
+    if (!primary) return;
+
+    const itemsData = predictions.map((p) => ({
+      id: p.itemId,
+      confidence: p.confidence,
+      className: p.className,
+      modelClassName: p.modelClassName,
+      displayName: p.displayName,
+      category: p.category,
+      box: p.box,
+    }));
+
     router.push({
       pathname: '/result',
       params: {
-        id: prediction.itemId,
-        confidence: String(prediction.confidence),
+        id: primary.itemId,
+        confidence: String(primary.confidence),
         source,
-        detectorClass: prediction.className,
-        modelClass: prediction.modelClassName,
-        displayName: prediction.displayName,
+        detectorClass: primary.className,
+        modelClass: primary.modelClassName,
+        displayName: primary.displayName,
         modelUsed: selectedModel,
         confidenceTier: selectedConfidence,
         confidenceThreshold: String(currentConfidenceObj.thresholdPercent),
-        bbox: serializeBox(prediction.box),
+        bbox: serializeBox(primary.box),
+        itemsJson: JSON.stringify(itemsData),
         ...(imageUri ? { imageUri } : {}),
       },
     });
@@ -121,7 +139,7 @@ export default function ScanScreen() {
         );
         return;
       }
-      openResult(demoPrediction(sample, uncertain ? 46 : 98), 'demo');
+      openResult(demoPredictions(sample, uncertain ? 46 : 98), 'demo');
     }, 1600);
   }
 
@@ -130,8 +148,8 @@ export default function ScanScreen() {
     setBusy(true);
     setError('');
     try {
-      const prediction = await recognizeImage(uri, selectedModel, currentConfidenceObj.value);
-      openResult(prediction, 'model', uri);
+      const predictions = await recognizeImage(uri, selectedModel, currentConfidenceObj.value);
+      openResult(predictions, 'model', uri);
     } catch (reason) {
       setError(
         reason instanceof Error

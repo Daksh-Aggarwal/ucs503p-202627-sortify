@@ -26,6 +26,16 @@ RAG_CANDIDATE_PATHS = [
     Path("rag.txt"),
 ]
 
+EMOJI_PATTERN = re.compile(
+    r"[\U00010000-\U0010ffff\u2600-\u27ff\ufe00-\ufe0f\u200d\u2300-\u23ff\u2b50\u2b55\u203c\u2049\u25aa-\u25fe]",
+    flags=re.UNICODE,
+)
+
+
+def remove_emojis(text: str) -> str:
+    """Strip emojis from text to enforce zero-emoji output rule."""
+    return EMOJI_PATTERN.sub("", text).strip()
+
 
 @dataclass
 class KnowledgeChunk:
@@ -209,10 +219,10 @@ class RagEngine:
     def _generate_grounded_response(
         self, query: str, context_chunks: list[KnowledgeChunk]
     ) -> str:
-        """Generate response grounded in retrieved context from rag.txt according to Qwen instructions."""
+        """Generate response grounded in retrieved context from rag.txt in concise bulleted format without emojis."""
         if not context_chunks:
             return (
-                "I couldn’t find specific guidance for that item in rag.txt. "
+                "I could not find specific guidance for that item in the waste guide. "
                 "Try asking about common materials like plastic bottles, cardboard, batteries, organic food scraps, "
                 "or e-waste, or check the waste guide."
             )
@@ -224,26 +234,46 @@ class RagEngine:
 
         # Parse instructions and cautions if formatted in chunk
         body = primary.content
-        inst_match = re.search(r"Disposal Instructions:\s*(.*?)(?=\n[A-Z][a-zA-Z\s]+:|$)", body, re.DOTALL | re.IGNORECASE)
+        inst_match = re.search(r"Disposal Instructions:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)", body, re.DOTALL | re.IGNORECASE)
         if inst_match:
             instructions = inst_match.group(1).strip()
         else:
             instructions = body.strip()
 
-        caution_match = re.search(r"Caution:\s*(.*?)(?=\n[A-Z][a-zA-Z\s]+:|$)", body, re.DOTALL | re.IGNORECASE)
+        caution_match = re.search(r"Caution:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)", body, re.DOTALL | re.IGNORECASE)
         if caution_match:
             cautions = caution_match.group(1).strip()
 
-        # Format as concise assistant response
-        parts = [f"**{primary.title}** ({category}):\n{instructions}"]
+        # Format as clean, structured bullet points without emojis
+        parts = [f"**{primary.title}** ({category})"]
+        if instructions:
+            for line in instructions.splitlines():
+                clean_line = line.strip().lstrip("- •* ")
+                if clean_line:
+                    parts.append(f"• {clean_line}")
+
+        mat_match = re.search(r"Material & Recycling Context:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)", body, re.DOTALL | re.IGNORECASE)
+        if mat_match:
+            mat_lines = [l.strip().lstrip("- •* ") for l in mat_match.group(1).strip().splitlines() if l.strip()]
+            if mat_lines:
+                parts.append(f"• Material note: {mat_lines[0]}")
+
         if cautions:
-            parts.append(f"⚠️ **Caution**: {cautions}")
+            clean_cautions = [l.strip().lstrip("- •* ") for l in cautions.splitlines() if l.strip()]
+            for c in clean_cautions:
+                parts.append(f"• Caution: {c}")
+
+        reg_match = re.search(r"Regional Notes:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)", body, re.DOTALL | re.IGNORECASE)
+        if reg_match:
+            reg_lines = [l.strip().lstrip("- •* ") for l in reg_match.group(1).strip().splitlines() if l.strip()]
+            if reg_lines:
+                parts.append(f"• Regional note: {reg_lines[0]}")
 
         if len(context_chunks) > 1:
             secondary = context_chunks[1]
-            parts.append(f"\n*Related note on {secondary.title}*: {secondary.content.strip()[:180]}...")
+            parts.append(f"• Related category ({secondary.title}): {secondary.category}")
 
-        return "\n\n".join(parts)
+        return remove_emojis("\n\n".join(parts))
 
     def answer_query(self, query: str) -> tuple[str, str, RagTrace]:
         """Execute complete RAG pipeline with retrieval, Qwen model prompt, generation, and trace capture."""
@@ -284,11 +314,15 @@ class RagEngine:
         system_prompt = (
             f"You are Sortify's waste sorting assistant powered by the lightweight base model {QWEN_MODEL_NAME}.\n"
             f"Answer the user query accurately and concisely using ONLY the provided context from rag.txt.\n"
-            f"If the answer is not in the context, state that clearly."
+            f"Strict output constraints:\n"
+            f"- Use concise bullet points for disposal steps.\n"
+            f"- Use NO emojis anywhere in the response (zero emojis, no unicode warning symbols).\n"
+            f"- Use plain text labels like 'Caution:' or 'Note:' without emoji icons.\n"
+            f"- If the answer is not in the context, state that clearly."
         )
         prompt_with_context = (
             f"Context from rag.txt:\n{context_text}\n\nUser question: {query}\n\n"
-            f"Provide a helpful waste sorting recommendation based strictly on the context."
+            f"Provide a concise waste sorting recommendation formatted in clean bullet points with zero emojis based strictly on the context."
         )
         pipeline_steps.append({
             "step": "context_injection",
@@ -304,10 +338,10 @@ class RagEngine:
         gen_start = time.perf_counter()
         external_reply = self._call_qwen_external_api(prompt_with_context, system_prompt)
         if external_reply:
-            reply = external_reply
+            reply = remove_emojis(external_reply)
             model_used = f"{QWEN_MODEL_NAME} (API)"
         else:
-            reply = self._generate_grounded_response(query, [c for c, _ in retrieved])
+            reply = remove_emojis(self._generate_grounded_response(query, [c for c, _ in retrieved]))
             model_used = f"{QWEN_MODEL_NAME} (Grounded Engine)"
 
         generation_ms = (time.perf_counter() - gen_start) * 1000.0

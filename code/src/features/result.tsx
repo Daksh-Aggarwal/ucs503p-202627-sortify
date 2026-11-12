@@ -1,12 +1,12 @@
 import { Disclosure } from '@/components/sortify/controls';
-import { useState } from 'react';
-import { View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { uniqueId, useApp } from '@/state/app-state';
-import { locationGuidance } from '@/data/catalog';
+import { Category, locationGuidance } from '@/data/catalog';
 import { NearbyDisposal } from '@/components/sortify/nearby-disposal';
 import { DetectionPreview } from '@/components/sortify/detection-preview';
-import { parseBox } from '@/services/recognition';
+import { BoundingBox, parseBox } from '@/services/recognition';
 import {
   Badge,
   Button,
@@ -20,6 +20,16 @@ import {
   Row,
   Txt,
 } from '@/components/sortify/ui';
+
+type DetectedItemPayload = {
+  id: string;
+  confidence: number;
+  className: string;
+  modelClassName: string;
+  displayName: string;
+  category: Category;
+  box: BoundingBox;
+};
 
 export default function ResultScreen() {
   const params = useLocalSearchParams<{
@@ -35,21 +45,64 @@ export default function ResultScreen() {
     modelUsed?: string;
     confidenceTier?: string;
     confidenceThreshold?: string;
+    itemsJson?: string;
   }>();
   const { state, update, notify, saveScan } = useApp();
-  const [savedId, setSavedId] = useState(params.scanId || '');
+  const [savedByItem, setSavedByItem] = useState<Record<number, string>>(() => {
+    const initial: Record<number, string> = {};
+    if (params.scanId) {
+      initial[0] = params.scanId;
+    }
+    return initial;
+  });
+  const [confirmedByItem, setConfirmedByItem] = useState<Record<number, boolean>>({});
   const [correcting, setCorrecting] = useState(false);
   const [correction, setCorrection] = useState('');
-  const [confirmed, setConfirmed] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const item = state.items.find((i) => i.id === params.id);
-  const saved = state.scans.find((s) => s.id === savedId);
-  const confidence = saved?.confidence ?? Number(params.confidence || 0);
-  const low = confidence > 0 && confidence < 70 && !confirmed && !saved;
+  const handleSelectIndex = (index: number) => {
+    setActiveIndex(index);
+    setCorrecting(false);
+    setCorrection('');
+  };
+
+  // Parse all detected items from scan
+  const detectedItems: DetectedItemPayload[] = useMemo(() => {
+    try {
+      if (params.itemsJson) {
+        const parsed = JSON.parse(params.itemsJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {
+      // fallback
+    }
+    const defaultBox = parseBox(params.bbox) || { x: 0.15, y: 0.15, width: 0.7, height: 0.7 };
+    return [
+      {
+        id: params.id,
+        confidence: Number(params.confidence || 0),
+        className: params.detectorClass || '',
+        modelClassName: params.modelClass || '',
+        displayName: params.displayName || '',
+        category: (params.detectorClass as Category) || 'General waste',
+        box: defaultBox,
+      },
+    ];
+  }, [params.itemsJson, params.id, params.confidence, params.detectorClass, params.modelClass, params.displayName, params.bbox]);
+
+  // Current active detected item being inspected
+  const activeDetected = detectedItems[activeIndex] || detectedItems[0];
+  const item = state.items.find((i) => i.id === activeDetected?.id) || state.items.find((i) => i.id === params.id);
+  const currentSavedId = savedByItem[activeIndex] || '';
+  const saved = state.scans.find((s) => s.id === currentSavedId);
+  const confidence = activeDetected ? activeDetected.confidence : saved?.confidence ?? Number(params.confidence || 0);
+  const isConfirmed = !!confirmedByItem[activeIndex];
+  const low = confidence > 0 && confidence < 70 && !isConfirmed && !saved;
   const source =
     saved?.source ||
     (params.source === 'demo' ? 'demo' : params.source === 'model' ? 'model' : 'manual');
-  const detectionBox = parseBox(params.bbox);
 
   // Confidence assessment & styling
   const confidenceScore = Math.max(0, Math.min(100, Math.round(confidence)));
@@ -73,8 +126,9 @@ export default function ResultScreen() {
         : 'The model has low confidence for this image. Please confirm before sorting.';
 
   // Labels
-  const rawModelClass = params.modelClass || params.detectorClass || '';
+  const rawModelClass = activeDetected?.modelClassName || activeDetected?.className || params.modelClass || params.detectorClass || '';
   const detectorLabel =
+    activeDetected?.displayName ||
     params.displayName ||
     rawModelClass.replaceAll('_', ' ') ||
     item?.name ||
@@ -96,7 +150,10 @@ export default function ResultScreen() {
           ...s,
           scans: s.scans.map((scan) => (scan.id === saved.id ? { ...scan, sorted: true } : scan)),
         }));
-    } else setSavedId(saveScan(item!.id, confidence, source, sorted));
+    } else {
+      const newScanId = saveScan(item!.id, confidence, source, sorted);
+      setSavedByItem((prev) => ({ ...prev, [activeIndex]: newScanId }));
+    }
     notify(
       sorted ? 'Marked as sorted. A small action worth celebrating.' : 'Saved to your history.',
     );
@@ -131,6 +188,125 @@ export default function ResultScreen() {
         onPress={() => router.push('/explore')}
         style={{ alignSelf: 'flex-start', paddingLeft: 0, marginBottom: 8 }}
       />
+
+      {/* Item Inspection & Capture Banner */}
+      <Card
+        style={{
+          marginBottom: 16,
+          padding: 14,
+          gap: 12,
+          backgroundColor: '#F6F8F3',
+          borderWidth: 1,
+          borderColor: C.line,
+        }}
+      >
+        <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <Row style={{ gap: 8, alignItems: 'center' }}>
+            <View
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                backgroundColor: C.green,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Icon name="scan" size={16} color="#FFFFFF" />
+            </View>
+            <View>
+              <Txt size={14} weight="700" color={C.ink}>
+                {detectedItems.length > 1
+                  ? `Item ${activeIndex + 1} of ${detectedItems.length}: ${detectorLabel}`
+                  : `Detected item: ${detectorLabel}`}
+              </Txt>
+              <Txt size={11} color={C.muted}>
+                {detectedItems.length > 1
+                  ? `${detectedItems.length} items detected • Step through one by one`
+                  : 'Scan complete • Ready to sort or capture a new image'}
+              </Txt>
+            </View>
+          </Row>
+
+          <Row style={{ gap: 6, alignItems: 'center' }}>
+            {detectedItems.length > 1 && (
+              <Button
+                title="Prev"
+                variant="secondary"
+                disabled={activeIndex === 0}
+                onPress={() => handleSelectIndex(Math.max(0, activeIndex - 1))}
+              />
+            )}
+            {detectedItems.length > 1 && activeIndex < detectedItems.length - 1 ? (
+              <Button
+                title="Next"
+                variant="primary"
+                onPress={() => handleSelectIndex(activeIndex + 1)}
+              />
+            ) : (
+              <Button
+                title="Capture new image"
+                icon="camera"
+                variant="primary"
+                onPress={() => router.push('/scan')}
+              />
+            )}
+          </Row>
+        </Row>
+
+        {/* Selectable item pills row */}
+        {detectedItems.length > 1 && (
+          <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+            {detectedItems.map((det, idx) => {
+              const isSelected = idx === activeIndex;
+              return (
+                <Pressable
+                  key={idx}
+                  onPress={() => handleSelectIndex(idx)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Inspect item ${idx + 1}: ${det.displayName}`}
+                  style={({ pressed, hovered }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 20,
+                    borderWidth: 1.5,
+                    borderColor: isSelected ? C.green : C.line,
+                    backgroundColor: isSelected ? '#E2ECE0' : hovered ? '#F0F3EC' : '#FFFFFF',
+                    opacity: pressed ? 0.75 : 1,
+                  })}
+                >
+                  <View
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      backgroundColor: isSelected ? C.green : '#D5DDD1',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Txt size={10} weight="700" color={isSelected ? '#FFFFFF' : C.ink}>
+                      {idx + 1}
+                    </Txt>
+                  </View>
+                  <Txt size={12} weight={isSelected ? '700' : '500'} color={isSelected ? C.green : C.ink}>
+                    {det.displayName}
+                  </Txt>
+                  <Badge
+                    text={`${det.confidence}%`}
+                    background={isSelected ? '#CBE3C9' : '#EAECE4'}
+                    color={isSelected ? C.ink : C.muted}
+                  />
+                </Pressable>
+              );
+            })}
+          </Row>
+        )}
+      </Card>
+
       <Row style={{ marginBottom: 20, alignItems: 'flex-start' }}>
         <ItemArt item={item} size={64} />
         <View style={{ flex: 1, gap: 5 }}>
@@ -221,24 +397,49 @@ export default function ResultScreen() {
         </Card>
       )}
 
-      {/* Detection bounding box preview */}
-      {!!params.imageUri && !!detectionBox && (
+      {/* Detection bounding box preview with active box focus */}
+      {!!params.imageUri && (
         <Card style={{ gap: 10, marginBottom: 16, padding: 14 }}>
-          <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-            <Txt size={13} weight="600">
-              Detected item & Bounding Box
-            </Txt>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <Row style={{ gap: 6, alignItems: 'center' }}>
+              <Txt size={13} weight="600">
+                {detectedItems.length > 1
+                  ? `Detection Frame (${detectedItems.length} items found)`
+                  : 'Detected item & Bounding Box'}
+              </Txt>
+              {detectedItems.length > 1 && (
+                <Badge
+                  text={`Inspecting #${activeIndex + 1}: ${detectorLabel}`}
+                  background="#E2ECE0"
+                  color="#1B4332"
+                />
+              )}
+            </Row>
             {!!params.modelUsed && (
               <Txt size={11} color={C.muted}>
                 Engine: {params.modelUsed}
               </Txt>
             )}
           </Row>
-          <DetectionPreview uri={params.imageUri} box={detectionBox} label={detectorLabel} />
-          <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <DetectionPreview
+            uri={params.imageUri}
+            boxes={detectedItems.map((d) => ({
+              box: d.box,
+              label: d.displayName,
+              confidence: d.confidence,
+            }))}
+            activeIndex={activeIndex}
+            onSelectIndex={handleSelectIndex}
+          />
+          <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
             <Txt size={12} color={C.muted}>
-              Original detection: <Txt size={12} weight="600" color={C.ink}>{detectorLabel}</Txt> → mapped to <Txt size={12} weight="600" color={C.green}>{item.category}</Txt>
+              Active item: <Txt size={12} weight="600" color={C.ink}>{detectorLabel}</Txt> → mapped to <Txt size={12} weight="600" color={C.green}>{item.category}</Txt>
             </Txt>
+            {detectedItems.length > 1 && (
+              <Txt size={11} color={C.muted}>
+                Showing focused box for active item. Use Prev / Next controls to step through items.
+              </Txt>
+            )}
           </Row>
         </Card>
       )}
@@ -250,7 +451,10 @@ export default function ResultScreen() {
             The prediction is uncertain. Check the match before saving.
           </Txt>
           <Row style={{ flexWrap: 'wrap' }}>
-            <Button title="Yes, this is my item" onPress={() => setConfirmed(true)} />
+            <Button
+              title="Yes, this is my item"
+              onPress={() => setConfirmedByItem((prev) => ({ ...prev, [activeIndex]: true }))}
+            />
             <Button
               title="Choose another"
               variant="secondary"
@@ -300,23 +504,55 @@ export default function ResultScreen() {
           </Row>
         )}
         {!low && (
-          <Row style={{ flexWrap: 'wrap', paddingTop: 4 }}>
-            <Button
-              title={saved?.sorted ? 'Marked as sorted' : 'I sorted this item'}
-              disabled={saved?.sorted}
-              icon="check"
-              onPress={() => save(true)}
-              style={{ flexGrow: 1 }}
-            />
-            <Button
-              title={saved ? 'Saved to history' : 'Save for later'}
-              disabled={!!saved}
-              icon="bookmark"
-              variant="secondary"
-              onPress={() => save(false)}
-              style={{ flexGrow: 1 }}
-            />
-          </Row>
+          <View style={{ gap: 10, paddingTop: 4 }}>
+            <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+              <Button
+                title={saved?.sorted ? 'Marked as sorted' : 'I sorted this item'}
+                disabled={saved?.sorted}
+                icon="check"
+                onPress={() => save(true)}
+                style={{ flexGrow: 1 }}
+              />
+              <Button
+                title={saved ? 'Saved to history' : 'Save for later'}
+                disabled={!!saved}
+                icon="bookmark"
+                variant="secondary"
+                onPress={() => save(false)}
+                style={{ flexGrow: 1 }}
+              />
+            </Row>
+            {detectedItems.length > 1 ? (
+              <Row style={{ justifyContent: 'space-between', alignItems: 'center', marginTop: 4, flexWrap: 'wrap', gap: 8 }}>
+                <Txt size={12} color={C.muted}>
+                  Item {activeIndex + 1} of {detectedItems.length}
+                </Txt>
+                {activeIndex < detectedItems.length - 1 ? (
+                  <Button
+                    title={`Next: ${detectedItems[activeIndex + 1].displayName} →`}
+                    variant="ghost"
+                    onPress={() => handleSelectIndex(activeIndex + 1)}
+                  />
+                ) : (
+                  <Button
+                    title="Capture new image →"
+                    icon="camera"
+                    variant="ghost"
+                    onPress={() => router.push('/scan')}
+                  />
+                )}
+              </Row>
+            ) : (
+              <Row style={{ justifyContent: 'flex-end', alignItems: 'center', marginTop: 4 }}>
+                <Button
+                  title="Capture new image →"
+                  icon="camera"
+                  variant="ghost"
+                  onPress={() => router.push('/scan')}
+                />
+              </Row>
+            )}
+          </View>
         )}
       </Card>
       <NearbyDisposal key={item.id} item={item} />
@@ -339,7 +575,12 @@ export default function ResultScreen() {
           title="Ask about this item"
           icon="chat"
           variant="ghost"
-          onPress={() => router.push({ pathname: '/assistant', params: { item: item.id } })}
+          onPress={() =>
+            router.push({
+              pathname: '/assistant',
+              params: { item: item.id, itemName: item.name, fromScan: '1' },
+            })
+          }
         />
         <Button
           title="Correct result"
