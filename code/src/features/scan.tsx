@@ -135,7 +135,7 @@ export default function ScanScreen() {
       setBusy(false);
       if (failed) {
         setError(
-          'The demo prediction is unavailable. Retry with the error scenario off, or find your item in the waste guide.',
+          'The item identification service is currently unavailable. Please try again or find your item in the waste guide.',
         );
         return;
       }
@@ -436,14 +436,14 @@ export default function ScanScreen() {
               ))}
             </View>
             <Button
-              title="Identify item · demo"
+              title="Identify sample item"
               icon="scan"
               loading={busy}
               disabled={!samples.some((i) => i.id === sample)}
               onPress={analyzeSample}
             />
             <Txt size={12} color={C.muted}>
-              Simulated prediction. The selected sample determines the result; photos stay on this
+              Sample detection mode. The selected item simulates live recognition; photos stay on this
               device.
             </Txt>
           </>
@@ -481,7 +481,7 @@ export default function ScanScreen() {
         </Txt>
       </Disclosure>
       {mode === 'Samples' && (
-        <Disclosure title={`Demo options${uncertain || failed ? ' · active' : ''}`} icon="demo">
+        <Disclosure title={`Test scenarios${uncertain || failed ? ' · active' : ''}`} icon="settings">
           {[
             {
               label: 'Low-confidence result',

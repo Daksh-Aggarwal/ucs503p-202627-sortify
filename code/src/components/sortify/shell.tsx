@@ -115,9 +115,9 @@ export function Shell({ children }: React.PropsWithChildren) {
           style={{ padding: 10, minHeight: 44, justifyContent: 'center' }}
         >
           <Row>
-            <Icon name="demo" size={18} color={C.muted} />
+            <Icon name="shield" size={18} color={C.muted} />
             <Txt color={C.muted} size={12}>
-              Admin demo
+              Admin panel
             </Txt>
           </Row>
         </Pressable>
@@ -147,7 +147,7 @@ export function Shell({ children }: React.PropsWithChildren) {
               {state.profile?.name || 'Guest'}
             </Txt>
             <Txt color={C.muted} size={10}>
-              {state.profile ? 'Demo member' : 'Local demo'}
+              {state.profile ? 'Member' : 'Guest user'}
             </Txt>
           </View>
           <Icon name="chevron" size={15} />
@@ -204,7 +204,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                 </Row>
               </Pressable>
               {desktop && <View style={{ height: 22, width: 1, backgroundColor: C.line }} />}
-              <Badge text="Demo" icon="demo" background="#F0F1EA" color="#7A846C" />
+              <Badge text="Online" icon="sparkle" background="#EFF6E9" color="#4F7A28" />
             </Row>
           </Row>
         </View>

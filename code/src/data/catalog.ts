@@ -714,7 +714,7 @@ export function locationGuidance(location: string, category: Category) {
           : category === 'Hazardous'
             ? 'specialist collection services'
             : 'general-waste collection';
-  return `Confirm ${stream} with your local collector${location && location !== 'Location detected' ? ` in ${location}` : ''}. Local schedules are not verified in this prototype.`;
+  return `Confirm ${stream} with your local collector${location && location !== 'Location detected' ? ` in ${location}` : ''}. Verify local schedules with municipal authorities.`;
 }
 
 export const lessons = [

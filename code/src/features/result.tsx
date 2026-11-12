@@ -209,7 +209,7 @@ export default function ResultScreen() {
     }));
     setCorrecting(false);
     setCorrection('');
-    notify('Correction saved. You can review it in the admin demo.');
+    notify('Correction saved. You can review it in the admin panel.');
   }
 
   async function handleConfidenceChange(tier: ConfidenceTier) {
@@ -269,7 +269,7 @@ export default function ResultScreen() {
         setReEvaluating(false);
       }
     } else {
-      // Demo / simulated mode
+      // Simulated mode
       setReEvaluating(true);
       setTimeout(() => {
         if (initialDetectedItems.length > 1) {

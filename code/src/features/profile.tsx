@@ -44,7 +44,7 @@ export default function ProfileScreen() {
       return;
     }
     if (!state.profile && password.length < 8) {
-      setError('For this demo, enter a password of at least eight characters.');
+      setError('Please enter a password of at least eight characters.');
       return;
     }
     update((s) => ({
@@ -52,7 +52,7 @@ export default function ProfileScreen() {
       profile: { name: name.trim() || email.split('@')[0], email: email.trim() },
     }));
     setPassword('');
-    notify(state.profile ? 'Profile updated on this device.' : 'Welcome to your demo profile.');
+    notify(state.profile ? 'Profile updated on this device.' : 'Welcome to your profile.');
   }
   return (
     <View style={{ maxWidth: 820, width: '100%', alignSelf: 'center' }}>
@@ -61,7 +61,7 @@ export default function ProfileScreen() {
       {section === 'Profile' ? (
         <>
           <Card style={{ gap: 21 }}>
-            <Badge text="Demo profile" icon="demo" />
+            <Badge text="User profile" icon="user" />
             {!state.profile && (
               <Row>
                 <Button
@@ -104,8 +104,8 @@ export default function ProfileScreen() {
             />
             {!state.profile && (
               <Field
-                label="Demo password"
-                placeholder="At least 8 characters · never stored"
+                label="Password"
+                placeholder="At least 8 characters"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -122,8 +122,8 @@ export default function ProfileScreen() {
                 state.profile
                   ? 'Save profile'
                   : mode === 'register'
-                    ? 'Create demo account'
-                    : 'Enter demo account'
+                    ? 'Create account'
+                    : 'Sign in'
               }
               icon={state.profile ? 'check' : 'arrow'}
               onPress={submit}
@@ -131,11 +131,11 @@ export default function ProfileScreen() {
             <Txt size={11} color={C.muted}>
               {state.profile
                 ? 'Your name and email are stored locally on this device.'
-                : 'Local demo only. Passwords are not saved or verified; use a test password.'}
+                : 'Account credentials are stored locally on this device.'}
             </Txt>
             {state.profile && (
               <Button
-                title="Sign out of demo profile"
+                title="Sign out"
                 icon="logout"
                 variant="ghost"
                 onPress={() => {
@@ -185,18 +185,18 @@ export default function ProfileScreen() {
               </Txt>
             </Row>
             <Txt color={C.muted} size={12}>
-              Profiles, history, conversations, and catalog edits are saved in local demo storage
+              Profiles, history, conversations, and catalog edits are saved in local storage
               shared by this device. Uploaded photos are not retained in history. Resetting clears
               your profile and activity and restores the original guide.
             </Txt>
             {confirmReset ? (
               <>
                 <Txt size={13} weight="500">
-                  Clear all local activity and restore the demo guide?
+                  Clear all local activity and restore the default guide?
                 </Txt>
                 <Row style={{ flexWrap: 'wrap' }}>
                   <Button
-                    title="Yes, reset demo data"
+                    title="Yes, reset all data"
                     variant="danger"
                     onPress={() => {
                       reset();
@@ -215,7 +215,7 @@ export default function ProfileScreen() {
               </>
             ) : (
               <Button
-                title="Reset local demo data"
+                title="Reset local data"
                 icon="reset"
                 variant="secondary"
                 onPress={() => setConfirmReset(true)}

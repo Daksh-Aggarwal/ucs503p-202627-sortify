@@ -162,7 +162,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
         }
       })
       .catch(() => {
-        if (active) setNotice('Saved demo data could not be loaded. Starting with sample data.');
+        if (active) setNotice('Saved data could not be loaded. Starting with sample data.');
       })
       .finally(() => {
         if (active) setReady(true);
@@ -253,7 +253,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
         update: setState,
         reset: () => {
           setState({ ...seed, scans: [], messages: [], feedback: [] });
-          notify('Your local demo data has been reset.');
+          notify('Your local data has been reset.');
         },
         saveScan,
       }}

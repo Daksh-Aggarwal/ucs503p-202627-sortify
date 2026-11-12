@@ -65,7 +65,7 @@ export default function HistoryScreen() {
                   <View style={{ flex: 1 }}>
                     <ItemRow
                       item={item}
-                      subtitle={`${new Date(scan.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · ${scan.sorted ? 'Sorted' : 'To sort'} · ${scan.source === 'demo' ? 'Demo' : scan.source === 'model' ? 'Scan' : 'Manual'}`}
+                      subtitle={`${new Date(scan.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · ${scan.sorted ? 'Sorted' : 'To sort'} · ${scan.source === 'demo' ? 'Sample' : scan.source === 'model' ? 'Scan' : 'Manual'}`}
                       onPress={() =>
                         router.push({
                           pathname: '/result',
@@ -198,7 +198,7 @@ export function ActivityScreen() {
         )}
       </Card>
       <Txt size={12} color={C.muted} style={{ marginTop: 14 }}>
-        Includes demo and manually saved items.
+        Includes scanned, sample, and manually saved items.
       </Txt>
     </View>
   );

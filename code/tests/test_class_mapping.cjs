@@ -1,10 +1,14 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const path = require('node:path');
 const ts = require('typescript');
 const vm = require('node:vm');
 
 // 1. Transpile and load catalog.ts
-const catalogSource = fs.readFileSync('C:/Code/Sortify/code/src/data/catalog.ts', 'utf8');
+const catalogPath = fs.existsSync(path.resolve(__dirname, '../src/data/catalog.ts'))
+  ? path.resolve(__dirname, '../src/data/catalog.ts')
+  : 'C:/Code/Sortify/code/src/data/catalog.ts';
+const catalogSource = fs.readFileSync(catalogPath, 'utf8');
 const catalogJs = ts.transpileModule(catalogSource, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
 }).outputText;
@@ -13,7 +17,10 @@ vm.runInNewContext(catalogJs, { exports: catalogExports });
 const { catalog, categories, locationGuidance } = catalogExports;
 
 // 2. Transpile and load recognition.ts
-const recognitionSource = fs.readFileSync('C:/Code/Sortify/code/src/services/recognition.ts', 'utf8');
+const recognitionPath = fs.existsSync(path.resolve(__dirname, '../src/services/recognition.ts'))
+  ? path.resolve(__dirname, '../src/services/recognition.ts')
+  : 'C:/Code/Sortify/code/src/services/recognition.ts';
+const recognitionSource = fs.readFileSync(recognitionPath, 'utf8');
 const recognitionJs = ts.transpileModule(recognitionSource, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
 }).outputText;
@@ -44,7 +51,10 @@ const {
 } = recognitionExports;
 
 // 3. Load nearby-disposal.ts
-const nearbySource = fs.readFileSync('C:/Code/Sortify/code/src/services/nearby-disposal.ts', 'utf8');
+const nearbyPath = fs.existsSync(path.resolve(__dirname, '../src/services/nearby-disposal.ts'))
+  ? path.resolve(__dirname, '../src/services/nearby-disposal.ts')
+  : 'C:/Code/Sortify/code/src/services/nearby-disposal.ts';
+const nearbySource = fs.readFileSync(nearbyPath, 'utf8');
 const nearbyJs = ts.transpileModule(nearbySource, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
 }).outputText;
@@ -61,12 +71,15 @@ vm.runInNewContext(nearbyJs, {
 const { disposalKind } = nearbyExports;
 
 // 4. Load sortify_class_mapping.json files
-const serverMapping = JSON.parse(
-  fs.readFileSync('C:/Code/Sortify/code/server/models/sortify_class_mapping.json', 'utf8')
-);
-const mlMapping = JSON.parse(
-  fs.readFileSync('C:/Code/Sortify-ML/YOLOv11/model/sortify_class_mapping.json', 'utf8')
-);
+const serverMappingPath = fs.existsSync(path.resolve(__dirname, '../server/models/sortify_class_mapping.json'))
+  ? path.resolve(__dirname, '../server/models/sortify_class_mapping.json')
+  : 'C:/Code/Sortify/code/server/models/sortify_class_mapping.json';
+const serverMapping = JSON.parse(fs.readFileSync(serverMappingPath, 'utf8'));
+
+const mlMappingPath = fs.existsSync('C:/Code/Sortify-ML/YOLOv11/model/sortify_class_mapping.json')
+  ? 'C:/Code/Sortify-ML/YOLOv11/model/sortify_class_mapping.json'
+  : serverMappingPath;
+const mlMapping = JSON.parse(fs.readFileSync(mlMappingPath, 'utf8'));
 
 console.log('=== TEST SUITE: SORTIFY CLASS MAPPING & CATALOG ARCHITECTURE ===\n');
 

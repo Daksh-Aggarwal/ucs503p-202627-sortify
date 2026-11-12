@@ -1,15 +1,19 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const path = require('node:path');
 const ts = require('typescript');
 
 // Load assistant service
-const source = fs.readFileSync('C:/Code/Sortify/code/src/services/assistant.ts', 'utf8');
+const source = fs.readFileSync(path.resolve(__dirname, '../src/services/assistant.ts'), 'utf8');
 const js = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
 }).outputText;
 
 // Load real catalog
-const catalogSource = fs.readFileSync('C:/Code/Sortify/code/src/data/catalog.ts', 'utf8');
+const catalogPath = fs.existsSync(path.resolve(__dirname, '../src/data/catalog.ts'))
+  ? path.resolve(__dirname, '../src/data/catalog.ts')
+  : 'C:/Code/Sortify/code/src/data/catalog.ts';
+const catalogSource = fs.readFileSync(catalogPath, 'utf8');
 const catalogJs = ts.transpileModule(catalogSource, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
 }).outputText;

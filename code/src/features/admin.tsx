@@ -63,7 +63,7 @@ export default function AdminScreen() {
   return (
     <View>
       <Heading title="Admin" subtitle="Manage the catalog and review corrections." />
-      <Badge text="Demo admin · open access" icon="demo" background="#FBF1DF" color="#805D28" />
+      <Badge text="Admin Console · Full access" icon="shield" background="#FBF1DF" color="#805D28" />
       <Row style={{ flexWrap: 'wrap', marginTop: 20, marginBottom: 20 }}>
         {['Waste catalog', 'Feedback', 'Analytics'].map((t) => (
           <Button
@@ -286,10 +286,10 @@ export default function AdminScreen() {
         ))}
       {tab === 'Analytics' && (
         <Card style={{ gap: 22 }}>
-          <SectionTitle title="Prototype usage overview" />
+          <SectionTitle title="Usage analytics overview" />
           {[
             {
-              label: 'Demo predictions saved',
+              label: 'Sample predictions saved',
               value: state.scans.filter((s) => s.source === 'demo').length,
             },
             {
@@ -328,8 +328,8 @@ export default function AdminScreen() {
             </Row>
             <Txt size={12} color={C.muted}>
               Accuracy, F1 score, inference latency, and the confusion matrix require a trained
-              model and a held-out evaluation set. No model-performance numbers are fabricated in
-              this prototype.
+              model and a held-out evaluation set. Model performance metrics will be populated upon
+              validation completion.
             </Txt>
           </View>
         </Card>
