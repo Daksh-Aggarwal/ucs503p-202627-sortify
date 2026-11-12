@@ -280,9 +280,6 @@ export default function AssistantScreen() {
   const messagesRef = useRef<ScrollView>(null);
   const { height } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
-  const [qwenMode, setQwenMode] = useState<'local' | 'api'>('local');
-  const [customApiUrl, setCustomApiUrl] = useState('');
-  const [showApiConfig, setShowApiConfig] = useState(true);
 
   const context = state.items.find((i) => i.id === params.item);
   const itemName = params.itemName || context?.name || '';
@@ -326,11 +323,7 @@ export default function AssistantScreen() {
     update((s) => ({ ...s, messages: [...s.messages, { id: uniqueId(), role: 'user', text }] }));
 
     try {
-      const res = await askAssistant(text, context, {
-        mode: qwenMode,
-        apiUrl: customApiUrl.trim() || undefined,
-        modelName: qwenMode === 'api' ? 'Qwen/Qwen2.5-0.5B-Instruct' : undefined,
-      });
+      const res = await askAssistant(text, context);
       update((s) => ({
         ...s,
         messages: [
@@ -382,131 +375,9 @@ export default function AssistantScreen() {
             <Txt size={12} color={C.muted}>
               Answers from rag.txt
             </Txt>
-            <Badge text={qwenMode === 'local' ? 'RAG: Local Qwen 0.5B' : 'RAG: Custom Qwen API'} />
-          </Row>
-
-          {/* Qwen Engine Selector (Local PyTorch / Transformers vs Custom API) */}
-          <Row style={{ gap: 6, alignItems: 'center' }}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Select Local Qwen model"
-              onPress={() => {
-                setQwenMode('local');
-                setShowApiConfig(false);
-              }}
-              style={({ pressed, hovered }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 5,
-                paddingHorizontal: 9,
-                paddingVertical: 5,
-                borderRadius: 14,
-                borderWidth: 1.5,
-                borderColor: qwenMode === 'local' ? C.green : '#E5E7EB',
-                backgroundColor: qwenMode === 'local' ? '#E2ECE0' : hovered ? '#F3F4F6' : '#FFFFFF',
-                opacity: pressed ? 0.75 : 1,
-              })}
-            >
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: qwenMode === 'local' ? C.green : '#9CA3AF',
-                }}
-              />
-              <Txt size={11} weight={qwenMode === 'local' ? '700' : '500'} color={qwenMode === 'local' ? C.green : C.ink}>
-                Local Qwen
-              </Txt>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Select Custom Qwen API"
-              onPress={() => {
-                if (qwenMode !== 'api') {
-                  setQwenMode('api');
-                  setShowApiConfig(true);
-                } else {
-                  setShowApiConfig((prev) => !prev);
-                }
-              }}
-              style={({ pressed, hovered }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 5,
-                paddingHorizontal: 9,
-                paddingVertical: 5,
-                borderRadius: 14,
-                borderWidth: 1.5,
-                borderColor: qwenMode === 'api' ? C.green : '#E5E7EB',
-                backgroundColor: qwenMode === 'api' ? '#E2ECE0' : hovered ? '#F3F4F6' : '#FFFFFF',
-                opacity: pressed ? 0.75 : 1,
-              })}
-            >
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: qwenMode === 'api' ? C.green : '#9CA3AF',
-                }}
-              />
-              <Txt size={11} weight={qwenMode === 'api' ? '700' : '500'} color={qwenMode === 'api' ? C.green : C.ink}>
-                Custom API
-              </Txt>
-            </Pressable>
+            <Badge text="RAG: Qwen 2.5" />
           </Row>
         </Row>
-
-        {/* Custom Qwen API settings panel */}
-        {qwenMode === 'api' && showApiConfig && (
-          <View
-            style={{
-              paddingHorizontal: 20,
-              paddingVertical: 10,
-              backgroundColor: '#F9FAFB',
-              borderBottomWidth: 1,
-              borderColor: C.line,
-              gap: 8,
-            }}
-          >
-            <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-              <Txt size={11} weight="600" color={C.ink}>
-                Custom Qwen API Base URL:
-              </Txt>
-              <Row style={{ gap: 6 }}>
-                <Pressable
-                  onPress={() => setCustomApiUrl('http://localhost:11434/v1')}
-                  style={{
-                    paddingHorizontal: 7,
-                    paddingVertical: 2,
-                    borderRadius: 4,
-                    backgroundColor: customApiUrl === 'http://localhost:11434/v1' ? '#D1FAE5' : '#E5E7EB',
-                  }}
-                >
-                  <Txt size={10} weight="600" color={C.ink}>Ollama (11434)</Txt>
-                </Pressable>
-                <Pressable
-                  onPress={() => setCustomApiUrl('http://localhost:8000/v1')}
-                  style={{
-                    paddingHorizontal: 7,
-                    paddingVertical: 2,
-                    borderRadius: 4,
-                    backgroundColor: customApiUrl === 'http://localhost:8000/v1' ? '#D1FAE5' : '#E5E7EB',
-                  }}
-                >
-                  <Txt size={10} weight="600" color={C.ink}>Server (8000)</Txt>
-                </Pressable>
-              </Row>
-            </Row>
-            <Field
-              value={customApiUrl}
-              onChangeText={setCustomApiUrl}
-              placeholder="e.g. http://localhost:11434/v1 (Ollama) or custom OpenAI-compatible endpoint"
-            />
-          </View>
-        )}
         <ScrollView
           ref={messagesRef}
           nestedScrollEnabled
@@ -725,7 +596,7 @@ export default function AssistantScreen() {
           )}
           {busy && (
             <Txt accessibilityLiveRegion="polite" color={C.muted} size={12}>
-              {qwenMode === 'api' ? 'Querying custom Qwen API with context from rag.txt…' : 'Pulling context from rag.txt with Local Qwen…'}
+              Generating response from rag.txt with Qwen 2.5…
             </Txt>
           )}
         </ScrollView>

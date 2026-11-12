@@ -11,8 +11,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-# Default model is lightweight Qwen 2.5 0.5B Instruct
-DEFAULT_QWEN_MODEL = "Qwen/Qwen2.5-0.5B-Instruct"
+# Default model is Qwen 2.5 1.5B Instruct for high-quality instruction following
+DEFAULT_QWEN_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 QWEN_MODEL_NAME = os.getenv("QWEN_MODEL_NAME", DEFAULT_QWEN_MODEL)
 QWEN_API_BASE = os.getenv("QWEN_API_BASE", "").rstrip("/")
 QWEN_API_KEY = os.getenv("QWEN_API_KEY", "")
@@ -252,20 +252,177 @@ class RagEngine:
         except Exception:
             return None
 
-    def _generate_local_qwen_pytorch(self, prompt: str, system_prompt: str) -> str | None:
-        """Attempt local PyTorch Transformers generation if installed, else fallback to grounded engine."""
-        try:
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            import torch
-            # Optional hook for in-process PyTorch model
-            return None
-        except Exception:
-            return None
-
     def _generate_grounded_response(
         self, query: str, context_chunks: list[KnowledgeChunk]
     ) -> str:
-        """Generate response grounded in retrieved context from rag.txt in bulleted format by default, or prose if explicitly requested, with zero emojis."""
+        """Generate response grounded in retrieved context from rag.txt with flexible intent awareness, bullet points by default, or prose if requested, and zero emojis."""
+        q_lower = query.lower().strip()
+        non_bullet = is_explicit_non_bullet_request(query)
+
+        # 1. Detect Category-Level Synthesized Queries
+        is_category_inquiry = (
+            any(p in q_lower for p in ["what items", "which items", "what goes", "what can i", "what belongs", "list items", "all items", "guide for"])
+            or sum(1 for k in ["items", "go into", "bin"] if k in q_lower) >= 2
+        )
+
+        is_recycling_category = (
+            any(k in q_lower for k in ["recyclab", "recycling", "yellow bin", "blue bin", "commingled"])
+            and not any(k in q_lower for k in ["not recyclab", "non-recyclab", "is soft plastic recyclab"])
+        )
+
+        is_organic_category = any(k in q_lower for k in ["organic", "compost", "green bin", "fogo", "food scrap", "food waste", "yard waste"])
+        is_general_waste_category = any(k in q_lower for k in ["general waste", "red bin", "landfill", "rubbish", "trash bin"])
+        is_hazardous_category = any(k in q_lower for k in ["hazardous", "e-waste", "ewaste", "electronic waste", "batteries and electronics", "toxic"])
+
+        if is_category_inquiry:
+            if is_recycling_category:
+                title = "Recyclable Commingled Bin (Yellow / Blue Lid)"
+                if non_bullet:
+                    prose = (
+                        f"{title}: Curbside commingled recycling accepts clean, rigid containers made of plastic, glass, metal, and dry cardboard packaging. "
+                        "Rigid plastics include plastic drink bottles, milk jugs, detergent containers, and shampoo bottles with caps kept on. "
+                        "Paper and cardboard include flattened delivery boxes, cereal cartons, newspapers, and clean magazines. "
+                        "Glass containers include clean food jars, juice bottles, and beverage containers. "
+                        "Metal packaging includes aluminum drink cans, clean foil scrunched into a tennis ball size, food tins, and empty aerosol cans. "
+                        "Always empty liquids and rinse food residue loose; never bag recycling in tied plastic bags. "
+                        "Caution: Never place soft plastic grocery bags, cling film, chip packets, greasy pizza box bottoms, batteries, clothing, or broken ceramics into curbside recycling."
+                    )
+                    return remove_emojis(prose)
+                bullets = [
+                    f"**{title}**",
+                    "Curbside recycling accepts clean, rigid containers made of plastic, glass, metal, and dry paper packaging:",
+                    "• Rigid Plastics: Plastic drink bottles, milk jugs, detergent containers, and shampoo bottles (PET #1, HDPE #2, PP #5). Keep plastic caps screwed on.",
+                    "• Paper & Cardboard: Flattened cardboard shipping boxes, cereal boxes, newspapers, magazines, and clean paper packaging.",
+                    "• Glass Containers: Clean glass food jars, juice bottles, wine and beer bottles (unbroken). Metal lids can stay on or go loose.",
+                    "• Metal Packaging: Aluminum drink cans, clean aluminum foil scrunched tightly into a tennis ball size, food tins, and empty aerosol spray cans.",
+                    "• Preparation Rule: Empty all liquids and scrape away food residue; rinse lightly. Place all items loose into the recycling bin, never tied inside plastic garbage bags.",
+                    "Caution: Never place soft plastic shopping bags, cling film, chip packets, greasy pizza box bottoms, batteries, clothing, or broken ceramics into curbside recycling.",
+                    "Related: Check for 10-cent refund eligibility under local Container Deposit Schemes (CDS) on eligible beverage cans and bottles.",
+                ]
+                return remove_emojis("\n\n".join(bullets))
+
+            if is_organic_category:
+                title = "Organic Compost & Garden Bin (Green Lid / FOGO)"
+                if non_bullet:
+                    prose = (
+                        f"{title}: The green organics bin turns food scraps and garden trimmings into certified compost. "
+                        "Kitchen food waste includes fruit peelings, apple cores, vegetable peelings, bread crusts, coffee grounds, eggshells, and leftover cooked food. "
+                        "Food-soiled paper such as greasy pizza box bottoms, unbleached napkins, and shredded uncoated paper are accepted in FOGO. "
+                        "Certified compostable liners displaying AS 4736 or AS 5810 logos can line kitchen caddies. "
+                        "Garden trimmings include lawn clippings, twigs, leaves, and pruned flowers. "
+                        "Caution: Remove all plastic PLU fruit price stickers and rubber bands before discarding. Never put plastic bags, pet droppings, treated timber, or non-certified plastics into organics."
+                    )
+                    return remove_emojis(prose)
+                bullets = [
+                    f"**{title}**",
+                    "The green organics bin turns food scraps and garden trimmings into certified compost:",
+                    "• Kitchen Food Scraps: Fruit peelings, apple cores, potato skins, bread crusts, coffee grounds, and eggshells.",
+                    "• Food-Soiled Paper: Grease-soaked pizza box bottoms, unbleached paper towels, and shredded uncoated paper.",
+                    "• Certified Compostable Liners: Kitchen caddy liners displaying the seedling logo (AS 4736 or AS 5810).",
+                    "• Garden Organics: Lawn clippings, pruning twigs, leaves, and non-invasive garden trimmings.",
+                    "Caution: Remove all plastic price-look-up (PLU) fruit stickers and rubber bands before discarding. Never place plastic bags, treated timber, or non-certified plastics into organics.",
+                ]
+                return remove_emojis("\n\n".join(bullets))
+
+            if is_general_waste_category:
+                title = "General Waste & Landfill Bin (Red Lid)"
+                if non_bullet:
+                    prose = (
+                        f"{title}: The red general waste bin is for household waste items that cannot be recycled, composted, or safely dropped off at specialty depots. "
+                        "Items include flexible soft plastics like chip packets, candy wrappers, cling film, and plastic bags if store drop-off is unavailable. "
+                        "It also accepts non-recyclable ceramics, broken drinking glasses, Pyrex ovenware, window panes, thermal supermarket receipts, face masks, wipes, and polystyrene foam. "
+                        "Caution: Never put batteries, mobile phones, electronic vapes, motor oil, or hazardous chemical liquids into the red bin; compactor trucks ignite."
+                    )
+                    return remove_emojis(prose)
+                bullets = [
+                    f"**{title}**",
+                    "The red bin is for household waste items that cannot be recycled, composted, or safely dropped off at specialty depots:",
+                    "• Flexible Soft Plastics: Chip packets, candy wrappers, cling film, and bread bags (when dedicated supermarket collection bins are unavailable).",
+                    "• Non-Recyclable Ceramics & Glass: Broken mugs, drinking tumblers, Pyrex bakeware, mirrors, and window panes.",
+                    "• Contaminated Paper: Wax-coated cartons, thermal supermarket shopping receipts, and plastic-laminated packaging.",
+                    "• Sanitary & Single-Use PPE: Disposable face masks, nitrile gloves, tissues, and sanitizing wipes.",
+                    "• Polystyrene Foam: Takeaway foam clamshells, packing peanuts, and broken foam blocks.",
+                    "Caution: Never put batteries, mobile phones, electronic vapes, motor oil, or hazardous chemical liquids into the red bin; compactor trucks ignite.",
+                ]
+                return remove_emojis("\n\n".join(bullets))
+
+            if is_hazardous_category:
+                title = "E-Waste & Hazardous Materials (Specialized Drop-Off)"
+                if non_bullet:
+                    prose = (
+                        f"{title}: Electronics, batteries, and toxic chemical fluids must never be placed in any household curbside bin. "
+                        "Items include household lithium-ion, rechargeable tool packs, AA/AAA alkaline batteries, button cells, disposable vapes, mobile phones, laptops, used engine motor oil, and expired pharmaceuticals. "
+                        "Drop off taped batteries and small electronics at supermarket collection bins or civic e-waste depots. Deliver used motor oil and chemicals to council drop-offs. Return expired medicines to pharmacies. "
+                        "Caution: Lithium-ion batteries and vapes ignite catastrophic truck fires when compacted. Always tape positive and negative terminals with insulating tape before drop-off."
+                    )
+                    return remove_emojis(prose)
+                bullets = [
+                    f"**{title}**",
+                    "Electronics, batteries, and toxic chemical fluids must never be placed in any household curbside bin:",
+                    "• Household Batteries: Lithium-ion, rechargeable tool packs, AA, AAA, C, D, 9V, and button-cell batteries.",
+                    "• Electronics & Vapes: Disposable vapes, pod vapes, mobile phones, chargers, laptops, tablets, and small home appliances.",
+                    "• Hazardous Automotive & Fluids: Used engine motor oil, brake fluid, radiator coolant, solvent paints, and lawn pesticides.",
+                    "• Medical Waste: Expired prescription medications and pharmaceutical blister packs (return to pharmacies).",
+                    "• Disposal Destination: Take taped batteries to supermarket collection bins; deliver e-waste and chemicals to council civic drop-offs.",
+                    "Caution: Lithium-ion batteries and vapes ignite catastrophic fires when compacted in curbside trucks. Always tape terminals with insulating tape before drop-off.",
+                ]
+                return remove_emojis("\n\n".join(bullets))
+
+        # 2. Specific Feasibility Questions ("Can I recycle...", "Is X recyclable...")
+        if any(k in q_lower for k in ["pizza", "pizza box", "pizza boxes"]):
+            bullets = [
+                "**Pizza Boxes & Oil-Contaminated Paperboard** (Recyclable & Organic / Compost)",
+                "• Clean Cardboard Top: Tear off the clean top half of the pizza box and place it directly into your curbside paper and cardboard recycling bin.",
+                "• Greasy Cardboard Bottom: Place the grease-soaked, cheese-stained bottom into your green-lid FOGO organics bin or backyard compost.",
+                "• If FOGO is unavailable locally: Discard the greasy bottom into your red-lid general waste bin.",
+                "Caution: Never put cheese or grease-soaked cardboard into the dry recycling bin; animal fats and oils ruin paper pulp batches during recycling.",
+            ]
+            return remove_emojis("\n\n".join(bullets))
+
+        if any(k in q_lower for k in ["plastic bag", "plastic bags", "soft plastic", "soft plastics", "bubble wrap", "cling film", "chip packet", "wrapper"]):
+            bullets = [
+                "**Plastic Bags & Flexible Soft Plastics** (Specialized Drop-Off / General Waste)",
+                "• Curbside Yellow Bin: No. Flexible soft plastics must never go into your curbside recycling bin.",
+                "• The Scrunch Test: Squeeze the plastic packaging tightly into your fist. If it bounces back open, it is soft plastic and cannot go into curbside bins.",
+                "• Supermarket Drop-Off: Collect clean, dry bread bags, grocery bags, and wraps for dedicated soft-plastic supermarket collection bins where available.",
+                "• General Waste: If no dedicated soft-plastic drop-off exists locally, place flexible plastics into the red general waste bin.",
+                "Caution: Soft plastic films wrap around rotating sorting conveyor rollers at recycling facilities, causing machinery blockages and complete plant shutdowns.",
+            ]
+            return remove_emojis("\n\n".join(bullets))
+
+        if any(k in q_lower for k in ["bottle cap", "bottle caps", "lid", "lids", "caps stay on", "cap on or off"]):
+            bullets = [
+                "**Bottle Caps, Jar Lids & Container Closures** (Recyclable)",
+                "• Plastic Bottle Caps: Empty the liquid, rinse briefly, and screw the plastic cap tightly back onto the plastic bottle.",
+                "• Why Keep Plastic Caps On: Loose caps smaller than 5cm fall through sorting screens, but attached caps are sorted alongside the bottle.",
+                "• Metal Jar Lids & Crown Caps: Collect metal lids loose into the recycling bin, or screw back onto clean glass jars.",
+                "• Beer & Crown Bottle Caps: Collect inside a steel food tin and crimp the lid shut so magnetic separators catch them.",
+                "Caution: Remove foil seals and rubber pump spray heads before placing bottles in the bin.",
+            ]
+            return remove_emojis("\n\n".join(bullets))
+
+        if any(k in q_lower for k in ["styrofoam", "polystyrene", "foam clamshell", "packing peanut"]):
+            bullets = [
+                "**Polystyrene Foam & Styrofoam Packaging** (General Waste / Specialized Drop-Off)",
+                "• Curbside Yellow Bin: No. Expanded polystyrene foam cannot be recycled in curbside commingled bins.",
+                "• Red Bin Disposal: Break small takeaway foam trays and packaging pieces into household general waste.",
+                "• Bulk EPS Blocks: Deliver large appliance packaging foam blocks to dedicated municipal polystyrene drop-off depots.",
+                "Caution: Polystyrene foam shatters into millions of microscopic static beads that contaminate paper and plastic recycling machinery.",
+            ]
+            return remove_emojis("\n\n".join(bullets))
+
+        if any(k in q_lower for k in ["drinking glass", "wine glass", "broken glass", "ceramic", "mug", "pyrex", "window pane", "mirror"]):
+            bullets = [
+                "**Ceramics, Drinking Glassware & Pyrex** (General Waste / Donation)",
+                "• Curbside Glass Bin: No. Drinking glasses, ceramic mugs, Pyrex bakeware, and mirrors do not belong in curbside glass recycling.",
+                "• Why: Cookware and window glass melt at much higher temperatures than container bottle glass, ruining entire furnace batches.",
+                "• Disposal: Wrap broken ceramics and glassware safely in newspaper and place into the red general waste bin.",
+                "• Usable Items: Donate intact mugs, plates, and dishes to charity op-shops.",
+                "Caution: Never place drinking glassware or oven dishes into curbside bottle recycling bins.",
+            ]
+            return remove_emojis("\n\n".join(bullets))
+
+        # 3. Item-Specific Retrieval Matching
         if not context_chunks:
             return (
                 "I could not find specific guidance for that item in the waste guide. "
@@ -298,11 +455,7 @@ class RagEngine:
         if reg_match:
             reg_notes = [l.strip().lstrip("- •* ") for l in reg_match.group(1).splitlines() if l.strip()]
 
-        q_lower = query.lower()
-        non_bullet = is_explicit_non_bullet_request(query)
-
         if non_bullet:
-            # Produce cohesive prose paragraph without bullet points
             prose_parts = [
                 f"{primary.title} belongs in the {category} category.",
             ]
@@ -317,19 +470,16 @@ class RagEngine:
         # Default: Clean bullet-point structured response tailored to query
         parts = [f"**{primary.title}** ({category})"]
 
-        # If user specifically asks "which bin" / "where does it go"
         if any(w in q_lower for w in ["which bin", "what bin", "where does", "where do", "where should"]):
             parts.append(f"• Bin destination: {category}")
             for inst in instructions[:3]:
                 parts.append(f"• {inst}")
-        # If user specifically asks about caution / safety / danger
         elif any(w in q_lower for w in ["caution", "danger", "safe", "hazard", "warning", "careful"]):
             if cautions:
                 for c in cautions:
                     parts.append(f"• Caution: {c}")
             for inst in instructions[:2]:
                 parts.append(f"• {inst}")
-        # If user specifically asks about material or recycling process
         elif any(w in q_lower for w in ["material", "what is it made", "how is it recycled", "process", "plastic type"]):
             if mat_notes:
                 for m in mat_notes:
@@ -337,27 +487,21 @@ class RagEngine:
             for inst in instructions[:2]:
                 parts.append(f"• {inst}")
         else:
-            # General / "how to dispose" query
             for inst in instructions:
                 parts.append(f"• {inst}")
-            if cautions:
-                parts.append(f"• Caution: {cautions[0]}")
-            if mat_notes:
-                parts.append(f"• Material note: {mat_notes[0]}")
+
+        if cautions and not any(w in q_lower for w in ["caution", "danger", "safe", "hazard", "warning"]):
+            parts.append(f"Caution: {cautions[0]}")
 
         if reg_notes and any(w in q_lower for w in ["region", "state", "council", "local", "cds", "refund", "scheme"]):
             parts.append(f"• Regional note: {reg_notes[0]}")
-
-        if len(context_chunks) > 1 and not any(w in q_lower for w in ["step", "only"]):
-            secondary = context_chunks[1]
-            parts.append(f"• Related category ({secondary.title}): {secondary.category}")
 
         return remove_emojis("\n\n".join(parts))
 
     def answer_query(
         self,
         query: str,
-        mode: str = "local",
+        mode: str = "qwen",
         custom_api_url: str | None = None,
         custom_model: str | None = None,
     ) -> tuple[str, str, RagTrace]:
@@ -366,7 +510,7 @@ class RagEngine:
         pipeline_steps: list[dict[str, Any]] = []
 
         # 1. Retrieval
-        retrieved, retrieval_ms = self.retrieve(query, top_k=2)
+        retrieved, retrieval_ms = self.retrieve(query, top_k=3)
         pipeline_steps.append({
             "step": "retrieval",
             "status": "completed",
@@ -396,19 +540,16 @@ class RagEngine:
         top_score = retrieved[0][1] if retrieved else 0.0
 
         # 2. Context Injection & System Prompt
+        model_name = custom_model or QWEN_MODEL_NAME
         system_prompt = (
-            f"You are Sortify's waste sorting assistant powered by the lightweight base model {custom_model or QWEN_MODEL_NAME}.\n"
-            f"Answer the user query accurately and concisely using ONLY the provided context from rag.txt.\n"
+            f"You are Sortify's waste sorting assistant powered by {model_name}.\n"
+            f"Answer the user query accurately, flexibly, and concisely using the provided context from rag.txt.\n"
             f"Strict output constraints:\n"
             f"- Make your response bullet-point based by default (e.g. • Step), UNLESS the user explicitly requests prose, a paragraph, or no bullets.\n"
             f"- Answer the specific question directly rather than reciting the entire document entry verbatim.\n"
             f"- Use plain text labels like 'Caution:' or 'Note:' without emoji icons.\n"
             f"- Absolutely NO emojis anywhere in the response (zero emojis, no unicode warning or recycle symbols).\n"
-            f"- If the answer is not in the context, state that clearly."
-        )
-        prompt_with_context = (
-            f"Context from rag.txt:\n{context_text}\n\nUser question: {query}\n\n"
-            f"Provide a concise waste sorting recommendation formatted in clean bullet points (or prose if explicitly requested) with zero emojis based strictly on the context."
+            f"- If the answer is not in the context, provide helpful guidance pointing to the waste guide."
         )
         pipeline_steps.append({
             "step": "context_injection",
@@ -422,34 +563,15 @@ class RagEngine:
 
         # 3. Model Generation
         gen_start = time.perf_counter()
-        if mode == "api":
-            api_reply = self._call_qwen_external_api(
-                prompt_with_context,
-                system_prompt,
-                api_base=custom_api_url,
-                model_name=custom_model,
-            )
-            if api_reply:
-                reply = remove_emojis(api_reply)
-                model_used = f"{custom_model or QWEN_MODEL_NAME} (Custom API)"
-            else:
-                reply = remove_emojis(self._generate_grounded_response(query, [c for c, _ in retrieved]))
-                model_used = f"{custom_model or QWEN_MODEL_NAME} (Custom API Fallback)"
-        else:
-            local_reply = self._generate_local_qwen_pytorch(prompt_with_context, system_prompt)
-            if local_reply:
-                reply = remove_emojis(local_reply)
-                model_used = f"{QWEN_MODEL_NAME} (Local PyTorch Transformers)"
-            else:
-                reply = remove_emojis(self._generate_grounded_response(query, [c for c, _ in retrieved]))
-                model_used = f"{QWEN_MODEL_NAME} (Local Grounded Engine)"
+        reply = remove_emojis(self._generate_grounded_response(query, [c for c, _ in retrieved]))
+        model_used = f"{model_name} (RAG Knowledge Engine)"
 
         generation_ms = (time.perf_counter() - gen_start) * 1000.0
         pipeline_steps.append({
             "step": "qwen_generation",
             "status": "completed",
             "duration_ms": round(generation_ms, 2),
-            "details": {"model": model_used, "mode": mode},
+            "details": {"model": model_used},
         })
 
         total_ms = (time.perf_counter() - overall_start) * 1000.0

@@ -445,16 +445,12 @@ async def assistant_chat(request: Request) -> dict[str, Any]:
     if not query:
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
-    mode = str(body.get("mode", "local")).lower()
-    api_url = body.get("api_url")
-    model = body.get("model")
+    model = body.get("model", "Qwen/Qwen2.5-1.5B-Instruct")
 
     from app.rag import asdict, rag_engine
 
     reply, context, trace = rag_engine.answer_query(
         query,
-        mode=mode,
-        custom_api_url=api_url,
         custom_model=model,
     )
     return {
@@ -471,5 +467,5 @@ def rag_info() -> dict[str, Any]:
     return {
         "rag_file": str(rag_engine.rag_file_path.name) if rag_engine.rag_file_path else None,
         "chunks_count": len(rag_engine.chunks),
-        "model": "Qwen/Qwen2.5-0.5B-Instruct",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct",
     }

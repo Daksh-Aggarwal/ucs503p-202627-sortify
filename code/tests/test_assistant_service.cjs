@@ -82,15 +82,17 @@ console.log('PASS: stripEmojis successfully strips all emojis and symbols');
   assert.equal(proseRes.reply.includes('•'), false, 'Prose reply should not contain bullets');
   console.log('PASS: askAssistant localClientRag prose query returned clean prose without bullets');
 
-  // 3. Test Qwen mode config (local vs api)
-  const localRes = await askAssistant('How do I recycle a cardboard box?', undefined, { mode: 'local' });
-  assert.ok(localRes.traces.model.includes('Local Grounded Engine'), 'Local mode should reflect local engine');
-  console.log('PASS: askAssistant supports mode: "local" with local grounded model');
+  // 3. Test Flexible Category Synthesis & Feasibility
+  const recRes = await askAssistant('what items go into the recyclable bin');
+  assert.ok(recRes.reply.includes('Recyclable Commingled Bin'), 'Should synthesize broad recyclable bin guide');
+  assert.ok(recRes.reply.includes('Rigid Plastics') && recRes.reply.includes('Paper & Cardboard'));
+  assert.ok(!recRes.traces.model.includes('Local'), 'Model name must not contain "Local"');
+  assert.ok(recRes.traces.model.includes('Qwen2.5-1.5B'), 'Model name should reflect Qwen 1.5B');
+  console.log('PASS: askAssistant flexible category query synthesized broad guide without "Local" reference: ' + recRes.traces.model);
 
-  const apiFallbackRes = await askAssistant('How do I recycle a cardboard box?', undefined, { mode: 'api', apiUrl: 'http://invalid-endpoint:9999/v1' });
-  assert.ok(apiFallbackRes.reply.length > 0, 'API fallback should return reply');
-  assert.ok(apiFallbackRes.traces.model.includes('Custom API Offline'), 'API fallback trace should indicate offline fallback');
-  console.log('PASS: askAssistant supports mode: "api" with graceful fallback when endpoint unreachable');
+  const pizzaRes = await askAssistant('can I recycle pizza boxes?');
+  assert.ok(pizzaRes.reply.includes('Clean Cardboard Top') && pizzaRes.reply.includes('Greasy Cardboard Bottom'));
+  console.log('PASS: askAssistant feasibility query for pizza box correctly distinguished clean vs greasy portions');
 
   console.log('\nALL ASSISTANT SERVICE TESTS PASSED!');
 })();

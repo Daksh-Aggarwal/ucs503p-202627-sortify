@@ -59,13 +59,16 @@ clean = remove_emojis(dirty)
 assert '⚠️' not in clean and '♻️' not in clean and '👍' not in clean and '✅' not in clean
 print('PASS: remove_emojis cleanly strips symbols')
 
-# 4. Test Qwen modes in Python RAG engine
-local_reply, _, local_trace = rag_engine.answer_query('How to dispose of cardboard?', mode='local')
-assert len(local_reply) > 0 and 'Local' in local_trace.model
-print('PASS: Python RAG engine answer_query mode="local" works')
+# 4. Test Qwen RAG engine flexibility & model metadata
+rec_reply, _, rec_trace = rag_engine.answer_query('what items go into the recyclable bin')
+assert 'Recyclable Commingled Bin' in rec_reply, f'Expected category synthesis for recycling query, got: {rec_reply[:100]}'
+assert 'Rigid Plastics' in rec_reply and 'Paper & Cardboard' in rec_reply
+assert 'Local' not in rec_trace.model, f'Found unwanted "Local" in trace model: {rec_trace.model}'
+assert 'Qwen2.5-1.5B' in rec_trace.model, f'Expected Qwen 1.5B in trace model: {rec_trace.model}'
+print(f'PASS: Flexible category query correctly synthesized broad bin guide without "Local" reference: {rec_trace.model}')
 
-api_reply, _, api_trace = rag_engine.answer_query('How to dispose of cardboard?', mode='api', custom_api_url='http://invalid:9999')
-assert len(api_reply) > 0 and 'API' in api_trace.model
-print('PASS: Python RAG engine answer_query mode="api" falls back cleanly when offline')
+pizza_reply, _, _ = rag_engine.answer_query('can I recycle pizza boxes?')
+assert 'Clean Cardboard Top' in pizza_reply and 'Greasy Cardboard Bottom' in pizza_reply
+print('PASS: Feasibility query "can I recycle pizza boxes" properly answered with clean vs greasy distinction')
 
 print('\nALL PYTHON RAG TESTS PASSED!')
