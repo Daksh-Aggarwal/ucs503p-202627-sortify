@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Image,
   Pressable,
   ScrollView,
   View,
@@ -11,7 +12,7 @@ import {
 import { router, usePathname, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/state/app-state';
-import { Badge, Button, C, Icon, IconButton, Row, Txt } from './ui';
+import { Button, C, Icon, IconButton, Row, Txt } from './ui';
 const links = [
   { href: '/', label: 'Overview', icon: 'home' },
   { href: '/scan', label: 'Scan an item', icon: 'scan' },
@@ -41,19 +42,13 @@ export function Shell({ children }: React.PropsWithChildren) {
         style={{ minHeight: 44, justifyContent: 'center' }}
         onPress={() => navigate('/')}
       >
-        <Row style={{ gap: 9, paddingHorizontal: 8 }}>
-          <View
-            style={{
-              width: 34,
-              height: 34,
-              backgroundColor: C.green,
-              borderRadius: 11,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Icon name="leaf" color="#E1EDC5" size={23} />
-          </View>
+        <Row style={{ gap: 10, paddingHorizontal: 8, alignItems: 'center' }}>
+          <Image
+            source={require('@/assets/images/logo.png')}
+            style={{ width: 34, height: 34 }}
+            resizeMode="contain"
+            accessibilityLabel="Sortify logo"
+          />
           <Txt size={28} weight="600" style={{ letterSpacing: -1.6 }}>
             sortify
             <Txt size={28} color="#7E9A53">
@@ -181,12 +176,30 @@ export function Shell({ children }: React.PropsWithChildren) {
               justifyContent: 'space-between',
             }}
           >
-            <Row>
-              <Txt size={12} color={C.muted}>
-                {desktop
-                  ? links.find((link) => link.href === pathname)?.label || 'Sortify'
-                  : 'sortify.'}
-              </Txt>
+            <Row style={{ alignItems: 'center', gap: 7 }}>
+              {!desktop && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Sortify home"
+                  onPress={() => navigate('/')}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}
+                >
+                  <Image
+                    source={require('@/assets/images/logo.png')}
+                    style={{ width: 20, height: 20 }}
+                    resizeMode="contain"
+                    accessibilityLabel="Sortify logo"
+                  />
+                  <Txt size={12} color={C.muted}>
+                    sortify.
+                  </Txt>
+                </Pressable>
+              )}
+              {desktop && (
+                <Txt size={12} color={C.muted}>
+                  {links.find((link) => link.href === pathname)?.label || 'Sortify'}
+                </Txt>
+              )}
             </Row>
             <Row style={{ gap: desktop ? 20 : 8 }}>
               <Pressable
