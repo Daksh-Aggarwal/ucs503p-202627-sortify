@@ -203,8 +203,8 @@ export function Shell({ children }: React.PropsWithChildren) {
                   <Icon name="down" size={12} />
                 </Row>
               </Pressable>
-              {desktop && <View style={{ height: 22, width: 1, backgroundColor: C.line }} />}
-              <Badge text="Online" icon="sparkle" background="#EFF6E9" color="#4F7A28" />
+              {/* {desktop && <View style={{ height: 22, width: 1, backgroundColor: C.line }} />}
+              <Badge text="Online" icon="sparkle" background="#EFF6E9" color="#4F7A28" /> */}
             </Row>
           </Row>
         </View>
