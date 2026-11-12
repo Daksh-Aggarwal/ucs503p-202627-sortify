@@ -46,29 +46,69 @@ SORTIFY_8_CLASS_NAMES = {
 
 # The 5 Sortify Major App Categories
 # 'Recyclable' | 'Organic' | 'General waste' | 'E-waste' | 'Hazardous'
-# Mapping from 8-class model classes to (category, default item id)
-MAP_8_CLASS_TO_SORTIFY: dict[str, dict[str, str]] = {
-    "paper_cardboard": {"category": "Recyclable", "item_id": "box", "display_name": "Paper & Cardboard"},
-    "plastic_bottle": {"category": "Recyclable", "item_id": "bottle", "display_name": "Plastic Bottle"},
-    "metal": {"category": "Recyclable", "item_id": "can", "display_name": "Metal"},
-    "flexible_plastic": {"category": "General waste", "item_id": "plastic-bag", "display_name": "Flexible Plastic"},
-    "sanitary_ppe_waste": {"category": "General waste", "item_id": "tissue", "display_name": "Sanitary / PPE Waste"},
-    "organic": {"category": "Organic", "item_id": "scraps", "display_name": "Organic Waste"},
-    "battery_ewaste": {"category": "E-waste", "item_id": "battery", "display_name": "Battery / E-waste"},
-    "hazardous_medical": {"category": "Hazardous", "item_id": "medical-waste", "display_name": "Hazardous Medical Waste"},
+# Mapping from 8-class model classes to (category, default item id, display name, sub_items)
+MAP_8_CLASS_TO_SORTIFY: dict[str, dict[str, Any]] = {
+    "paper_cardboard": {
+        "category": "Recyclable",
+        "item_id": "paper-cardboard",
+        "display_name": "Paper & Cardboard",
+        "sub_items": ["box", "paper", "pizza-box"],
+    },
+    "plastic_bottle": {
+        "category": "Recyclable",
+        "item_id": "plastic-bottle",
+        "display_name": "Plastic Bottle & Container",
+        "sub_items": ["bottle", "detergent-jug", "plastic-tub"],
+    },
+    "metal": {
+        "category": "Recyclable",
+        "item_id": "metal",
+        "display_name": "Metal Can & Packaging",
+        "sub_items": ["can", "food-tin", "aluminium-foil", "aerosol-can"],
+    },
+    "flexible_plastic": {
+        "category": "General waste",
+        "item_id": "flexible-plastic",
+        "display_name": "Flexible Plastic Packaging",
+        "sub_items": ["wrapper", "plastic-bag", "bubble-wrap", "cling-film", "squeeze-pouch"],
+    },
+    "sanitary_ppe_waste": {
+        "category": "General waste",
+        "item_id": "sanitary-ppe",
+        "display_name": "Sanitary & PPE Waste",
+        "sub_items": ["tissue", "face-mask", "wet-wipes", "rubber-gloves"],
+    },
+    "organic": {
+        "category": "Organic",
+        "item_id": "organic-waste",
+        "display_name": "Organic Waste",
+        "sub_items": ["scraps", "banana", "coffee-grounds", "leaves"],
+    },
+    "battery_ewaste": {
+        "category": "E-waste",
+        "item_id": "battery-ewaste",
+        "display_name": "Battery & E-waste",
+        "sub_items": ["battery", "mobile-phone", "charger", "headphones", "vape"],
+    },
+    "hazardous_medical": {
+        "category": "Hazardous",
+        "item_id": "hazardous-medical",
+        "display_name": "Hazardous Medical Waste",
+        "sub_items": ["medical-waste", "medicine", "blister-pack"],
+    },
 }
 
-MAP_10_CLASS_TO_SORTIFY: dict[str, dict[str, str]] = {
-    "paper": {"category": "Recyclable", "item_id": "paper", "display_name": "Paper"},
-    "cardboard": {"category": "Recyclable", "item_id": "box", "display_name": "Cardboard"},
-    "glass": {"category": "Recyclable", "item_id": "jar", "display_name": "Glass"},
-    "metal": {"category": "Recyclable", "item_id": "can", "display_name": "Metal"},
-    "plastic_bottle": {"category": "Recyclable", "item_id": "bottle", "display_name": "Plastic Bottle"},
-    "plastic_bag": {"category": "General waste", "item_id": "plastic-bag", "display_name": "Plastic Bag"},
-    "sanitary_ppe_waste": {"category": "General waste", "item_id": "tissue", "display_name": "Sanitary / PPE Waste"},
-    "organic": {"category": "Organic", "item_id": "scraps", "display_name": "Organic"},
-    "battery_ewaste": {"category": "E-waste", "item_id": "battery", "display_name": "Battery / E-waste"},
-    "hazardous_medical": {"category": "Hazardous", "item_id": "medical-waste", "display_name": "Hazardous Medical"},
+MAP_10_CLASS_TO_SORTIFY: dict[str, dict[str, Any]] = {
+    "paper": {"category": "Recyclable", "item_id": "paper", "display_name": "Paper", "sub_items": ["paper"]},
+    "cardboard": {"category": "Recyclable", "item_id": "box", "display_name": "Cardboard Box", "sub_items": ["box"]},
+    "glass": {"category": "Recyclable", "item_id": "jar", "display_name": "Glass Container", "sub_items": ["jar"]},
+    "metal": {"category": "Recyclable", "item_id": "metal", "display_name": "Metal Can & Packaging", "sub_items": ["can", "food-tin"]},
+    "plastic_bottle": {"category": "Recyclable", "item_id": "plastic-bottle", "display_name": "Plastic Bottle & Container", "sub_items": ["bottle", "detergent-jug"]},
+    "plastic_bag": {"category": "General waste", "item_id": "flexible-plastic", "display_name": "Plastic Bag & Flexible Film", "sub_items": ["plastic-bag", "wrapper", "bubble-wrap"]},
+    "sanitary_ppe_waste": {"category": "General waste", "item_id": "sanitary-ppe", "display_name": "Sanitary & PPE Waste", "sub_items": ["tissue", "face-mask", "wet-wipes"]},
+    "organic": {"category": "Organic", "item_id": "organic-waste", "display_name": "Organic Waste", "sub_items": ["scraps", "banana", "leaves"]},
+    "battery_ewaste": {"category": "E-waste", "item_id": "battery-ewaste", "display_name": "Battery & E-waste", "sub_items": ["battery", "mobile-phone", "charger"]},
+    "hazardous_medical": {"category": "Hazardous", "item_id": "hazardous-medical", "display_name": "Hazardous Medical Waste", "sub_items": ["medical-waste", "medicine", "blister-pack"]},
 }
 
 # COCO 80-class fallback aliases
@@ -241,6 +281,7 @@ def normalize_detections(
         raw_class_name = loaded_model.names.get(raw_class_id, f"class_{raw_class_id}")
 
         # Map to Sortify's 5 Major Categories and standard item IDs
+        sub_items: list[str] = []
         if loaded_model.profile == "sortify-8class":
             mapping = MAP_8_CLASS_TO_SORTIFY.get(raw_class_name)
             if not mapping:
@@ -248,12 +289,14 @@ def normalize_detections(
                 class_key = SORTIFY_8_CLASS_NAMES.get(raw_class_id, "")
                 mapping = MAP_8_CLASS_TO_SORTIFY.get(class_key, {
                     "category": "General waste",
-                    "item_id": "tissue",
+                    "item_id": "sanitary-ppe",
                     "display_name": raw_class_name,
+                    "sub_items": [],
                 })
             category = mapping["category"]
             item_id = mapping["item_id"]
             display_name = mapping["display_name"]
+            sub_items = mapping.get("sub_items", [])
             sortify_class_name = raw_class_name
 
         elif loaded_model.profile == "sortify-10class":
@@ -262,12 +305,14 @@ def normalize_detections(
                 class_key = SORTIFY_10_CLASS_NAMES.get(raw_class_id, "")
                 mapping = MAP_10_CLASS_TO_SORTIFY.get(class_key, {
                     "category": "General waste",
-                    "item_id": "tissue",
+                    "item_id": "sanitary-ppe",
                     "display_name": raw_class_name,
+                    "sub_items": [],
                 })
             category = mapping["category"]
             item_id = mapping["item_id"]
             display_name = mapping["display_name"]
+            sub_items = mapping.get("sub_items", [])
             sortify_class_name = raw_class_name
 
         elif loaded_model.profile == "coco-compatibility":
@@ -277,18 +322,21 @@ def normalize_detections(
             raw_10_name = SORTIFY_10_CLASS_NAMES.get(mapped_10_id, "unknown")
             mapping = MAP_10_CLASS_TO_SORTIFY.get(raw_10_name, {
                 "category": "General waste",
-                "item_id": "tissue",
+                "item_id": "sanitary-ppe",
                 "display_name": raw_class_name,
+                "sub_items": [],
             })
             category = mapping["category"]
             item_id = mapping["item_id"]
             display_name = mapping["display_name"]
+            sub_items = mapping.get("sub_items", [])
             sortify_class_name = raw_10_name
         else:
             # Custom profile
             category = "General waste"
-            item_id = "tissue"
+            item_id = "sanitary-ppe"
             display_name = raw_class_name
+            sub_items = []
             sortify_class_name = raw_class_name
 
         left, top, right, bottom = coordinates
@@ -306,6 +354,7 @@ def normalize_detections(
                 # Mapped application category (out of the 5 major classes)
                 "category": category,
                 "item_id": item_id,
+                "sub_items": sub_items,
                 "class_name": sortify_class_name,
                 "confidence": round(float(confidence), 5),
                 "bbox": {

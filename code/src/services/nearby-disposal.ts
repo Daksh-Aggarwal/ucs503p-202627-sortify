@@ -14,10 +14,10 @@ export type NearbyPlace = {
 
 // A broad hazardous category alone does not establish what a facility accepts.
 export function disposalKind(item: WasteItem): DisposalKind | null {
-  if (item.id === 'battery') return 'battery';
+  if (item.id === 'battery' || item.id === 'battery-ewaste') return 'battery';
   if (item.category === 'E-waste') return 'electronics';
-  if (item.id === 'medicine') return 'medicine';
-  if (item.id === 'medical-waste') return 'medical';
+  if (item.id === 'medicine' || item.id === 'blister-pack') return 'medicine';
+  if (item.id === 'medical-waste' || item.id === 'hazardous-medical') return 'medical';
   return null;
 }
 

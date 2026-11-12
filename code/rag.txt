@@ -1000,3 +1000,120 @@ Caution:
 - Starters manufactured prior to the 1990s often contain hazardous Polychlorinated Biphenyls (PCBs) in the capacitor dielectric fluid, which are highly toxic carcinogens.
 Regional Notes:
 - Local government e-waste recovery centers and chemical clean-up days process fluorescent fixtures and hazardous lighting accessories safely.
+
+
+[Flexible Plastic Packaging, Film & Wrappers]
+Category: General waste / Specialized Store Drop-off
+Disposal Instructions:
+- Perform the scrunch test: if plastic packaging scrunches easily into a ball and bounces back, it is flexible soft plastic.
+- Keep all flexible soft plastics, grocery bags, cling film, and snack wrappers out of curbside yellow recycling bins.
+- Check whether your municipality or local supermarket runs a dedicated soft-plastics drop-off collection point.
+- If a soft-plastics program operates locally, collect clean and dry film packaging together before taking it to the store collection depot.
+- If no dedicated soft-plastic program is available, dispose of flexible packaging in your general waste red-lid bin.
+Material & Recycling Context:
+- Flexible plastics encompass low-density polyethylene (LDPE #4), polypropylene film (PP #5), shrink wrap, and multilayer barrier films.
+- When flexible films enter automated material recovery facilities (MRFs), they wrap tightly around rotating disk screens and optical conveyor shafts, causing emergency line shutdowns.
+Caution:
+- Never bag your loose recyclables inside a plastic garbage bag or grocery bag; sorting facility staff cannot open opaque bags and will discard the entire bag to landfill.
+Regional Notes:
+- Supermarket soft-plastic return drop-offs and council soft-plastic bag trials operate in select metropolitan regions.
+
+[Face Masks, Nitrile Gloves & Disposable PPE]
+Category: General waste
+Disposal Instructions:
+- Dispose of single-use surgical masks, N95 respirators, disposable nitrile or latex gloves, and sanitary wipes in the general waste bin.
+- Cut mask ear loops with scissors prior to disposal to eliminate entanglement risk for birds and urban wildlife.
+- Place used PPE in a tied plastic trash bag inside your household red-lid rubbish bin.
+- Never place any personal protective equipment or sanitary hygiene items in curbside recycling or green compost bins.
+Material & Recycling Context:
+- Single-use face masks are made from non-woven melt-blown polypropylene fibers, while disposable gloves are composed of synthetic nitrile or natural rubber latex.
+- These materials cannot be recycled through municipal commingled streams and carry biological hygiene considerations.
+Caution:
+- Wet wipes, tissues, and face masks must never be flushed down toilets; they do not disintegrate and combine with fats to form severe sewer fatbergs.
+Regional Notes:
+- Healthcare facilities and clinics use specialized biohazard yellow clinical bins, but domestic household PPE belongs in regular general waste.
+
+[Paper & Cardboard Packaging]
+Category: Recyclable
+Disposal Instructions:
+- Flatten all delivery boxes, cereal boxes, corrugated cartons, and cardboard packaging completely to maximize truck capacity.
+- Keep paper, magazines, newspapers, and cardboard clean and dry.
+- Strip away packing tape, plastic mailer wrap, bubble wrap inserts, and polystyrene blocks.
+- Deposit clean loose paper and cardboard directly into your curbside paper recycling bin.
+Material & Recycling Context:
+- Cardboard and paper fibres can be repulped and recycled five to seven times into new boxes, cartons, and packaging newsprint.
+Caution:
+- Food-soiled paperboard, greasy pizza box bases, wax-coated boxes, and thermal receipts cannot be recycled with paper and must be placed in general waste or composting.
+Regional Notes:
+- Commingled recycling trucks accept clean paper and flattened cardboard mixed with accepted cans and bottles in many regions.
+
+[Metal Cans, Food Tins & Aluminium Foil Packaging]
+Category: Recyclable
+Disposal Instructions:
+- Empty all food, beverage, or soup contents completely and rinse off sauce residue.
+- For clean aluminium cooking foil, scrunch sheets into a solid fist-sized ball before placing in the recycling bin.
+- Push tin can lids inside the can and squeeze the top of the can slightly to keep the sharp lid contained.
+- Empty aerosol spray cans completely by discharging remaining pressure before recycling.
+Material & Recycling Context:
+- Aluminium and steel are infinitely recyclable without loss of material quality, saving up to 95 percent of the energy needed for virgin metal extraction.
+Caution:
+- Aerosols containing flammable propellant, spray paint, or insect spray that still hiss must be delivered to household chemical cleanup drop-offs.
+Regional Notes:
+- Accepted in curbside yellow recycling bins across all municipal councils.
+
+[Plastic Bottles, Jugs & Rigid Plastic Containers]
+Category: Recyclable
+Disposal Instructions:
+- Empty all liquid or viscous household product contents completely.
+- Give bottles, milk jugs, detergent containers, and rigid tubs a quick rinse with cold water.
+- Keep plastic screw caps securely attached so caps are sorted alongside bottles at recovery facilities.
+- Gently squash or flatten bottles to save volume in collection trucks.
+- Deposit loose into your yellow-lid curbside recycling bin.
+Material & Recycling Context:
+- Rigid bottles and jugs are made from polyethylene terephthalate (PET #1) and high-density polyethylene (HDPE #2), which are widely remelted into fresh bottles, pipes, and fleece fibres.
+Caution:
+- Containers that held hazardous motor oil, lawn chemicals, automotive coolant, or flammable solvents cannot be recycled curbside and belong at hazardous drop-offs.
+Regional Notes:
+- Many regions offer container deposit return kiosks offering 10-cent refunds for eligible drink bottles.
+
+[Organic Food Waste, Compost & Garden Organics]
+Category: Organic / FOGO
+Disposal Instructions:
+- Collect fruit peels, vegetable ends, meal leftovers, coffee grounds, and loose tea leaves in a kitchen caddy.
+- Line your caddy with certified compostable liners displaying seedling logos, or fold a liner from newspaper.
+- Empty food scraps and clean garden organics (leaves, flowers, lawn clippings) directly into your green-lid FOGO bin.
+- For backyard compost systems, mix equal parts nitrogen-rich green scraps with carbon-rich brown leaves to accelerate decomposition.
+Material & Recycling Context:
+- Diverting organics from landfill prevents anaerobic breakdown that generates potent methane greenhouse gas, transforming food into nutrient-rich compost.
+Caution:
+- Remove produce barcode stickers, plastic packaging, twist ties, and rubber bands before composting.
+Regional Notes:
+- Municipalities without FOGO collections should compost food organics at home or discard food in general waste.
+
+[Batteries, Small Electronics & E-Waste]
+Category: E-waste / Hazardous
+Disposal Instructions:
+- Never place batteries, mobile phones, power cords, electronic chargers, or small electrical devices into household red, yellow, or green bins.
+- Place clear insulating tape or electrical tape over battery terminals to prevent short circuits.
+- Take household batteries to supermarket or hardware store recycling collection tubes.
+- Deliver phones, cables, tablets, headphones, and small electronic devices to authorized e-waste depots or retail take-back programs.
+Material & Recycling Context:
+- Electronics and batteries contain valuable non-renewable resources including lithium, cobalt, nickel, copper, and precious metals that are recovered through specialized recycling.
+Caution:
+- Crushed or punctured lithium-ion cells cause aggressive thermal runaway chemical fires inside waste trucks and sorting plants.
+Regional Notes:
+- Free national e-waste drop-off networks operate across electronics retailers and council transfer stations.
+
+[Hazardous Medical Waste, Sharps & Pharmaceuticals]
+Category: Hazardous
+Disposal Instructions:
+- Return unwanted, expired, or leftover prescription tablets, capsules, and liquid medicines to a local community pharmacy.
+- Place used hypodermic needles, syringes, and lancets immediately into an Australian Standard or rigid yellow puncture-proof sharps container.
+- When sharps containers are three-quarters full, seal the lid permanently and deliver to participating pharmacies, civic hospitals, or hazardous collection sites.
+- Empty medicine blister packs made of plastic-foil composites go into general waste or dedicated pharmacy blister pack collection boxes where available.
+Material & Recycling Context:
+- Incineration under high-temperature clinical conditions destroys active pharmaceutical compounds safely without contaminating groundwater aquifers.
+Caution:
+- Never flush medications down household sinks or toilets. Never discard loose needles or sharps in household garbage or recycling.
+Regional Notes:
+- Free Return Unwanted Medicines (RUM) programs are funded at community pharmacies nationwide.

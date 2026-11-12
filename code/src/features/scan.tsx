@@ -162,7 +162,16 @@ export default function ScanScreen() {
   }
 
   const samples = state.items.filter((i) =>
-    ['bottle', 'banana', 'box', 'battery', 'can'].includes(i.id),
+    [
+      'bottle',
+      'banana',
+      'box',
+      'battery',
+      'can',
+      'flexible-plastic',
+      'tissue',
+      'medical-waste',
+    ].includes(i.id),
   );
 
   const currentConfidenceObj =

@@ -67,7 +67,7 @@ const seed: State = {
   profile: null,
   location: '',
   nearbyDisposalEnabled: false,
-  catalogVersion: 2,
+  catalogVersion: 3,
   scans: [
     {
       id: 'seed-1',
@@ -144,13 +144,20 @@ export function AppProvider({ children }: React.PropsWithChildren) {
               ...seed,
               ...parsed,
               location: '',
-              catalogVersion: 2,
+              catalogVersion: 3,
               messages: [], // Assistant conversations are ephemeral
               items:
-                parsed.catalogVersion === 2 ||
-                parsed.items.some((item: WasteItem) => item.id === 'mobile-phone')
+                parsed.catalogVersion === 3 && Array.isArray(parsed.items) && parsed.items.length >= catalog.length
                   ? parsed.items
-                  : [...parsed.items, catalog.find((item) => item.id === 'mobile-phone')!],
+                  : [
+                      ...catalog,
+                      // Preserve any user-created custom items that are not in the standard catalog
+                      ...(Array.isArray(parsed.items)
+                        ? parsed.items.filter(
+                            (p: WasteItem) => p && p.id && !catalog.some((c) => c.id === p.id),
+                          )
+                        : []),
+                    ],
             });
         }
       })

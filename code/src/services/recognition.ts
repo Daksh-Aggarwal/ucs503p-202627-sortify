@@ -95,14 +95,14 @@ export const STREAMLINED_8_CLASS_MAPPING: Record<
   number,
   { className: string; displayName: string; itemId: string; category: Category }
 > = {
-  0: { className: 'paper_cardboard', displayName: 'Paper & Cardboard', itemId: 'box', category: 'Recyclable' },
-  1: { className: 'plastic_bottle', displayName: 'Plastic Bottle', itemId: 'bottle', category: 'Recyclable' },
-  2: { className: 'metal', displayName: 'Metal Can / Tin', itemId: 'can', category: 'Recyclable' },
-  3: { className: 'flexible_plastic', displayName: 'Flexible Plastic', itemId: 'plastic-bag', category: 'General waste' },
-  4: { className: 'sanitary_ppe_waste', displayName: 'Sanitary / PPE Waste', itemId: 'tissue', category: 'General waste' },
-  5: { className: 'organic', displayName: 'Organic Waste', itemId: 'scraps', category: 'Organic' },
-  6: { className: 'battery_ewaste', displayName: 'Battery & E-waste', itemId: 'battery', category: 'E-waste' },
-  7: { className: 'hazardous_medical', displayName: 'Hazardous Medical', itemId: 'medical-waste', category: 'Hazardous' },
+  0: { className: 'paper_cardboard', displayName: 'Paper & Cardboard', itemId: 'paper-cardboard', category: 'Recyclable' },
+  1: { className: 'plastic_bottle', displayName: 'Plastic Bottle & Container', itemId: 'plastic-bottle', category: 'Recyclable' },
+  2: { className: 'metal', displayName: 'Metal Can & Packaging', itemId: 'metal', category: 'Recyclable' },
+  3: { className: 'flexible_plastic', displayName: 'Flexible Plastic Packaging', itemId: 'flexible-plastic', category: 'General waste' },
+  4: { className: 'sanitary_ppe_waste', displayName: 'Sanitary & PPE Waste', itemId: 'sanitary-ppe', category: 'General waste' },
+  5: { className: 'organic', displayName: 'Organic Waste', itemId: 'organic-waste', category: 'Organic' },
+  6: { className: 'battery_ewaste', displayName: 'Battery & E-waste', itemId: 'battery-ewaste', category: 'E-waste' },
+  7: { className: 'hazardous_medical', displayName: 'Hazardous Medical Waste', itemId: 'hazardous-medical', category: 'Hazardous' },
 };
 
 /**
@@ -115,13 +115,13 @@ export const UNIFIED_10_CLASS_MAPPING: Record<
   0: { className: 'paper', displayName: 'Paper', itemId: 'paper', category: 'Recyclable' },
   1: { className: 'cardboard', displayName: 'Cardboard Box', itemId: 'box', category: 'Recyclable' },
   2: { className: 'glass', displayName: 'Glass Container', itemId: 'jar', category: 'Recyclable' },
-  3: { className: 'metal', displayName: 'Metal Can', itemId: 'can', category: 'Recyclable' },
-  4: { className: 'plastic_bottle', displayName: 'Plastic Bottle', itemId: 'bottle', category: 'Recyclable' },
-  5: { className: 'plastic_bag', displayName: 'Plastic Bag', itemId: 'plastic-bag', category: 'General waste' },
-  6: { className: 'sanitary_ppe_waste', displayName: 'Sanitary / PPE Waste', itemId: 'tissue', category: 'General waste' },
-  7: { className: 'organic', displayName: 'Organic Waste', itemId: 'scraps', category: 'Organic' },
-  8: { className: 'battery_ewaste', displayName: 'Battery / E-waste', itemId: 'battery', category: 'E-waste' },
-  9: { className: 'hazardous_medical', displayName: 'Hazardous Medical', itemId: 'medical-waste', category: 'Hazardous' },
+  3: { className: 'metal', displayName: 'Metal Can & Packaging', itemId: 'metal', category: 'Recyclable' },
+  4: { className: 'plastic_bottle', displayName: 'Plastic Bottle & Container', itemId: 'plastic-bottle', category: 'Recyclable' },
+  5: { className: 'plastic_bag', displayName: 'Plastic Bag & Flexible Film', itemId: 'flexible-plastic', category: 'General waste' },
+  6: { className: 'sanitary_ppe_waste', displayName: 'Sanitary & PPE Waste', itemId: 'sanitary-ppe', category: 'General waste' },
+  7: { className: 'organic', displayName: 'Organic Waste', itemId: 'organic-waste', category: 'Organic' },
+  8: { className: 'battery_ewaste', displayName: 'Battery & E-waste', itemId: 'battery-ewaste', category: 'E-waste' },
+  9: { className: 'hazardous_medical', displayName: 'Hazardous Medical Waste', itemId: 'hazardous-medical', category: 'Hazardous' },
 };
 
 type RawDetection = {
@@ -298,33 +298,78 @@ export async function recognizeImage(
 
 export function demoPredictions(itemId: string, confidence: number): RecognitionPrediction[] {
   const primary = demoPrediction(itemId, confidence);
-  if (itemId === 'bottle') {
+  if (itemId === 'bottle' || itemId === 'plastic-bottle') {
     return [
       primary,
       {
         classId: 0,
         className: 'paper_cardboard',
         modelClassName: 'paper_cardboard',
-        displayName: 'Cardboard Box',
-        itemId: 'box',
+        displayName: 'Paper & Cardboard',
+        itemId: 'paper-cardboard',
         category: 'Recyclable',
         confidence: 82,
         box: { x: 0.58, y: 0.38, width: 0.36, height: 0.54 },
       },
     ];
   }
-  if (itemId === 'can') {
+  if (itemId === 'can' || itemId === 'metal') {
     return [
       primary,
       {
         classId: 3,
         className: 'flexible_plastic',
         modelClassName: 'flexible_plastic',
-        displayName: 'Plastic Bag',
-        itemId: 'plastic-bag',
+        displayName: 'Flexible Plastic Packaging',
+        itemId: 'flexible-plastic',
         category: 'General waste',
         confidence: 71,
         box: { x: 0.06, y: 0.44, width: 0.44, height: 0.50 },
+      },
+    ];
+  }
+  if (itemId === 'flexible-plastic' || itemId === 'wrapper' || itemId === 'plastic-bag') {
+    return [
+      primary,
+      {
+        classId: 1,
+        className: 'plastic_bottle',
+        modelClassName: 'plastic_bottle',
+        displayName: 'Plastic Bottle & Container',
+        itemId: 'plastic-bottle',
+        category: 'Recyclable',
+        confidence: 68,
+        box: { x: 0.55, y: 0.20, width: 0.38, height: 0.65 },
+      },
+    ];
+  }
+  if (itemId === 'sanitary-ppe' || itemId === 'tissue') {
+    return [
+      primary,
+      {
+        classId: 3,
+        className: 'flexible_plastic',
+        modelClassName: 'flexible_plastic',
+        displayName: 'Flexible Plastic Packaging',
+        itemId: 'flexible-plastic',
+        category: 'General waste',
+        confidence: 65,
+        box: { x: 0.60, y: 0.30, width: 0.35, height: 0.50 },
+      },
+    ];
+  }
+  if (itemId === 'hazardous-medical' || itemId === 'medical-waste' || itemId === 'medicine') {
+    return [
+      primary,
+      {
+        classId: 0,
+        className: 'paper_cardboard',
+        modelClassName: 'paper_cardboard',
+        displayName: 'Paper & Cardboard',
+        itemId: 'paper-cardboard',
+        category: 'Recyclable',
+        confidence: 72,
+        box: { x: 0.52, y: 0.15, width: 0.42, height: 0.60 },
       },
     ];
   }
@@ -332,12 +377,37 @@ export function demoPredictions(itemId: string, confidence: number): Recognition
 }
 
 export function demoPrediction(itemId: string, confidence: number): RecognitionPrediction {
-  const itemMappings: Record<string, { classId: number; className: string; displayName: string; category: Category }> = {
+  const itemMappings: Record<
+    string,
+    { classId: number; className: string; displayName: string; category: Category }
+  > = {
+    // Generalized 8-class IDs
+    'paper-cardboard': { classId: 0, className: 'paper_cardboard', displayName: 'Paper & Cardboard', category: 'Recyclable' },
+    'plastic-bottle': { classId: 1, className: 'plastic_bottle', displayName: 'Plastic Bottle & Container', category: 'Recyclable' },
+    metal: { classId: 2, className: 'metal', displayName: 'Metal Can & Packaging', category: 'Recyclable' },
+    'flexible-plastic': { classId: 3, className: 'flexible_plastic', displayName: 'Flexible Plastic Packaging', category: 'General waste' },
+    'sanitary-ppe': { classId: 4, className: 'sanitary_ppe_waste', displayName: 'Sanitary & PPE Waste', category: 'General waste' },
+    'organic-waste': { classId: 5, className: 'organic', displayName: 'Organic Waste', category: 'Organic' },
+    'battery-ewaste': { classId: 6, className: 'battery_ewaste', displayName: 'Battery & E-waste', category: 'E-waste' },
+    'hazardous-medical': { classId: 7, className: 'hazardous_medical', displayName: 'Hazardous Medical Waste', category: 'Hazardous' },
+
+    // Specific item IDs
     bottle: { classId: 1, className: 'plastic_bottle', displayName: 'Plastic Bottle', category: 'Recyclable' },
-    banana: { classId: 5, className: 'organic', displayName: 'Organic Waste', category: 'Organic' },
-    box: { classId: 0, className: 'paper_cardboard', displayName: 'Paper & Cardboard', category: 'Recyclable' },
-    battery: { classId: 6, className: 'battery_ewaste', displayName: 'Battery & E-waste', category: 'E-waste' },
-    can: { classId: 2, className: 'metal', displayName: 'Metal Can', category: 'Recyclable' },
+    banana: { classId: 5, className: 'organic', displayName: 'Banana Peel', category: 'Organic' },
+    box: { classId: 0, className: 'paper_cardboard', displayName: 'Cardboard Box', category: 'Recyclable' },
+    paper: { classId: 0, className: 'paper_cardboard', displayName: 'Newspaper & Print Paper', category: 'Recyclable' },
+    battery: { classId: 6, className: 'battery_ewaste', displayName: 'Household Battery', category: 'E-waste' },
+    can: { classId: 2, className: 'metal', displayName: 'Aluminium Can', category: 'Recyclable' },
+    scraps: { classId: 5, className: 'organic', displayName: 'Vegetable Scraps', category: 'Organic' },
+    tissue: { classId: 4, className: 'sanitary_ppe_waste', displayName: 'Used Tissue', category: 'General waste' },
+    'plastic-bag': { classId: 3, className: 'flexible_plastic', displayName: 'Plastic Bag', category: 'General waste' },
+    wrapper: { classId: 3, className: 'flexible_plastic', displayName: 'Snack Wrapper', category: 'General waste' },
+    'bubble-wrap': { classId: 3, className: 'flexible_plastic', displayName: 'Bubble Wrap', category: 'General waste' },
+    'mobile-phone': { classId: 6, className: 'battery_ewaste', displayName: 'Old Mobile Phone', category: 'E-waste' },
+    charger: { classId: 6, className: 'battery_ewaste', displayName: 'Phone Charger', category: 'E-waste' },
+    medicine: { classId: 7, className: 'hazardous_medical', displayName: 'Expired Medicine', category: 'Hazardous' },
+    'medical-waste': { classId: 7, className: 'hazardous_medical', displayName: 'Medical Waste', category: 'Hazardous' },
+    jar: { classId: 2, className: 'metal', displayName: 'Glass Jar', category: 'Recyclable' },
   };
 
   const sample = itemMappings[itemId] || {

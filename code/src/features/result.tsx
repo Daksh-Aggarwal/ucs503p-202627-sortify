@@ -78,9 +78,11 @@ export default function ResultScreen() {
   });
   const [reEvaluating, setReEvaluating] = useState(false);
   const [customDetections, setCustomDetections] = useState<DetectedItemPayload[] | null>(null);
+  const [selectedSubItemId, setSelectedSubItemId] = useState<string | null>(null);
 
   const handleSelectIndex = (index: number) => {
     setActiveIndex(index);
+    setSelectedSubItemId(null);
     setCorrecting(false);
     setCorrection('');
   };
@@ -164,6 +166,14 @@ export default function ResultScreen() {
       />
     );
 
+  const activeItem = (selectedSubItemId ? state.items.find((i) => i.id === selectedSubItemId) : null) || item;
+
+  // If viewing a specific sub-item directly (e.g. from guide, history or barcode), locate its parent class
+  const parentClassItem =
+    !item.subItemIds && !selectedSubItemId
+      ? state.items.find((i) => i.subItemIds && i.subItemIds.includes(item.id))
+      : null;
+
   function save(sorted = false) {
     if (saved) {
       if (sorted)
@@ -172,7 +182,8 @@ export default function ResultScreen() {
           scans: s.scans.map((scan) => (scan.id === saved.id ? { ...scan, sorted: true } : scan)),
         }));
     } else {
-      const newScanId = saveScan(item!.id, confidence, source, sorted);
+      const targetId = activeItem?.id || item!.id;
+      const newScanId = saveScan(targetId, confidence, source, sorted);
       setSavedByItem((prev) => ({ ...prev, [activeIndex]: newScanId }));
     }
     notify(
@@ -182,12 +193,13 @@ export default function ResultScreen() {
 
   function feedback() {
     if (!correction.trim()) return;
+    const targetId = activeItem?.id || item!.id;
     update((s) => ({
       ...s,
       feedback: [
         {
           id: uniqueId(),
-          itemId: item!.id,
+          itemId: targetId,
           correction: correction.trim(),
           status: 'Pending',
           date: new Date().toISOString(),
@@ -404,16 +416,16 @@ export default function ResultScreen() {
       </Card>
 
       <Row style={{ marginBottom: 20, alignItems: 'flex-start' }}>
-        <ItemArt item={item} size={64} />
+        <ItemArt item={activeItem} size={64} />
         <View style={{ flex: 1, gap: 5 }}>
           <Txt accessibilityRole="header" size={26} weight="500" style={{ lineHeight: 32 }}>
-            {item.name}
+            {activeItem.name}
           </Txt>
           <Txt size={13} color={C.muted}>
-            {item.material}
+            {activeItem.material}
           </Txt>
           <Row style={{ flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-            <CategoryBadge category={item.category} />
+            <CategoryBadge category={activeItem.category} />
             {confidence > 0 && (
               <Badge
                 text={`${confidenceScore}% • ${confidenceTierLabel}`}
@@ -431,6 +443,113 @@ export default function ResultScreen() {
           </Row>
         </View>
       </Row>
+
+      {/* Parent class link when viewing a specific sub-item */}
+      {parentClassItem && (
+        <Card
+          style={{
+            marginBottom: 16,
+            padding: 12,
+            backgroundColor: '#FAFBF7',
+            borderWidth: 1,
+            borderColor: C.line,
+          }}
+        >
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <Row style={{ gap: 6, alignItems: 'center' }}>
+              <Txt size={12} color={C.muted}>
+                Part of class:
+              </Txt>
+              <Badge text={parentClassItem.name} />
+            </Row>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`View full ${parentClassItem.name} class overview`}
+              onPress={() =>
+                router.push({
+                  pathname: '/result',
+                  params: { id: parentClassItem.id, source: 'manual' },
+                })
+              }
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+            >
+              <Txt size={12} color={C.green} weight="600">
+                View class overview
+              </Txt>
+              <Icon name="arrow" size={14} color={C.green} />
+            </Pressable>
+          </Row>
+        </Card>
+      )}
+
+      {/* Sub-items / Specific items in this class selector */}
+      {item.subItemIds && item.subItemIds.length > 0 && (
+        <Card
+          style={{
+            marginBottom: 16,
+            padding: 14,
+            gap: 10,
+            backgroundColor: '#FAFBF7',
+            borderWidth: 1,
+            borderColor: C.line,
+          }}
+        >
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+            <Row style={{ gap: 6, alignItems: 'center' }}>
+              <Icon name="tag" size={16} color={C.green} />
+              <Txt size={13} weight="600" color={C.ink}>
+                Specific items in this class:
+              </Txt>
+            </Row>
+            {selectedSubItemId && (
+              <Pressable
+                onPress={() => setSelectedSubItemId(null)}
+                accessibilityRole="button"
+                style={{ paddingVertical: 2, paddingHorizontal: 6 }}
+              >
+                <Txt size={12} color={C.green} weight="600">
+                  Show class overview
+                </Txt>
+              </Pressable>
+            )}
+          </Row>
+          <Txt size={11} color={C.muted}>
+            Tap a specific item below if you need item-tailored sorting steps:
+          </Txt>
+          <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+            {item.subItemIds.map((subId) => {
+              const sub = state.items.find((i) => i.id === subId);
+              if (!sub) return null;
+              const isSelected = activeItem.id === sub.id;
+              return (
+                <Pressable
+                  key={subId}
+                  onPress={() => setSelectedSubItemId(sub.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`View instructions for ${sub.name}`}
+                  style={({ pressed, hovered }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 16,
+                    borderWidth: 1.5,
+                    borderColor: isSelected ? C.green : C.line,
+                    backgroundColor: isSelected ? '#E2ECE0' : hovered ? '#F0F3EC' : '#FFFFFF',
+                    opacity: pressed ? 0.75 : 1,
+                  })}
+                >
+                  <ItemArt item={sub} size={22} />
+                  <Txt size={12} weight={isSelected ? '700' : '500'} color={isSelected ? C.green : C.ink}>
+                    {sub.name}
+                  </Txt>
+                </Pressable>
+              );
+            })}
+          </Row>
+        </Card>
+      )}
 
       {/* Model Confidence & Changeable Threshold Card */}
       {confidence > 0 && (
@@ -541,7 +660,7 @@ export default function ResultScreen() {
           />
           <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
             <Txt size={12} color={C.muted}>
-              Active item: <Txt size={12} weight="600" color={C.ink}>{detectorLabel}</Txt> → mapped to <Txt size={12} weight="600" color={C.green}>{item.category}</Txt>
+              Active item: <Txt size={12} weight="600" color={C.ink}>{detectorLabel}</Txt> → mapped to <Txt size={12} weight="600" color={C.green}>{activeItem.category}</Txt>
             </Txt>
             {detectedItems.length > 1 && (
               <Txt size={11} color={C.muted}>
@@ -577,7 +696,7 @@ export default function ResultScreen() {
         <Txt size={17} weight="600">
           Disposal steps
         </Txt>
-        {item.steps.map((step, index) => (
+        {activeItem.steps.map((step, index) => (
           <Row key={index} style={{ alignItems: 'flex-start' }}>
             <View
               style={{
@@ -596,7 +715,7 @@ export default function ResultScreen() {
             <Txt style={{ flex: 1 }}>{step}</Txt>
           </Row>
         ))}
-        {!!item.caution && (
+        {!!activeItem.caution && (
           <Row
             style={{
               backgroundColor: '#FAF2E4',
@@ -607,7 +726,7 @@ export default function ResultScreen() {
           >
             <Icon name="warning" size={18} color="#8B652B" />
             <Txt style={{ flex: 1 }} color="#805D28" size={13}>
-              {item.caution}
+              {activeItem.caution}
             </Txt>
           </Row>
         )}
@@ -663,7 +782,7 @@ export default function ResultScreen() {
           </View>
         )}
       </Card>
-      <NearbyDisposal key={item.id} item={item} />
+      <NearbyDisposal key={activeItem.id} item={activeItem} />
       <View style={{ marginTop: 16 }}>
         <Disclosure
           title={
@@ -674,7 +793,7 @@ export default function ResultScreen() {
           icon="pin"
         >
           <Txt size={13} color={C.muted}>
-            {locationGuidance(state.location, item.category)}
+            {locationGuidance(state.location, activeItem.category)}
           </Txt>
         </Disclosure>
       </View>
@@ -687,8 +806,8 @@ export default function ResultScreen() {
             router.push({
               pathname: '/assistant',
               params: {
-                item: item.id,
-                itemName: activeDetected?.displayName || item.name,
+                item: activeItem.id,
+                itemName: activeItem.name,
                 fromScan: String(Date.now()),
               },
             })

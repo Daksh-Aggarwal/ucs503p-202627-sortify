@@ -36,7 +36,8 @@ yarn-error.*
 !.env.example
 
 # Local model artifacts can be large and must not be committed.
-server/models/
+server/models/*
+!server/models/sortify_class_mapping.json
 server/.venv/
 
 # typescript

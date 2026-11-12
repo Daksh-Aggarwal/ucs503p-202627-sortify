@@ -265,6 +265,7 @@ Caution:
     id: 'chunk-17',
     title: 'Vapes, E-Cigarettes & Electronic Nicotine Pods',
     category: 'E-waste / Hazardous',
+    itemId: 'vape',
     text: `[Vapes, E-Cigarettes & Electronic Nicotine Pods]
 Category: E-waste / Hazardous
 Disposal Instructions:
@@ -293,6 +294,7 @@ Caution:
     id: 'chunk-19',
     title: 'Aerosol Spray Cans & Pressurized Deodorant Cans',
     category: 'Recyclable / Hazardous',
+    itemId: 'aerosol-can',
     text: `[Aerosol Spray Cans & Pressurized Deodorant Cans]
 Category: Recyclable / Hazardous
 Disposal Instructions:
@@ -302,6 +304,134 @@ Disposal Instructions:
 Caution:
 - Partially full pressurized aerosol cans explode inside compactor trucks.`,
     keywords: ['aerosol', 'spray', 'deodorant', 'canister', 'pressurized'],
+  },
+  {
+    id: 'chunk-20',
+    title: 'Flexible Plastic Packaging & Soft Films',
+    category: 'General waste / Specialized Store Drop-off',
+    itemId: 'flexible-plastic',
+    text: `[Flexible Plastic Packaging & Soft Films]
+Category: General waste / Specialized Store Drop-off
+Disposal Instructions:
+- Perform the scrunch test: if plastic packaging scrunches into a ball and bounces back, it is flexible soft plastic.
+- Keep all flexible soft plastics, grocery bags, cling film, and snack wrappers out of curbside yellow recycling bins.
+- Collect clean and dry flexible plastic packaging for dedicated soft-plastic supermarket drop-off where available.
+- If no dedicated soft-plastic collection point operates locally, dispose in the general waste red-lid bin.
+Caution:
+- Never place soft plastic film in curbside recycling bins; film tangles in facility sorting machinery.`,
+    keywords: ['flexible', 'soft', 'film', 'plastic', 'wrapper', 'snack', 'pouch', 'scrunch', 'grocery', 'bag'],
+  },
+  {
+    id: 'chunk-21',
+    title: 'Face Masks, Nitrile Gloves & Sanitary PPE',
+    category: 'General waste',
+    itemId: 'sanitary-ppe',
+    text: `[Face Masks, Nitrile Gloves & Sanitary PPE]
+Category: General waste
+Disposal Instructions:
+- Dispose of single-use surgical masks, disposable gloves, tissues, and sanitizing wipes in the general waste bin.
+- Cut mask ear loops with scissors prior to disposal to protect wildlife.
+- Seal used PPE securely in a rubbish bag before placing into household general waste.
+Caution:
+- Never flush wet wipes, tissues, or hygiene items down the toilet; they cause sewer blockages and fatbergs.`,
+    keywords: ['mask', 'masks', 'glove', 'gloves', 'ppe', 'sanitary', 'wipe', 'wipes', 'tissue', 'hygiene'],
+  },
+  {
+    id: 'chunk-22',
+    title: 'Paper & Cardboard Packaging',
+    category: 'Recyclable',
+    itemId: 'paper-cardboard',
+    text: `[Paper & Cardboard Packaging]
+Category: Recyclable
+Disposal Instructions:
+- Flatten all delivery boxes, cereal cartons, and corrugated cardboard packaging completely.
+- Keep paper, magazines, newspapers, and cardboard clean and dry.
+- Strip away packing tape, plastic mailer wrap, and foam inserts.
+- Place loose into your curbside paper and cardboard recycling bin.
+Caution:
+- Greasy pizza box bottoms and food-soiled paperboard cannot be recycled with clean paper.`,
+    keywords: ['paper', 'cardboard', 'box', 'packaging', 'carton', 'newspaper', 'print'],
+  },
+  {
+    id: 'chunk-23',
+    title: 'Metal Cans, Food Tins & Aluminium Packaging',
+    category: 'Recyclable',
+    itemId: 'metal',
+    text: `[Metal Cans, Food Tins & Aluminium Packaging]
+Category: Recyclable
+Disposal Instructions:
+- Empty all food, beverage, or soup contents completely and rinse off sauce residue.
+- For clean aluminium foil, scrunch sheets into a solid fist-sized ball before placing in the recycling bin.
+- Push tin can lids inside the can and squeeze the top of the can slightly to keep the sharp lid contained.
+- Place loose into your curbside metal recycling bin.
+Caution:
+- Aerosols must be completely empty of pressure. Heavily burnt or food-crusted foil belongs in general waste.`,
+    keywords: ['metal', 'can', 'tin', 'foil', 'aluminium', 'aluminum', 'steel'],
+  },
+  {
+    id: 'chunk-24',
+    title: 'Plastic Bottles, Jugs & Rigid Plastic Containers',
+    category: 'Recyclable',
+    itemId: 'plastic-bottle',
+    text: `[Plastic Bottles, Jugs & Rigid Plastic Containers]
+Category: Recyclable
+Disposal Instructions:
+- Empty all liquid or viscous household product contents completely.
+- Give bottles, milk jugs, detergent containers, and rigid tubs a quick rinse with cold water.
+- Keep plastic screw caps securely attached so caps are sorted alongside bottles at recovery facilities.
+- Gently squash or flatten bottles to save volume in collection trucks.
+- Deposit loose into your yellow-lid curbside recycling bin.
+Caution:
+- Containers that held hazardous motor oil, lawn chemicals, automotive coolant, or flammable solvents cannot be recycled curbside and belong at hazardous drop-offs.`,
+    keywords: ['plastic', 'bottle', 'bottles', 'jug', 'container', 'tub', 'hdpe', 'pet', 'rigid'],
+  },
+  {
+    id: 'chunk-25',
+    title: 'Organic Food Waste, Compost & Garden Organics',
+    category: 'Organic / FOGO',
+    itemId: 'organic-waste',
+    text: `[Organic Food Waste, Compost & Garden Organics]
+Category: Organic / FOGO
+Disposal Instructions:
+- Collect fruit peels, vegetable ends, meal leftovers, coffee grounds, and loose tea leaves in a kitchen caddy.
+- Line your caddy with certified compostable liners displaying seedling logos, or fold a liner from newspaper.
+- Empty food scraps and clean garden organics (leaves, flowers, lawn clippings) directly into your green-lid FOGO bin.
+- For backyard compost systems, mix equal parts nitrogen-rich green scraps with carbon-rich brown leaves to accelerate decomposition.
+Caution:
+- Remove produce barcode stickers, plastic packaging, twist ties, and rubber bands before composting.`,
+    keywords: ['organic', 'food', 'scraps', 'compost', 'vegetable', 'fruit', 'fogo', 'leaves', 'coffee', 'grounds'],
+  },
+  {
+    id: 'chunk-26',
+    title: 'Batteries, Small Electronics & E-Waste',
+    category: 'E-waste / Hazardous',
+    itemId: 'battery-ewaste',
+    text: `[Batteries, Small Electronics & E-Waste]
+Category: E-waste / Hazardous
+Disposal Instructions:
+- Never place batteries, mobile phones, power cords, electronic chargers, or small electrical devices into household red, yellow, or green bins.
+- Place clear insulating tape or electrical tape over battery terminals to prevent short circuits.
+- Take household batteries to supermarket or hardware store recycling collection tubes.
+- Deliver phones, cables, tablets, headphones, and small electronic devices to authorized e-waste depots or retail take-back programs.
+Caution:
+- Crushed or punctured lithium-ion cells cause aggressive thermal runaway chemical fires inside waste trucks and sorting plants.`,
+    keywords: ['battery', 'batteries', 'ewaste', 'e-waste', 'electronics', 'charger', 'cable', 'phone', 'vape', 'device'],
+  },
+  {
+    id: 'chunk-27',
+    title: 'Hazardous Medical Waste, Sharps & Pharmaceuticals',
+    category: 'Hazardous',
+    itemId: 'hazardous-medical',
+    text: `[Hazardous Medical Waste, Sharps & Pharmaceuticals]
+Category: Hazardous
+Disposal Instructions:
+- Return unwanted, expired, or leftover prescription tablets, capsules, and liquid medicines to a local community pharmacy.
+- Place used hypodermic needles, syringes, and lancets immediately into an Australian Standard or rigid yellow puncture-proof sharps container.
+- When sharps containers are three-quarters full, seal the lid permanently and deliver to participating pharmacies, civic hospitals, or hazardous collection sites.
+- Empty medicine blister packs made of plastic-foil composites go into general waste or dedicated pharmacy blister pack collection boxes where available.
+Caution:
+- Never flush medications down household sinks or toilets. Never discard loose needles or sharps in household garbage or recycling.`,
+    keywords: ['medical', 'sharps', 'needle', 'syringe', 'medicine', 'pills', 'pharmaceutical', 'blister', 'hazardous'],
   },
 ];
 
@@ -347,7 +477,15 @@ function localClientRag(
       if (chunk.keywords.includes(w)) score += 3;
       if (lowerText.includes(w)) score += 1;
     }
-    if (contextItem && chunk.itemId === contextItem.id) score += 4;
+    const isContextMatch = Boolean(
+      contextItem &&
+        (chunk.itemId === contextItem.id ||
+          (contextItem.subItemIds && chunk.itemId && contextItem.subItemIds.includes(chunk.itemId)) ||
+          (chunk.itemId && catalog.find((c) => c.id === chunk.itemId)?.subItemIds?.includes(contextItem.id)) ||
+          (contextItem.detectorClass && chunk.itemId === contextItem.detectorClass) ||
+          (chunk.itemId && (contextItem.id.startsWith(chunk.itemId) || chunk.itemId.startsWith(contextItem.id))))
+    );
+    if (isContextMatch) score += 4;
     return { chunk, score };
   })
     .filter((s) => s.score > 0)

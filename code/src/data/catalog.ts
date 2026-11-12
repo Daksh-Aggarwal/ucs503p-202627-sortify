@@ -1,4 +1,5 @@
 export type Category = 'Recyclable' | 'Organic' | 'General waste' | 'E-waste' | 'Hazardous';
+
 export type WasteItem = {
   id: string;
   name: string;
@@ -8,7 +9,11 @@ export type WasteItem = {
   steps: string[];
   caution?: string;
   keywords: string[];
+  detectorClass?: string;
+  subItemIds?: string[];
+  examples?: string[];
 };
+
 export const categories: {
   name: Category;
   color: string;
@@ -52,7 +57,170 @@ export const categories: {
     description: 'A little extra care goes a long way',
   },
 ];
+
 export const catalog: WasteItem[] = [
+  // ==========================================
+  // GENERALIZED DETECTOR CLASS REPRESENTATIVES
+  // ==========================================
+  {
+    id: 'paper-cardboard',
+    name: 'Paper & Cardboard',
+    category: 'Recyclable',
+    material: 'Paper fibres, corrugated cardboard & paperboard',
+    description: 'Clean, dry paper and cardboard products suitable for pulping and fiber recovery.',
+    steps: [
+      'Keep all paper and cardboard products clean and dry.',
+      'Flatten delivery boxes, cartons, and packaging to conserve bin space.',
+      'Remove packing tape, plastic mailer liners, and polystyrene inserts.',
+      'Place loose in your curbside paper and cardboard recycling bin.',
+    ],
+    caution: 'Food-soiled paper, greasy pizza box bottoms, and thermal receipts cannot be recycled with paper.',
+    keywords: ['paper', 'cardboard', 'box', 'packaging', 'parcel', 'newspaper', 'carton', 'paperboard'],
+    detectorClass: 'paper_cardboard',
+    subItemIds: ['box', 'paper', 'pizza-box'],
+    examples: ['Cardboard box', 'Newspaper', 'Office paper', 'Shipping carton', 'Cereal box'],
+  },
+  {
+    id: 'plastic-bottle',
+    name: 'Plastic Bottle & Container',
+    category: 'Recyclable',
+    material: 'Rigid plastic · PET #1 & HDPE #2',
+    description: 'Everyday rigid bottles, jugs, and containers for beverages, dairy, and household liquids.',
+    steps: [
+      'Empty all liquid contents completely and give a quick rinse.',
+      'Keep screw caps on the bottle so small closures are processed together.',
+      'Gently flatten the bottle to save volume in collection trucks.',
+      'Place loose in your curbside dry-recycling bin, or return via container refund kiosks.',
+    ],
+    caution: 'Bottles that contained motor oil, solvents, or garden chemicals cannot be recycled curbside.',
+    keywords: ['plastic', 'bottle', 'water', 'pet', 'hdpe', 'jug', 'container', 'beverage'],
+    detectorClass: 'plastic_bottle',
+    subItemIds: ['bottle', 'detergent-jug', 'plastic-tub'],
+    examples: ['Water bottle', 'Milk bottle', 'Detergent jug', 'Shampoo bottle'],
+  },
+  {
+    id: 'metal',
+    name: 'Metal Can & Packaging',
+    category: 'Recyclable',
+    material: 'Aluminium & tin-plated steel',
+    description: 'Aluminium drink cans, steel food tins, clean foil, and empty metal aerosols.',
+    steps: [
+      'Empty all food or beverage residue completely.',
+      'Rinse lightly to keep recyclables clean and odor-free.',
+      'For clean aluminium foil, crunch together into a solid fist-sized ball.',
+      'Place loose into your curbside recycling bin.',
+    ],
+    caution: 'Aerosols must be completely empty of pressure. Heavily food-caked foil belongs in general waste.',
+    keywords: ['metal', 'can', 'tin', 'aluminium', 'aluminum', 'steel', 'foil', 'aerosol'],
+    detectorClass: 'metal',
+    subItemIds: ['can', 'food-tin', 'aluminium-foil', 'aerosol-can'],
+    examples: ['Aluminium beverage can', 'Food tin', 'Clean aluminium foil', 'Aerosol spray can'],
+  },
+  {
+    id: 'flexible-plastic',
+    name: 'Flexible Plastic Packaging',
+    category: 'General waste',
+    material: 'Soft LDPE #4, PP #5 film & multilayer laminates',
+    description: 'Soft flexible plastics including snack wrappers, plastic bags, bubble wrap, pouches, and cling film.',
+    steps: [
+      'Perform the scrunch test: if it scrunches into a ball and bounces back, it is soft flexible plastic.',
+      'Check if a designated supermarket or drop-off program accepts clean soft plastics in your area.',
+      'Ensure items are completely clean, empty, and dry before soft-plastic drop-off.',
+      'If no dedicated soft-plastic collection is available, place in the general waste bin.',
+    ],
+    caution: 'Never place soft plastic bags or film in curbside recycling bins; film tangles in facility sorting machinery.',
+    keywords: [
+      'plastic bag',
+      'soft plastic',
+      'flexible plastic',
+      'wrapper',
+      'chip bag',
+      'snack packet',
+      'bubble wrap',
+      'film',
+      'pouch',
+      'ziplock',
+    ],
+    detectorClass: 'flexible_plastic',
+    subItemIds: ['wrapper', 'plastic-bag', 'bubble-wrap', 'cling-film', 'squeeze-pouch'],
+    examples: ['Chip packet / wrapper', 'Plastic shopping bag', 'Bubble wrap', 'Cling film', 'Squeeze pouch'],
+  },
+  {
+    id: 'sanitary-ppe',
+    name: 'Sanitary & PPE Waste',
+    category: 'General waste',
+    material: 'Hygiene fibres, polypropylene non-wovens & nitrile',
+    description: 'Personal protective equipment, disposable masks, hygiene tissues, wipes, and dressings.',
+    steps: [
+      'Never place masks, wipes, gloves, or tissues into recycling or compost bins.',
+      'Seal used hygiene and PPE items securely inside a rubbish bag.',
+      'Tie the rubbish bag tightly to prevent exposure and odors.',
+      'Discard in your regular household general waste bin.',
+    ],
+    caution: 'Never flush wet wipes, tissues, or hygiene pads down the toilet; they cause sewer blockages and fatbergs.',
+    keywords: ['sanitary', 'ppe', 'tissue', 'mask', 'glove', 'wipe', 'hygiene', 'napkin'],
+    detectorClass: 'sanitary_ppe_waste',
+    subItemIds: ['tissue', 'face-mask', 'wet-wipes', 'rubber-gloves'],
+    examples: ['Disposable face mask', 'Used facial tissue', 'Cleaning wipe', 'Disposable gloves'],
+  },
+  {
+    id: 'organic-waste',
+    name: 'Organic Waste',
+    category: 'Organic',
+    material: 'Biodegradable kitchen food scraps & garden organics',
+    description: 'Fruit and vegetable offcuts, food preparation scraps, coffee grounds, and garden leaves.',
+    steps: [
+      'Strip off all produce stickers, plastic tags, and rubber bands.',
+      'Collect food scraps in a kitchen caddy lined with certified compostable liner or newspaper.',
+      'Empty into your curbside green-lid FOGO organics bin or home compost heap.',
+      'Cover with dry brown leaves or mulch in home compost to maintain balanced breakdown.',
+    ],
+    caution: 'Do not include plastic packaging, treated timber, or non-compostable food wrappers.',
+    keywords: ['organic', 'food', 'scraps', 'compost', 'vegetable', 'fruit', 'leaves', 'fogo'],
+    detectorClass: 'organic',
+    subItemIds: ['scraps', 'banana', 'coffee-grounds', 'leaves'],
+    examples: ['Vegetable scraps', 'Fruit peels', 'Coffee grounds', 'Garden trimmings'],
+  },
+  {
+    id: 'battery-ewaste',
+    name: 'Battery & E-waste',
+    category: 'E-waste',
+    material: 'Lithium, alkaline cells, circuit boards, copper wiring & plastics',
+    description: 'Household batteries, old mobile phones, chargers, cables, and small electronic devices.',
+    steps: [
+      'Never discard batteries or electronics in household red rubbish or yellow recycling bins.',
+      'Apply clear non-conductive tape over exposed battery terminals.',
+      'Back up and erase personal data before handing over phones or digital gadgets.',
+      'Deliver intact items to dedicated battery drop-off bins or certified e-waste recyclers.',
+    ],
+    caution: 'Lithium batteries cause severe fires when crushed in garbage trucks or sorting compactors. Handle swollen cells with care.',
+    keywords: ['battery', 'batteries', 'ewaste', 'e-waste', 'electronics', 'charger', 'cable', 'phone'],
+    detectorClass: 'battery_ewaste',
+    subItemIds: ['battery', 'mobile-phone', 'charger', 'headphones', 'vape'],
+    examples: ['Household battery', 'Mobile phone', 'Charging cable', 'Headphones', 'Vape device'],
+  },
+  {
+    id: 'hazardous-medical',
+    name: 'Hazardous Medical Waste',
+    category: 'Hazardous',
+    material: 'Pharmaceuticals, clinical sharps & regulated bio-waste',
+    description: 'Expired medication, used syringes, injection needles, lancets, and clinical waste.',
+    steps: [
+      'Never throw loose needles, syringes, or sharps into household rubbish or recycling bins.',
+      'Place sharps immediately into an approved rigid, puncture-proof yellow sharps container.',
+      'Return expired or unwanted tablets and liquid medicines to a community pharmacy take-back program.',
+      'Deliver sealed sharps containers to participating pharmacies, medical centers, or civic hazardous depots.',
+    ],
+    caution: 'Loose sharps present acute puncture and infection hazards to sanitation workers. Never flush medications.',
+    keywords: ['medical', 'sharps', 'needle', 'syringe', 'medicine', 'pills', 'pharmaceutical', 'hazardous'],
+    detectorClass: 'hazardous_medical',
+    subItemIds: ['medical-waste', 'medicine', 'blister-pack'],
+    examples: ['Syringe & needle', 'Expired medicine', 'Blister pack', 'Clinical dressing'],
+  },
+
+  // ==========================================
+  // SPECIFIC DETAILED ITEMS
+  // ==========================================
   {
     id: 'bottle',
     name: 'Plastic bottle',
@@ -61,10 +229,40 @@ export const catalog: WasteItem[] = [
     description: 'An everyday bottle with another life ahead of it.',
     steps: [
       'Empty the bottle and give it a quick rinse.',
-      'Keep it clean and dry; check whether your collector accepts caps.',
-      'Place it in your accepted dry-recycling stream.',
+      'Keep it clean and dry; keep the cap screwed on.',
+      'Place it loose in your accepted dry-recycling stream.',
     ],
     keywords: ['water', 'pet', 'plastic', 'bottle'],
+    detectorClass: 'plastic_bottle',
+  },
+  {
+    id: 'detergent-jug',
+    name: 'Detergent & milk jug',
+    category: 'Recyclable',
+    material: 'HDPE · Plastic #2',
+    description: 'Rigid opaque plastic jugs for milk, detergent, and shampoo.',
+    steps: [
+      'Empty liquids and rinse with warm water.',
+      'Remove pump dispensers containing metal springs (place pump in general waste).',
+      'Replace the screw cap and place the jug loose into your recycling bin.',
+    ],
+    keywords: ['hdpe', 'milk', 'jug', 'detergent', 'shampoo', 'bottle', 'rigid plastic'],
+    detectorClass: 'plastic_bottle',
+  },
+  {
+    id: 'plastic-tub',
+    name: 'Plastic food container & tub',
+    category: 'Recyclable',
+    material: 'PP · Polypropylene #5',
+    description: 'Yogurt tubs, margarine containers, and rigid takeaway containers.',
+    steps: [
+      'Scrape off food leftovers and rinse briefly.',
+      'Reattach matching clean lids so they do not fall through sorting grates.',
+      'Place loose in your curbside commingled recycling bin.',
+    ],
+    caution: 'Black plastic containers may not be recognized by optical sorters in some municipalities.',
+    keywords: ['tub', 'yogurt', 'takeaway', 'polypropylene', 'container', 'punnet'],
+    detectorClass: 'plastic_bottle',
   },
   {
     id: 'banana',
@@ -73,11 +271,12 @@ export const catalog: WasteItem[] = [
     material: 'Biodegradable food waste',
     description: 'A small scrap that can become something good.',
     steps: [
-      'Remove any stickers or packaging.',
+      'Remove any produce price stickers or packaging.',
       'Keep the peel separate from plastic and other dry waste.',
       'Add it to a suitable compost system or your wet-waste collection.',
     ],
-    keywords: ['banana', 'fruit', 'peel'],
+    keywords: ['banana', 'fruit', 'peel', 'food', 'scraps'],
+    detectorClass: 'organic',
   },
   {
     id: 'box',
@@ -87,11 +286,42 @@ export const catalog: WasteItem[] = [
     description: 'Clean cardboard is a valuable recyclable material.',
     steps: [
       'Remove plastic liners and packing materials.',
-      'Flatten the box and keep it dry.',
+      'Flatten the box completely and keep it dry.',
       'Place clean cardboard with accepted paper recycling.',
     ],
     caution: 'Greasy or food-soiled sections may not be accepted with paper recycling.',
-    keywords: ['cardboard', 'box', 'parcel', 'paperboard'],
+    keywords: ['cardboard', 'box', 'parcel', 'paperboard', 'corrugated'],
+    detectorClass: 'paper_cardboard',
+  },
+  {
+    id: 'paper',
+    name: 'Newspaper & print paper',
+    category: 'Recyclable',
+    material: 'Clean printed paper & newsprint',
+    description: 'Keep paper in circulation, one page at a time.',
+    steps: [
+      'Separate paper from plastic sleeves or metallic covers.',
+      'Keep pages clean and dry.',
+      'Bundle for an accepted paper-recycling collection.',
+    ],
+    keywords: ['newspaper', 'paper', 'magazine', 'office paper', 'document'],
+    detectorClass: 'paper_cardboard',
+  },
+  {
+    id: 'pizza-box',
+    name: 'Greasy pizza box',
+    category: 'General waste',
+    material: 'Food-soiled corrugated cardboard',
+    description: 'Pizza boxes with baked-on oil and food residue.',
+    steps: [
+      'Separate the clean box lid from the grease-soaked base.',
+      'Place the clean top lid in paper and cardboard recycling.',
+      'If your council FOGO green bin accepts food-soiled cardboard, place the greasy base in FOGO.',
+      'If FOGO is not available or does not accept food paper, put the greasy bottom in general waste.',
+    ],
+    caution: 'Never put grease-soaked cardboard into dry recycling; oil ruins recycled paper pulp.',
+    keywords: ['pizza', 'greasy', 'soiled', 'box', 'cardboard', 'cheese'],
+    detectorClass: 'paper_cardboard',
   },
   {
     id: 'battery',
@@ -106,7 +336,8 @@ export const catalog: WasteItem[] = [
     ],
     caution:
       'Do not crush, puncture, burn, or place batteries in mixed recycling. Do not handle a leaking, swollen, or hot battery; seek specialist guidance.',
-    keywords: ['battery', 'batteries', 'aa', 'lithium'],
+    keywords: ['battery', 'batteries', 'aa', 'aaa', 'lithium', 'alkaline', 'cell'],
+    detectorClass: 'battery_ewaste',
   },
   {
     id: 'jar',
@@ -120,7 +351,7 @@ export const catalog: WasteItem[] = [
       'Use an accepted glass collection stream.',
     ],
     caution: 'Broken glass, mirrors, and ceramics need separate guidance.',
-    keywords: ['jar', 'glass', 'jam'],
+    keywords: ['jar', 'glass', 'jam', 'bottle'],
   },
   {
     id: 'can',
@@ -133,7 +364,52 @@ export const catalog: WasteItem[] = [
       'Rinse off food or drink residue.',
       'Place it with accepted metal or dry recyclables.',
     ],
-    keywords: ['can', 'soda', 'aluminium', 'aluminum', 'metal'],
+    keywords: ['can', 'soda', 'aluminium', 'aluminum', 'metal', 'drink'],
+    detectorClass: 'metal',
+  },
+  {
+    id: 'food-tin',
+    name: 'Steel food tin',
+    category: 'Recyclable',
+    material: 'Tin-plated steel',
+    description: 'Canned soup, tomato paste, tuna, and pet food tins.',
+    steps: [
+      'Rinse food residues thoroughly.',
+      'Tuck the detached lid safely inside the tin and squeeze top slightly.',
+      'Deposit in your curbside metal recycling stream.',
+    ],
+    keywords: ['tin', 'steel', 'food tin', 'canned food', 'soup can', 'pet food'],
+    detectorClass: 'metal',
+  },
+  {
+    id: 'aluminium-foil',
+    name: 'Aluminium foil & tray',
+    category: 'Recyclable',
+    material: 'Clean aluminium foil',
+    description: 'Clean cooking foil, baking wraps, and takeaway foil trays.',
+    steps: [
+      'Wipe off food crumbs and sauces.',
+      'Roll and scrunch foil into a solid fist-sized ball so it is captured by sorters.',
+      'Place the solid ball into curbside recycling.',
+    ],
+    caution: 'Heavily burnt or food-crusted foil must go into general waste.',
+    keywords: ['foil', 'aluminium foil', 'baking tray', 'pie tin', 'wrap'],
+    detectorClass: 'metal',
+  },
+  {
+    id: 'aerosol-can',
+    name: 'Aerosol spray can',
+    category: 'Recyclable',
+    material: 'Aluminium or steel container',
+    description: 'Deodorant, hairspray, and shaving cream aerosol cans.',
+    steps: [
+      'Depress nozzle until completely empty of pressure and propellant.',
+      'Remove loose plastic spray caps.',
+      'Place empty metal can in curbside recycling.',
+    ],
+    caution: 'Never puncture or incinerate aerosol cans. Cans with remaining pressure belong in household hazardous waste.',
+    keywords: ['aerosol', 'spray', 'deodorant', 'hairspray', 'canister'],
+    detectorClass: 'metal',
   },
   {
     id: 'scraps',
@@ -146,7 +422,22 @@ export const catalog: WasteItem[] = [
       'Collect scraps separately in a covered wet-waste container.',
       'Use a suitable compost system or organic-waste collection.',
     ],
-    keywords: ['vegetable', 'food', 'scraps', 'compost'],
+    keywords: ['vegetable', 'food', 'scraps', 'compost', 'kitchen'],
+    detectorClass: 'organic',
+  },
+  {
+    id: 'coffee-grounds',
+    name: 'Coffee grounds & tea leaves',
+    category: 'Organic',
+    material: 'Organic compostable material',
+    description: 'Spent espresso grounds, filter coffee, and loose tea leaves.',
+    steps: [
+      'Empty grounds out of paper or reusable filters.',
+      'Add directly into your food organics caddy or home compost heap.',
+      'Unbleached paper filters can be composted along with the grounds.',
+    ],
+    keywords: ['coffee', 'grounds', 'tea', 'compost', 'espresso', 'organic'],
+    detectorClass: 'organic',
   },
   {
     id: 'tissue',
@@ -159,7 +450,50 @@ export const catalog: WasteItem[] = [
       'Contain hygienically with general household waste.',
       'Follow your local collection instructions.',
     ],
-    keywords: ['tissue', 'napkin', 'soiled'],
+    keywords: ['tissue', 'napkin', 'soiled', 'facial tissue'],
+    detectorClass: 'sanitary_ppe_waste',
+  },
+  {
+    id: 'face-mask',
+    name: 'Disposable face mask',
+    category: 'General waste',
+    material: 'Polypropylene non-woven fabric',
+    description: 'Surgical and protective face coverings.',
+    steps: [
+      'Cut ear loops if possible to protect wildlife.',
+      'Place in a sealed general waste bag.',
+      'Deposit in your red-lid general rubbish bin.',
+    ],
+    caution: 'Do not place in recycling or compost bins.',
+    keywords: ['mask', 'face mask', 'surgical', 'ppe', 'covid'],
+    detectorClass: 'sanitary_ppe_waste',
+  },
+  {
+    id: 'wet-wipes',
+    name: 'Wet wipes & sanitizing wipes',
+    category: 'General waste',
+    material: 'Synthetic blended non-woven fibres',
+    description: 'Baby wipes, disinfectant wipes, and makeup remover pads.',
+    steps: [
+      'Contain hygienically inside household garbage.',
+      'Deposit in the general waste bin.',
+    ],
+    caution: 'Never flush wet wipes down the toilet, even if labeled flushable.',
+    keywords: ['wipes', 'wet wipe', 'baby wipe', 'sanitizing wipe', 'disinfectant'],
+    detectorClass: 'sanitary_ppe_waste',
+  },
+  {
+    id: 'rubber-gloves',
+    name: 'Disposable gloves',
+    category: 'General waste',
+    material: 'Nitrile, latex or vinyl',
+    description: 'Single-use cleaning, medical, or food preparation gloves.',
+    steps: [
+      'Remove carefully by peeling inside out.',
+      'Place in general waste bin.',
+    ],
+    keywords: ['gloves', 'nitrile', 'latex', 'vinyl', 'rubber gloves'],
+    detectorClass: 'sanitary_ppe_waste',
   },
   {
     id: 'wrapper',
@@ -168,11 +502,12 @@ export const catalog: WasteItem[] = [
     material: 'Multilayer flexible packaging',
     description: 'Mixed layers are difficult to recycle through everyday streams.',
     steps: [
-      'Empty any remaining food.',
+      'Empty any remaining food crumbs.',
       'Check for a dedicated flexible-packaging collection scheme.',
       'If none is available, place it in general waste.',
     ],
-    keywords: ['wrapper', 'chips', 'packet', 'snack'],
+    keywords: ['wrapper', 'chips', 'packet', 'snack', 'crisps', 'candy'],
+    detectorClass: 'flexible_plastic',
   },
   {
     id: 'plastic-bag',
@@ -185,7 +520,51 @@ export const catalog: WasteItem[] = [
       'Check whether a dedicated flexible-plastic collection point accepts it.',
       'If no collection exists, place it in general waste.',
     ],
-    keywords: ['plastic bag', 'bag', 'carry bag', 'polybag'],
+    keywords: ['plastic bag', 'bag', 'carry bag', 'polybag', 'grocery bag'],
+    detectorClass: 'flexible_plastic',
+  },
+  {
+    id: 'bubble-wrap',
+    name: 'Bubble wrap & air cushions',
+    category: 'General waste',
+    material: 'LDPE #4 cushion film',
+    description: 'Protective packaging bubble wrap and deflated packaging air pillows.',
+    steps: [
+      'Pop air cushions or cut bubble wrap to deflate volume.',
+      'Remove adhesive paper address labels if practical.',
+      'Drop at participating soft plastic store collection points where active, or discard in general waste.',
+    ],
+    caution: 'Do not put bubble wrap in curbside recycling bins; it wraps tightly around rotating sorting machinery.',
+    keywords: ['bubble wrap', 'air pillow', 'packing', 'cushion', 'packaging film'],
+    detectorClass: 'flexible_plastic',
+  },
+  {
+    id: 'cling-film',
+    name: 'Cling wrap & plastic film',
+    category: 'General waste',
+    material: 'Soft polyethylene stretch film',
+    description: 'Food wrap, shrink wrap, and pallet stretch film.',
+    steps: [
+      'Scrape off food remnants; only clean dry film can be recycled.',
+      'If contaminated with food oils or sauces, discard directly into general waste.',
+      'Clean dry film can be dropped off at soft-plastic drop points where available.',
+    ],
+    keywords: ['cling wrap', 'plastic film', 'shrink wrap', 'glad wrap', 'stretch film'],
+    detectorClass: 'flexible_plastic',
+  },
+  {
+    id: 'squeeze-pouch',
+    name: 'Squeeze pouch & food packet',
+    category: 'General waste',
+    material: 'Multilayer foil-plastic laminate',
+    description: 'Baby food pouches, yoghurt pouches, and sauce packets with plastic spouts.',
+    steps: [
+      'Squeeze out all remaining food contents completely.',
+      'Screw cap on tightly.',
+      'Place in general waste bin unless a specialized pouch mail-in program is active.',
+    ],
+    keywords: ['pouch', 'squeeze pouch', 'baby food', 'laminate', 'sauce packet'],
+    detectorClass: 'flexible_plastic',
   },
   {
     id: 'mobile-phone',
@@ -201,7 +580,8 @@ export const catalog: WasteItem[] = [
     ],
     caution:
       'Do not dismantle the phone or puncture its battery. Seek specialist advice if it is swollen, leaking, or hot.',
-    keywords: ['mobile phone', 'smartphone', 'cell phone', 'handset'],
+    keywords: ['mobile phone', 'smartphone', 'cell phone', 'handset', 'tablet'],
+    detectorClass: 'battery_ewaste',
   },
   {
     id: 'charger',
@@ -215,7 +595,8 @@ export const catalog: WasteItem[] = [
       'Use an authorized e-waste recycler or retailer take-back program.',
     ],
     caution: 'Do not dismantle damaged electrical accessories.',
-    keywords: ['charger', 'cable', 'phone', 'electronic', 'wire'],
+    keywords: ['charger', 'cable', 'phone', 'electronic', 'wire', 'adapter'],
+    detectorClass: 'battery_ewaste',
   },
   {
     id: 'headphones',
@@ -228,7 +609,23 @@ export const catalog: WasteItem[] = [
       'Keep battery-powered headphones intact.',
       'Take them to an authorized electronics collection point.',
     ],
-    keywords: ['headphones', 'earphones', 'earbuds'],
+    keywords: ['headphones', 'earphones', 'earbuds', 'headset', 'audio'],
+    detectorClass: 'battery_ewaste',
+  },
+  {
+    id: 'vape',
+    name: 'Disposable vape & e-cigarette',
+    category: 'E-waste',
+    material: 'Lithium battery cell, heating coil & plastic housing',
+    description: 'Single-use vapes and electronic nicotine devices containing integrated batteries.',
+    steps: [
+      'Never dispose of vapes in red rubbish, yellow recycling, or green compost bins.',
+      'Store safely in a cool dry container away from flammable items.',
+      'Drop off at designated hazardous waste or e-waste collection drop depots.',
+    ],
+    caution: 'Crushed vape batteries cause immediate truck and recycling facility fires.',
+    keywords: ['vape', 'e-cigarette', 'ecig', 'pod', 'disposable vape', 'nicotine'],
+    detectorClass: 'battery_ewaste',
   },
   {
     id: 'medicine',
@@ -242,7 +639,8 @@ export const catalog: WasteItem[] = [
       'Ask a pharmacist or local authority about an approved disposal program.',
     ],
     caution: 'Do not flush medicines or empty them into drains.',
-    keywords: ['medicine', 'pills', 'tablet', 'pharmaceutical'],
+    keywords: ['medicine', 'pills', 'tablet', 'pharmaceutical', 'capsule'],
+    detectorClass: 'hazardous_medical',
   },
   {
     id: 'medical-waste',
@@ -257,20 +655,23 @@ export const catalog: WasteItem[] = [
     ],
     caution:
       'Do not place sharps, syringes, or potentially infectious material in household waste.',
-    keywords: ['medical', 'syringe', 'needle', 'clinical', 'hazardous'],
+    keywords: ['medical', 'syringe', 'needle', 'clinical', 'hazardous', 'sharps'],
+    detectorClass: 'hazardous_medical',
   },
   {
-    id: 'paper',
-    name: 'Newspaper',
-    category: 'Recyclable',
-    material: 'Printed paper',
-    description: 'Keep paper in circulation, one page at a time.',
+    id: 'blister-pack',
+    name: 'Medicine blister pack',
+    category: 'Hazardous',
+    material: 'PVC plastic and aluminium foil composite',
+    description: 'Push-through medication blister packaging.',
     steps: [
-      'Separate paper from plastic covers.',
-      'Keep it clean and dry.',
-      'Bundle for an accepted paper-recycling collection.',
+      'Ensure all tablets and pills have been removed.',
+      'Check if your local pharmacy hosts a blister pack recycling collection box.',
+      'If no specialized take-back program is available, discard in general waste.',
     ],
-    keywords: ['newspaper', 'paper', 'magazine'],
+    caution: 'Blister packs cannot be recycled in curbside yellow recycling bins due to bonded foil-plastic.',
+    keywords: ['blister pack', 'pill pack', 'medicine pack', 'foil pack', 'tablets'],
+    detectorClass: 'hazardous_medical',
   },
   {
     id: 'leaves',
@@ -283,7 +684,8 @@ export const catalog: WasteItem[] = [
       'Shred large leaves if practical.',
       'Add to compost or an accepted garden-waste collection.',
     ],
-    keywords: ['leaves', 'garden', 'plant'],
+    keywords: ['leaves', 'garden', 'plant', 'yard', 'foliage'],
+    detectorClass: 'organic',
   },
   {
     id: 'ceramic',
@@ -297,9 +699,10 @@ export const catalog: WasteItem[] = [
       'Check local guidance for non-recyclable household or bulky waste.',
     ],
     caution: 'Do not put ceramics into glass recycling.',
-    keywords: ['ceramic', 'mug', 'plate', 'broken'],
+    keywords: ['ceramic', 'mug', 'plate', 'broken', 'pottery', 'porcelain'],
   },
 ];
+
 export function locationGuidance(location: string, category: Category) {
   const stream =
     category === 'Organic'
@@ -313,6 +716,7 @@ export function locationGuidance(location: string, category: Category) {
             : 'general-waste collection';
   return `Confirm ${stream} with your local collector${location && location !== 'Location detected' ? ` in ${location}` : ''}. Local schedules are not verified in this prototype.`;
 }
+
 export const lessons = [
   {
     title: 'Small habits. Lasting change.',

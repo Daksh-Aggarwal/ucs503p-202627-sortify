@@ -8,16 +8,22 @@ const js = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
 }).outputText;
 
+// Load real catalog
+const catalogSource = fs.readFileSync('C:/Code/Sortify/code/src/data/catalog.ts', 'utf8');
+const catalogJs = ts.transpileModule(catalogSource, {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+}).outputText;
+const catalogExports = {};
+const vm = require('node:vm');
+vm.runInNewContext(catalogJs, { exports: catalogExports });
+const realCatalog = catalogExports.catalog;
+
 const exportsObj = {};
-const fakeCatalog = [
-  { id: 'bottle', name: 'Plastic bottle', keywords: ['plastic', 'bottle'] },
-  { id: 'battery', name: 'Household battery', keywords: ['battery'] },
-];
 
 const context = {
   exports: exportsObj,
   require: (name) => {
-    if (name.includes('catalog')) return { catalog: fakeCatalog };
+    if (name.includes('catalog')) return { catalog: realCatalog };
     return {};
   },
   process: { env: {} },
@@ -29,7 +35,6 @@ const context = {
   console,
 };
 
-const vm = require('node:vm');
 vm.runInNewContext(js, context);
 
 const { stripEmojis, askAssistant } = exportsObj;
@@ -50,7 +55,7 @@ console.log('PASS: stripEmojis successfully strips all emojis and symbols');
   assert.ok(bottleRes.reply.length > 0, 'Reply must not be empty');
   assert.equal(bottleRes.reply.includes('•'), true, 'Reply must contain bullet points');
   assert.equal(bottleRes.reply.includes('\u26A0'), false, 'Reply must not contain emoji warning');
-  assert.equal(bottleRes.itemId, 'bottle', 'Must identify bottle item');
+  assert.ok(bottleRes.itemId === 'bottle' || bottleRes.itemId === 'plastic-bottle', `Must identify bottle item, got ${bottleRes.itemId}`);
   assert.ok(bottleRes.reply.includes('Caution:'), 'Reply should include Caution section if defined');
   console.log('PASS: askAssistant localClientRag for plastic bottle returned bulleted, emoji-free response with Caution');
 
@@ -58,7 +63,7 @@ console.log('PASS: stripEmojis successfully strips all emojis and symbols');
   assert.ok(batteryRes.reply.length > 0);
   assert.equal(batteryRes.reply.includes('•'), true);
   assert.equal(batteryRes.reply.includes('\u26A0'), false);
-  assert.equal(batteryRes.itemId, 'battery');
+  assert.ok(batteryRes.itemId === 'battery' || batteryRes.itemId === 'battery-ewaste', `Must identify battery item, got ${batteryRes.itemId}`);
   assert.ok(batteryRes.reply.includes('Caution:'), 'Reply should include Caution section');
   console.log('PASS: askAssistant localClientRag for batteries returned bulleted, emoji-free response with Caution');
 
