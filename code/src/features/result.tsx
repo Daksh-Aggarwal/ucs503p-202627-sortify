@@ -430,6 +430,7 @@ export default function ResultScreen() {
             }))}
             activeIndex={activeIndex}
             onSelectIndex={handleSelectIndex}
+            onCaptureNewImage={() => router.push('/scan')}
           />
           <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
             <Txt size={12} color={C.muted}>
@@ -578,7 +579,11 @@ export default function ResultScreen() {
           onPress={() =>
             router.push({
               pathname: '/assistant',
-              params: { item: item.id, itemName: item.name, fromScan: '1' },
+              params: {
+                item: item.id,
+                itemName: activeDetected?.displayName || item.name,
+                fromScan: String(Date.now()),
+              },
             })
           }
         />

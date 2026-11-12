@@ -30,7 +30,11 @@ test_queries = [
     'How to throw away motor oil?',
     'What to do with expired prescription medicine?',
     'How to recycle clothes?',
-    'Can soft plastic wrappers go in yellow bin?'
+    'Can soft plastic wrappers go in yellow bin?',
+    'How do I dispose of disposable vapes?',
+    'Can I recycle aerosol spray cans?',
+    'Where do coffee pods go?',
+    'What do I do with medicine blister packs?'
 ]
 
 for q in test_queries:
@@ -41,6 +45,13 @@ for q in test_queries:
     assert '•' in reply, f'Expected bullet points in reply for {q}, got: {reply}'
     assert trace.retrieval_score > 0, f'Expected positive score for {q}'
     print(f'PASS: Query \"{q[:35]}...\" -> {len(reply)} chars, bullet formatted, 0 emojis, trace score {trace.retrieval_score}')
+
+# 2b. Test explicit non-bullet request
+prose_query = 'Explain in one paragraph without bullets how to dispose of plastic bottles'
+prose_reply, _, _ = rag_engine.answer_query(prose_query)
+assert '•' not in prose_reply, f'Expected no bullet points for explicit non-bullet request, got: {prose_reply}'
+assert len(prose_reply) > 20, f'Expected substantive prose reply, got: {prose_reply}'
+print(f'PASS: Explicit non-bullet request cleanly returned prose: \"{prose_reply[:60]}...\"')
 
 # 3. Test remove_emojis utility
 dirty = 'Warning ⚠️ Recycle ♻️ Great 👍 Check ✅'

@@ -261,7 +261,69 @@ Caution:
 - Thermal receipt paper is coated with BPA and chemical dyes that contaminate paper recycling pulp and toilet paper.`,
     keywords: ['receipt', 'receipts', 'thermal', 'docket', 'ticket'],
   },
+  {
+    id: 'chunk-17',
+    title: 'Vapes, E-Cigarettes & Electronic Nicotine Pods',
+    category: 'E-waste / Hazardous',
+    text: `[Vapes, E-Cigarettes & Electronic Nicotine Pods]
+Category: E-waste / Hazardous
+Disposal Instructions:
+- Never discard disposable vapes, mods, or pods into curbside red, yellow, or green bins.
+- Separate liquid pod cartridges from battery units where possible.
+- Drop whole vapes and battery units at designated community e-waste or hazardous waste collection depots.
+Caution:
+- Crushed lithium batteries in vapes cause immediate truck and recycling plant fires.`,
+    keywords: ['vape', 'vapes', 'ecig', 'e-cigarette', 'pod', 'nicotine', 'vaping'],
+  },
+  {
+    id: 'chunk-18',
+    title: 'Aluminum & Plastic Coffee Pods and Capsules',
+    category: 'Specialized Drop-off / General waste',
+    text: `[Aluminum & Plastic Coffee Pods and Capsules]
+Category: Specialized Drop-off / General waste
+Disposal Instructions:
+- Do not put loose coffee pods into standard curbside yellow recycling bins.
+- Collect capsules in designated recycling satchels and drop at Nespresso or participating florist/post collection points.
+- Scrape organic grounds into compost if disposing of shells in general waste.
+Caution:
+- Small pods fall through sorting screens and ruin glass recycling batches.`,
+    keywords: ['coffee', 'pod', 'pods', 'capsule', 'capsules', 'nespresso'],
+  },
+  {
+    id: 'chunk-19',
+    title: 'Aerosol Spray Cans & Pressurized Deodorant Cans',
+    category: 'Recyclable / Hazardous',
+    text: `[Aerosol Spray Cans & Pressurized Deodorant Cans]
+Category: Recyclable / Hazardous
+Disposal Instructions:
+- Discharge residual propellant until no spray or hissing remains.
+- Remove loose plastic spray nozzles.
+- Place completely empty aerosol cans loose into the yellow recycling bin.
+Caution:
+- Partially full pressurized aerosol cans explode inside compactor trucks.`,
+    keywords: ['aerosol', 'spray', 'deodorant', 'canister', 'pressurized'],
+  },
 ];
+
+function isExplicitNonBulletRequest(query: string): boolean {
+  const q = query.toLowerCase();
+  return [
+    'no bullet',
+    'no bullets',
+    'without bullet',
+    'without bullets',
+    'in paragraph',
+    'in a paragraph',
+    'one paragraph',
+    'single paragraph',
+    'in prose',
+    'explain in prose',
+    'as prose',
+    'in sentences',
+    'full sentences',
+    'summary paragraph',
+  ].some((phrase) => q.includes(phrase));
+}
 
 function localClientRag(query: string, contextItem?: WasteItem): AssistantResponse {
   const startTime = Date.now();
@@ -323,20 +385,48 @@ function localClientRag(query: string, contextItem?: WasteItem): AssistantRespon
   const cautionMatch = primary.text.match(/Caution:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)/s);
   const caution = cautionMatch ? cautionMatch[1].trim() : '';
 
-  const lines: string[] = [`**${primary.title}** (${primary.category})`];
-  if (instructions) {
-    const rawLines = instructions.split('\n').map((l) => l.trim().replace(/^[-•*]\s*/, '')).filter(Boolean);
-    for (const l of rawLines) {
-      lines.push(`• ${l}`);
+  const rawLines = instructions
+    ? instructions.split('\n').map((l) => l.trim().replace(/^[-•*]\s*/, '')).filter(Boolean)
+    : [];
+  const rawCautionLines = caution
+    ? caution.split('\n').map((l) => l.trim().replace(/^[-•*]\s*/, '')).filter(Boolean)
+    : [];
+
+  const qLower = query.toLowerCase();
+  const nonBullet = isExplicitNonBulletRequest(query);
+
+  let reply: string;
+  if (nonBullet) {
+    const sentences = [
+      `${primary.title} belongs in the ${primary.category} category.`,
+      ...rawLines.slice(0, 3),
+      ...(rawCautionLines.length ? [`Caution: ${rawCautionLines[0]}`] : []),
+    ];
+    reply = stripEmojis(sentences.join(' '));
+  } else {
+    const lines: string[] = [`**${primary.title}** (${primary.category})`];
+    if (['which bin', 'what bin', 'where does', 'where do'].some((w) => qLower.includes(w))) {
+      lines.push(`• Bin destination: ${primary.category}`);
+      for (const l of rawLines.slice(0, 3)) {
+        lines.push(`• ${l}`);
+      }
+    } else if (['caution', 'safe', 'hazard', 'warning'].some((w) => qLower.includes(w))) {
+      for (const c of rawCautionLines) {
+        lines.push(`• Caution: ${c}`);
+      }
+      for (const l of rawLines.slice(0, 2)) {
+        lines.push(`• ${l}`);
+      }
+    } else {
+      for (const l of rawLines) {
+        lines.push(`• ${l}`);
+      }
+      if (rawCautionLines.length) {
+        lines.push(`• Caution: ${rawCautionLines[0]}`);
+      }
     }
+    reply = stripEmojis(lines.join('\n\n'));
   }
-  if (caution) {
-    const rawCautionLines = caution.split('\n').map((l) => l.trim().replace(/^[-•*]\s*/, '')).filter(Boolean);
-    for (const c of rawCautionLines) {
-      lines.push(`• Caution: ${c}`);
-    }
-  }
-  const reply = stripEmojis(lines.join('\n\n'));
 
   const trace: RagTrace = {
     trace_id: `trace-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,

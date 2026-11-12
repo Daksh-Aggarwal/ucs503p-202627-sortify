@@ -70,6 +70,29 @@ class RagTrace:
     system_prompt: str
 
 
+def is_explicit_non_bullet_request(query: str) -> bool:
+    q = query.lower()
+    return any(
+        phrase in q
+        for phrase in [
+            "no bullet",
+            "no bullets",
+            "without bullet",
+            "without bullets",
+            "in paragraph",
+            "in a paragraph",
+            "one paragraph",
+            "single paragraph",
+            "in prose",
+            "explain in prose",
+            "as prose",
+            "in sentences",
+            "full sentences",
+            "summary paragraph",
+        ]
+    )
+
+
 class RagEngine:
     def __init__(self) -> None:
         self.rag_file_path: Path | None = None
@@ -219,7 +242,7 @@ class RagEngine:
     def _generate_grounded_response(
         self, query: str, context_chunks: list[KnowledgeChunk]
     ) -> str:
-        """Generate response grounded in retrieved context from rag.txt in concise bulleted format without emojis."""
+        """Generate response grounded in retrieved context from rag.txt in bulleted format by default, or prose if explicitly requested, with zero emojis."""
         if not context_chunks:
             return (
                 "I could not find specific guidance for that item in the waste guide. "
@@ -229,47 +252,80 @@ class RagEngine:
 
         primary = context_chunks[0]
         category = primary.category
-        instructions = ""
-        cautions = ""
-
-        # Parse instructions and cautions if formatted in chunk
         body = primary.content
+
+        # Parse sections
+        instructions: list[str] = []
         inst_match = re.search(r"Disposal Instructions:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)", body, re.DOTALL | re.IGNORECASE)
         if inst_match:
-            instructions = inst_match.group(1).strip()
-        else:
-            instructions = body.strip()
+            instructions = [l.strip().lstrip("- •* ") for l in inst_match.group(1).splitlines() if l.strip()]
 
+        cautions: list[str] = []
         caution_match = re.search(r"Caution:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)", body, re.DOTALL | re.IGNORECASE)
         if caution_match:
-            cautions = caution_match.group(1).strip()
+            cautions = [l.strip().lstrip("- •* ") for l in caution_match.group(1).splitlines() if l.strip()]
 
-        # Format as clean, structured bullet points without emojis
-        parts = [f"**{primary.title}** ({category})"]
-        if instructions:
-            for line in instructions.splitlines():
-                clean_line = line.strip().lstrip("- •* ")
-                if clean_line:
-                    parts.append(f"• {clean_line}")
-
+        mat_notes: list[str] = []
         mat_match = re.search(r"Material & Recycling Context:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)", body, re.DOTALL | re.IGNORECASE)
         if mat_match:
-            mat_lines = [l.strip().lstrip("- •* ") for l in mat_match.group(1).strip().splitlines() if l.strip()]
-            if mat_lines:
-                parts.append(f"• Material note: {mat_lines[0]}")
+            mat_notes = [l.strip().lstrip("- •* ") for l in mat_match.group(1).splitlines() if l.strip()]
 
-        if cautions:
-            clean_cautions = [l.strip().lstrip("- •* ") for l in cautions.splitlines() if l.strip()]
-            for c in clean_cautions:
-                parts.append(f"• Caution: {c}")
-
+        reg_notes: list[str] = []
         reg_match = re.search(r"Regional Notes:\s*(.*?)(?=\n[A-Z][a-zA-Z\s&]+:|$)", body, re.DOTALL | re.IGNORECASE)
         if reg_match:
-            reg_lines = [l.strip().lstrip("- •* ") for l in reg_match.group(1).strip().splitlines() if l.strip()]
-            if reg_lines:
-                parts.append(f"• Regional note: {reg_lines[0]}")
+            reg_notes = [l.strip().lstrip("- •* ") for l in reg_match.group(1).splitlines() if l.strip()]
 
-        if len(context_chunks) > 1:
+        q_lower = query.lower()
+        non_bullet = is_explicit_non_bullet_request(query)
+
+        if non_bullet:
+            # Produce cohesive prose paragraph without bullet points
+            prose_parts = [
+                f"{primary.title} belongs in the {category} category.",
+            ]
+            if instructions:
+                prose_parts.append(" ".join(instructions[:3]))
+            if cautions:
+                prose_parts.append(f"Caution: {cautions[0]}")
+            if mat_notes:
+                prose_parts.append(mat_notes[0])
+            return remove_emojis(" ".join(prose_parts))
+
+        # Default: Clean bullet-point structured response tailored to query
+        parts = [f"**{primary.title}** ({category})"]
+
+        # If user specifically asks "which bin" / "where does it go"
+        if any(w in q_lower for w in ["which bin", "what bin", "where does", "where do", "where should"]):
+            parts.append(f"• Bin destination: {category}")
+            for inst in instructions[:3]:
+                parts.append(f"• {inst}")
+        # If user specifically asks about caution / safety / danger
+        elif any(w in q_lower for w in ["caution", "danger", "safe", "hazard", "warning", "careful"]):
+            if cautions:
+                for c in cautions:
+                    parts.append(f"• Caution: {c}")
+            for inst in instructions[:2]:
+                parts.append(f"• {inst}")
+        # If user specifically asks about material or recycling process
+        elif any(w in q_lower for w in ["material", "what is it made", "how is it recycled", "process", "plastic type"]):
+            if mat_notes:
+                for m in mat_notes:
+                    parts.append(f"• Material note: {m}")
+            for inst in instructions[:2]:
+                parts.append(f"• {inst}")
+        else:
+            # General / "how to dispose" query
+            for inst in instructions:
+                parts.append(f"• {inst}")
+            if cautions:
+                parts.append(f"• Caution: {cautions[0]}")
+            if mat_notes:
+                parts.append(f"• Material note: {mat_notes[0]}")
+
+        if reg_notes and any(w in q_lower for w in ["region", "state", "council", "local", "cds", "refund", "scheme"]):
+            parts.append(f"• Regional note: {reg_notes[0]}")
+
+        if len(context_chunks) > 1 and not any(w in q_lower for w in ["step", "only"]):
             secondary = context_chunks[1]
             parts.append(f"• Related category ({secondary.title}): {secondary.category}")
 
@@ -315,14 +371,15 @@ class RagEngine:
             f"You are Sortify's waste sorting assistant powered by the lightweight base model {QWEN_MODEL_NAME}.\n"
             f"Answer the user query accurately and concisely using ONLY the provided context from rag.txt.\n"
             f"Strict output constraints:\n"
-            f"- Use concise bullet points for disposal steps.\n"
-            f"- Use NO emojis anywhere in the response (zero emojis, no unicode warning symbols).\n"
+            f"- Make your response bullet-point based by default (e.g. • Step), UNLESS the user explicitly requests prose, a paragraph, or no bullets.\n"
+            f"- Answer the specific question directly rather than reciting the entire document entry verbatim.\n"
             f"- Use plain text labels like 'Caution:' or 'Note:' without emoji icons.\n"
+            f"- Absolutely NO emojis anywhere in the response (zero emojis, no unicode warning or recycle symbols).\n"
             f"- If the answer is not in the context, state that clearly."
         )
         prompt_with_context = (
             f"Context from rag.txt:\n{context_text}\n\nUser question: {query}\n\n"
-            f"Provide a concise waste sorting recommendation formatted in clean bullet points with zero emojis based strictly on the context."
+            f"Provide a concise waste sorting recommendation formatted in clean bullet points (or prose if explicitly requested) with zero emojis based strictly on the context."
         )
         pipeline_steps.append({
             "step": "context_injection",
