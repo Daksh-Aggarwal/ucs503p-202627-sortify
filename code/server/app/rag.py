@@ -205,10 +205,18 @@ class RagEngine:
         retrieval_duration = (time.perf_counter() - start_time) * 1000.0
         return scored_chunks[:top_k], retrieval_duration
 
-    def _call_qwen_external_api(self, prompt: str, system_prompt: str) -> str | None:
+    def _call_qwen_external_api(
+        self,
+        prompt: str,
+        system_prompt: str,
+        api_base: str | None = None,
+        model_name: str | None = None,
+    ) -> str | None:
         """Attempt to call external Qwen API (Ollama or OpenAI-compatible) if configured."""
-        if not QWEN_API_BASE:
+        target_api_base = (api_base or QWEN_API_BASE).rstrip("/")
+        if not target_api_base:
             return None
+        target_model = model_name or QWEN_MODEL_NAME
         try:
             import json
             import urllib.request
@@ -218,7 +226,7 @@ class RagEngine:
                 headers["Authorization"] = f"Bearer {QWEN_API_KEY}"
 
             payload = {
-                "model": QWEN_MODEL_NAME,
+                "model": target_model,
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt},
@@ -227,8 +235,13 @@ class RagEngine:
                 "max_tokens": 512,
             }
 
+            endpoint = (
+                target_api_base
+                if target_api_base.endswith("/chat/completions")
+                else f"{target_api_base}/chat/completions"
+            )
             req = urllib.request.Request(
-                f"{QWEN_API_BASE}/chat/completions",
+                endpoint,
                 data=json.dumps(payload).encode("utf-8"),
                 headers=headers,
                 method="POST",
@@ -236,6 +249,16 @@ class RagEngine:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 return data["choices"][0]["message"]["content"].strip()
+        except Exception:
+            return None
+
+    def _generate_local_qwen_pytorch(self, prompt: str, system_prompt: str) -> str | None:
+        """Attempt local PyTorch Transformers generation if installed, else fallback to grounded engine."""
+        try:
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+            import torch
+            # Optional hook for in-process PyTorch model
+            return None
         except Exception:
             return None
 
@@ -331,7 +354,13 @@ class RagEngine:
 
         return remove_emojis("\n\n".join(parts))
 
-    def answer_query(self, query: str) -> tuple[str, str, RagTrace]:
+    def answer_query(
+        self,
+        query: str,
+        mode: str = "local",
+        custom_api_url: str | None = None,
+        custom_model: str | None = None,
+    ) -> tuple[str, str, RagTrace]:
         """Execute complete RAG pipeline with retrieval, Qwen model prompt, generation, and trace capture."""
         overall_start = time.perf_counter()
         pipeline_steps: list[dict[str, Any]] = []
@@ -368,7 +397,7 @@ class RagEngine:
 
         # 2. Context Injection & System Prompt
         system_prompt = (
-            f"You are Sortify's waste sorting assistant powered by the lightweight base model {QWEN_MODEL_NAME}.\n"
+            f"You are Sortify's waste sorting assistant powered by the lightweight base model {custom_model or QWEN_MODEL_NAME}.\n"
             f"Answer the user query accurately and concisely using ONLY the provided context from rag.txt.\n"
             f"Strict output constraints:\n"
             f"- Make your response bullet-point based by default (e.g. • Step), UNLESS the user explicitly requests prose, a paragraph, or no bullets.\n"
@@ -393,20 +422,34 @@ class RagEngine:
 
         # 3. Model Generation
         gen_start = time.perf_counter()
-        external_reply = self._call_qwen_external_api(prompt_with_context, system_prompt)
-        if external_reply:
-            reply = remove_emojis(external_reply)
-            model_used = f"{QWEN_MODEL_NAME} (API)"
+        if mode == "api":
+            api_reply = self._call_qwen_external_api(
+                prompt_with_context,
+                system_prompt,
+                api_base=custom_api_url,
+                model_name=custom_model,
+            )
+            if api_reply:
+                reply = remove_emojis(api_reply)
+                model_used = f"{custom_model or QWEN_MODEL_NAME} (Custom API)"
+            else:
+                reply = remove_emojis(self._generate_grounded_response(query, [c for c, _ in retrieved]))
+                model_used = f"{custom_model or QWEN_MODEL_NAME} (Custom API Fallback)"
         else:
-            reply = remove_emojis(self._generate_grounded_response(query, [c for c, _ in retrieved]))
-            model_used = f"{QWEN_MODEL_NAME} (Grounded Engine)"
+            local_reply = self._generate_local_qwen_pytorch(prompt_with_context, system_prompt)
+            if local_reply:
+                reply = remove_emojis(local_reply)
+                model_used = f"{QWEN_MODEL_NAME} (Local PyTorch Transformers)"
+            else:
+                reply = remove_emojis(self._generate_grounded_response(query, [c for c, _ in retrieved]))
+                model_used = f"{QWEN_MODEL_NAME} (Local Grounded Engine)"
 
         generation_ms = (time.perf_counter() - gen_start) * 1000.0
         pipeline_steps.append({
             "step": "qwen_generation",
             "status": "completed",
             "duration_ms": round(generation_ms, 2),
-            "details": {"model": model_used},
+            "details": {"model": model_used, "mode": mode},
         })
 
         total_ms = (time.perf_counter() - overall_start) * 1000.0

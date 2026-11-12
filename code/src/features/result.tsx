@@ -6,7 +6,14 @@ import { uniqueId, useApp } from '@/state/app-state';
 import { Category, locationGuidance } from '@/data/catalog';
 import { NearbyDisposal } from '@/components/sortify/nearby-disposal';
 import { DetectionPreview } from '@/components/sortify/detection-preview';
-import { BoundingBox, parseBox } from '@/services/recognition';
+import {
+  BoundingBox,
+  CONFIDENCE_LEVELS,
+  ConfidenceTier,
+  demoPredictions,
+  parseBox,
+  recognizeImage,
+} from '@/services/recognition';
 import {
   Badge,
   Button,
@@ -60,6 +67,18 @@ export default function ResultScreen() {
   const [correction, setCorrection] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const [selectedTier, setSelectedTier] = useState<ConfidenceTier>(() => {
+    if (params.confidenceTier === 'low' || params.confidenceTier === 'medium' || params.confidenceTier === 'high') {
+      return params.confidenceTier as ConfidenceTier;
+    }
+    const thresh = Number(params.confidenceThreshold || 50);
+    if (thresh <= 40) return 'low';
+    if (thresh >= 65) return 'high';
+    return 'medium';
+  });
+  const [reEvaluating, setReEvaluating] = useState(false);
+  const [customDetections, setCustomDetections] = useState<DetectedItemPayload[] | null>(null);
+
   const handleSelectIndex = (index: number) => {
     setActiveIndex(index);
     setCorrecting(false);
@@ -67,7 +86,7 @@ export default function ResultScreen() {
   };
 
   // Parse all detected items from scan
-  const detectedItems: DetectedItemPayload[] = useMemo(() => {
+  const initialDetectedItems: DetectedItemPayload[] = useMemo(() => {
     try {
       if (params.itemsJson) {
         const parsed = JSON.parse(params.itemsJson);
@@ -91,6 +110,8 @@ export default function ResultScreen() {
       },
     ];
   }, [params.itemsJson, params.id, params.confidence, params.detectorClass, params.modelClass, params.displayName, params.bbox]);
+
+  const detectedItems = customDetections !== null ? customDetections : initialDetectedItems;
 
   // Current active detected item being inspected
   const activeDetected = detectedItems[activeIndex] || detectedItems[0];
@@ -179,6 +200,99 @@ export default function ResultScreen() {
     notify('Correction saved. You can review it in the admin demo.');
   }
 
+  async function handleConfidenceChange(tier: ConfidenceTier) {
+    if (reEvaluating || tier === selectedTier) return;
+    setSelectedTier(tier);
+    const targetLevel = CONFIDENCE_LEVELS.find((l) => l.id === tier) || CONFIDENCE_LEVELS[1];
+
+    if (params.imageUri && source === 'model') {
+      setReEvaluating(true);
+      try {
+        const preds = await recognizeImage(
+          params.imageUri,
+          params.modelUsed || 'best.pt',
+          targetLevel.value,
+        );
+        if (preds && preds.length > 0) {
+          const newItems: DetectedItemPayload[] = preds.map((p) => ({
+            id: p.itemId,
+            confidence: p.confidence,
+            className: p.className,
+            modelClassName: p.modelClassName,
+            displayName: p.displayName,
+            category: p.category,
+            box: p.box,
+          }));
+          setCustomDetections(newItems);
+          setActiveIndex(0);
+          notify(`Re-evaluated with ${targetLevel.label} confidence (${targetLevel.thresholdPercent}%): ${newItems.length} item(s) found`);
+        } else {
+          // If live model returned 0 items above threshold, filter existing scan items
+          const filtered = initialDetectedItems.filter((d) => d.confidence >= targetLevel.thresholdPercent);
+          if (filtered.length > 0) {
+            setCustomDetections(filtered);
+            setActiveIndex(0);
+            notify(`Filtered by ${targetLevel.label} confidence (${targetLevel.thresholdPercent}%): ${filtered.length} item(s)`);
+          } else {
+            const topMatch = initialDetectedItems[0];
+            setCustomDetections(topMatch ? [topMatch] : null);
+            setActiveIndex(0);
+            notify(`No items passed the ${targetLevel.label} (${targetLevel.thresholdPercent}%) threshold. Showing highest match.`);
+          }
+        }
+      } catch {
+        // Backend offline or error -> fall back to filtering existing scan items
+        const filtered = initialDetectedItems.filter((d) => d.confidence >= targetLevel.thresholdPercent);
+        if (filtered.length > 0) {
+          setCustomDetections(filtered);
+          setActiveIndex(0);
+          notify(`Re-evaluated (${targetLevel.label} ≥${targetLevel.thresholdPercent}%): ${filtered.length} item(s)`);
+        } else {
+          const topMatch = initialDetectedItems[0];
+          setCustomDetections(topMatch ? [topMatch] : null);
+          setActiveIndex(0);
+          notify(`No items passed the ${targetLevel.label} (${targetLevel.thresholdPercent}%) threshold. Showing highest match.`);
+        }
+      } finally {
+        setReEvaluating(false);
+      }
+    } else {
+      // Demo / simulated mode
+      setReEvaluating(true);
+      setTimeout(() => {
+        if (initialDetectedItems.length > 1) {
+          const filtered = initialDetectedItems.filter((d) => d.confidence >= targetLevel.thresholdPercent);
+          if (filtered.length > 0) {
+            setCustomDetections(filtered);
+            setActiveIndex(0);
+            notify(`Re-evaluated with ${targetLevel.label} confidence (${targetLevel.thresholdPercent}%): ${filtered.length} item(s)`);
+          } else {
+            const topMatch = initialDetectedItems[0];
+            setCustomDetections(topMatch ? [topMatch] : null);
+            setActiveIndex(0);
+            notify(`No items passed the ${targetLevel.label} (${targetLevel.thresholdPercent}%) threshold. Showing highest match.`);
+          }
+        } else {
+          const simConf = tier === 'low' ? 46 : tier === 'medium' ? 78 : 98;
+          const preds = demoPredictions(params.id || 'bottle', simConf);
+          const newItems: DetectedItemPayload[] = preds.map((p) => ({
+            id: p.itemId,
+            confidence: p.confidence,
+            className: p.className,
+            modelClassName: p.modelClassName,
+            displayName: p.displayName,
+            category: p.category,
+            box: p.box,
+          }));
+          setCustomDetections(newItems);
+          setActiveIndex(0);
+          notify(`Re-evaluated with ${targetLevel.label} confidence (${targetLevel.thresholdPercent}%)`);
+        }
+        setReEvaluating(false);
+      }, 300);
+    }
+  }
+
   return (
     <View style={{ maxWidth: 850, width: '100%', alignSelf: 'center' }}>
       <Button
@@ -189,7 +303,7 @@ export default function ResultScreen() {
         style={{ alignSelf: 'flex-start', paddingLeft: 0, marginBottom: 8 }}
       />
 
-      {/* Item Inspection & Capture Banner */}
+      {/* Streamlined Detection Summary Bar */}
       <Card
         style={{
           marginBottom: 16,
@@ -217,41 +331,23 @@ export default function ResultScreen() {
             <View>
               <Txt size={14} weight="700" color={C.ink}>
                 {detectedItems.length > 1
-                  ? `Item ${activeIndex + 1} of ${detectedItems.length}: ${detectorLabel}`
-                  : `Detected item: ${detectorLabel}`}
+                  ? `Detection Summary (${detectedItems.length} items detected)`
+                  : 'Detection Summary (1 item detected)'}
               </Txt>
               <Txt size={11} color={C.muted}>
                 {detectedItems.length > 1
-                  ? `${detectedItems.length} items detected • Step through one by one`
+                  ? `Inspecting item ${activeIndex + 1} of ${detectedItems.length}: ${detectorLabel} (${confidenceScore}%)`
                   : 'Scan complete • Ready to sort or capture a new image'}
               </Txt>
             </View>
           </Row>
 
-          <Row style={{ gap: 6, alignItems: 'center' }}>
-            {detectedItems.length > 1 && (
-              <Button
-                title="Prev"
-                variant="secondary"
-                disabled={activeIndex === 0}
-                onPress={() => handleSelectIndex(Math.max(0, activeIndex - 1))}
-              />
-            )}
-            {detectedItems.length > 1 && activeIndex < detectedItems.length - 1 ? (
-              <Button
-                title="Next"
-                variant="primary"
-                onPress={() => handleSelectIndex(activeIndex + 1)}
-              />
-            ) : (
-              <Button
-                title="Capture new image"
-                icon="camera"
-                variant="primary"
-                onPress={() => router.push('/scan')}
-              />
-            )}
-          </Row>
+          <Button
+            title="Capture new image"
+            icon="camera"
+            variant="primary"
+            onPress={() => router.push('/scan')}
+          />
         </Row>
 
         {/* Selectable item pills row */}
@@ -336,7 +432,7 @@ export default function ResultScreen() {
         </View>
       </Row>
 
-      {/* Model Confidence Card */}
+      {/* Model Confidence & Changeable Threshold Card */}
       {confidence > 0 && (
         <Card
           style={{
@@ -354,14 +450,46 @@ export default function ResultScreen() {
               <Txt size={14} weight="600" color={confidenceColor}>
                 {confidenceTierLabel} ({confidenceScore}%)
               </Txt>
+              {reEvaluating && (
+                <Badge text="Re-evaluating…" background="#FEF3C7" color="#92400E" />
+              )}
             </Row>
-            {!!params.confidenceThreshold && (
-              <Badge
-                text={`Filter: ${params.confidenceTier ? params.confidenceTier.toUpperCase() : ''} (≥${params.confidenceThreshold}%)`}
-                background="#FFFFFF"
-                color={C.muted}
-              />
-            )}
+
+            {/* Changeable Confidence Selector */}
+            <Row style={{ gap: 6, alignItems: 'center' }}>
+              <Txt size={11} weight="600" color={C.muted}>
+                Confidence:
+              </Txt>
+              {CONFIDENCE_LEVELS.map((lvl) => {
+                const isSelected = lvl.id === selectedTier;
+                return (
+                  <Pressable
+                    key={lvl.id}
+                    disabled={reEvaluating}
+                    onPress={() => handleConfidenceChange(lvl.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Re-evaluate with ${lvl.label} ${lvl.thresholdPercent}% confidence`}
+                    style={({ pressed, hovered }) => ({
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 12,
+                      borderWidth: 1.5,
+                      borderColor: isSelected ? confidenceColor : '#D1D5DB',
+                      backgroundColor: isSelected ? '#FFFFFF' : hovered ? '#F3F4F6' : 'rgba(255, 255, 255, 0.5)',
+                      opacity: reEvaluating ? 0.6 : pressed ? 0.75 : 1,
+                    })}
+                  >
+                    <Txt
+                      size={11}
+                      weight={isSelected ? '700' : '500'}
+                      color={isSelected ? confidenceColor : C.ink}
+                    >
+                      {lvl.label} {lvl.thresholdPercent}%
+                    </Txt>
+                  </Pressable>
+                );
+              })}
+            </Row>
           </Row>
 
           {/* Visual progress meter bar */}
@@ -386,7 +514,7 @@ export default function ResultScreen() {
 
           <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
             <Txt size={12} color={C.muted} style={{ flex: 1 }}>
-              {confidenceDescription}
+              {reEvaluating ? 'Re-evaluating image with new confidence threshold…' : confidenceDescription}
             </Txt>
             {!!params.modelUsed && (
               <Txt size={11} color={C.muted}>
@@ -400,27 +528,6 @@ export default function ResultScreen() {
       {/* Detection bounding box preview with active box focus */}
       {!!params.imageUri && (
         <Card style={{ gap: 10, marginBottom: 16, padding: 14 }}>
-          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-            <Row style={{ gap: 6, alignItems: 'center' }}>
-              <Txt size={13} weight="600">
-                {detectedItems.length > 1
-                  ? `Detection Frame (${detectedItems.length} items found)`
-                  : 'Detected item & Bounding Box'}
-              </Txt>
-              {detectedItems.length > 1 && (
-                <Badge
-                  text={`Inspecting #${activeIndex + 1}: ${detectorLabel}`}
-                  background="#E2ECE0"
-                  color="#1B4332"
-                />
-              )}
-            </Row>
-            {!!params.modelUsed && (
-              <Txt size={11} color={C.muted}>
-                Engine: {params.modelUsed}
-              </Txt>
-            )}
-          </Row>
           <DetectionPreview
             uri={params.imageUri}
             boxes={detectedItems.map((d) => ({
@@ -432,13 +539,13 @@ export default function ResultScreen() {
             onSelectIndex={handleSelectIndex}
             onCaptureNewImage={() => router.push('/scan')}
           />
-          <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+          <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
             <Txt size={12} color={C.muted}>
               Active item: <Txt size={12} weight="600" color={C.ink}>{detectorLabel}</Txt> → mapped to <Txt size={12} weight="600" color={C.green}>{item.category}</Txt>
             </Txt>
             {detectedItems.length > 1 && (
               <Txt size={11} color={C.muted}>
-                Showing focused box for active item. Use Prev / Next controls to step through items.
+                Item {activeIndex + 1} of {detectedItems.length} • Swipe or use controls to browse
               </Txt>
             )}
           </Row>

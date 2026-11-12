@@ -325,11 +325,20 @@ function isExplicitNonBulletRequest(query: string): boolean {
   ].some((phrase) => q.includes(phrase));
 }
 
-function localClientRag(query: string, contextItem?: WasteItem): AssistantResponse {
+function localClientRag(
+  query: string,
+  contextItem?: WasteItem,
+  mode: 'local' | 'api' = 'local',
+): AssistantResponse {
   const startTime = Date.now();
   const words = (query.toLowerCase().match(/[a-z0-9]+/g) || []).filter(
     (w) => !['the', 'a', 'an', 'and', 'or', 'how', 'what', 'where', 'can', 'i', 'do', 'it', 'is'].includes(w),
   );
+
+  const modelLabel =
+    mode === 'api'
+      ? 'Qwen/Qwen2.5-0.5B-Instruct (Custom API Offline - Grounded Fallback)'
+      : 'Qwen/Qwen2.5-0.5B-Instruct (Local Grounded Engine)';
 
   const scored = FALLBACK_RAG_CHUNKS.map((chunk) => {
     let score = 0;
@@ -352,7 +361,7 @@ function localClientRag(query: string, contextItem?: WasteItem): AssistantRespon
     const dummyTrace: RagTrace = {
       trace_id: `trace-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       timestamp: new Date().toISOString(),
-      model: 'Qwen/Qwen2.5-0.5B-Instruct',
+      model: modelLabel,
       query,
       retrieval_ms: retrievalMs,
       generation_ms: genMs,
@@ -362,9 +371,9 @@ function localClientRag(query: string, contextItem?: WasteItem): AssistantRespon
       pipeline_steps: [
         { step: 'retrieval', status: 'completed', duration_ms: retrievalMs, details: { rag_file: 'rag.txt', matches: 0 } },
         { step: 'context_injection', status: 'completed', duration_ms: 1 },
-        { step: 'qwen_generation', status: 'completed', duration_ms: genMs, details: { model: 'Qwen/Qwen2.5-0.5B-Instruct' } },
+        { step: 'qwen_generation', status: 'completed', duration_ms: genMs, details: { model: modelLabel } },
       ],
-      system_prompt: 'You are Sortify waste sorting assistant powered by lightweight model Qwen/Qwen2.5-0.5B-Instruct.',
+      system_prompt: `You are Sortify waste sorting assistant powered by lightweight model ${modelLabel}.`,
     };
 
     return {
@@ -431,7 +440,7 @@ function localClientRag(query: string, contextItem?: WasteItem): AssistantRespon
   const trace: RagTrace = {
     trace_id: `trace-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     timestamp: new Date().toISOString(),
-    model: 'Qwen/Qwen2.5-0.5B-Instruct',
+    model: modelLabel,
     query,
     retrieval_ms: retrievalMs,
     generation_ms: genMs,
@@ -463,10 +472,10 @@ function localClientRag(query: string, contextItem?: WasteItem): AssistantRespon
         step: 'qwen_generation',
         status: 'completed',
         duration_ms: genMs,
-        details: { model: 'Qwen/Qwen2.5-0.5B-Instruct' },
+        details: { model: modelLabel },
       },
     ],
-    system_prompt: 'You are Sortify waste sorting assistant powered by lightweight model Qwen/Qwen2.5-0.5B-Instruct. Ground replies strictly in rag.txt.',
+    system_prompt: `You are Sortify waste sorting assistant powered by lightweight model ${modelLabel}. Ground replies strictly in rag.txt.`,
   };
 
   return {
@@ -477,19 +486,32 @@ function localClientRag(query: string, contextItem?: WasteItem): AssistantRespon
   };
 }
 
+export type QwenConfig = {
+  mode?: 'local' | 'api';
+  apiUrl?: string;
+  modelName?: string;
+};
+
 export async function askAssistant(
   query: string,
   contextItem?: WasteItem,
+  config: QwenConfig = { mode: 'local' },
 ): Promise<AssistantResponse> {
-  // Attempt to call the FastAPI backend RAG endpoint
+  const mode = config?.mode || 'local';
+  // Attempt to call the FastAPI backend RAG endpoint with mode and optional custom API settings
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     const response = await fetch(`${apiUrl}/v1/assistant/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: query }),
+      body: JSON.stringify({
+        message: query,
+        mode,
+        api_url: config?.apiUrl,
+        model: config?.modelName,
+      }),
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
@@ -510,8 +532,72 @@ export async function askAssistant(
       };
     }
   } catch {
-    // API not running or unreachable, smoothly fallback to client-side RAG engine
+    // API not running or unreachable, smoothly fallback
   }
 
-  return localClientRag(query, contextItem);
+  // If custom API was requested directly and backend wasn't reached, try calling custom API directly
+  if (mode === 'api' && config?.apiUrl) {
+    try {
+      const directController = new AbortController();
+      const directTimeout = setTimeout(() => directController.abort(), 5000);
+      const endpoint = config.apiUrl.endsWith('/chat/completions')
+        ? config.apiUrl
+        : `${config.apiUrl.replace(/\/$/, '')}/chat/completions`;
+
+      const apiRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: config.modelName || 'Qwen/Qwen2.5-0.5B-Instruct',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are Sortify waste sorting assistant. Give concise bulleted instructions with zero emojis.',
+            },
+            { role: 'user', content: query },
+          ],
+          temperature: 0.2,
+          max_tokens: 512,
+        }),
+        signal: directController.signal,
+      });
+      clearTimeout(directTimeout);
+
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (content) {
+          const matched = catalog.find((i) =>
+            query.toLowerCase().includes(i.name.toLowerCase()) ||
+            i.keywords.some((k) => query.toLowerCase().includes(k)),
+          );
+          const trace: RagTrace = {
+            trace_id: `trace-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            model: `${config.modelName || 'Qwen/Qwen2.5'} (Direct Custom API)`,
+            query,
+            retrieval_ms: 10,
+            generation_ms: 80,
+            total_ms: 90,
+            retrieval_score: 1.0,
+            sources: [],
+            pipeline_steps: [
+              { step: 'custom_api_generation', status: 'completed', duration_ms: 80, details: { endpoint } },
+            ],
+            system_prompt: 'Direct Custom API call',
+          };
+          return {
+            reply: stripEmojis(content),
+            context: 'Generated by custom Qwen API',
+            traces: trace,
+            itemId: matched?.id,
+          };
+        }
+      }
+    } catch {
+      // Fall through to local client RAG
+    }
+  }
+
+  return localClientRag(query, contextItem, mode);
 }

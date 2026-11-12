@@ -1,6 +1,6 @@
 import { BoundingBox } from '@/services/recognition';
 import { Image, LayoutChangeEvent, Pressable, View } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Row, Txt } from './ui';
 
 type Size = { width: number; height: number };
@@ -30,6 +30,8 @@ export function DetectionPreview({
 }) {
   const [frame, setFrame] = useState<Size>({ width: 0, height: 0 });
   const [imageSize, setImageSize] = useState<Size>({ width: 0, height: 0 });
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     if (!uri) return;
@@ -89,10 +91,37 @@ export function DetectionPreview({
   const safeActiveIndex = Math.max(0, Math.min(totalItems - 1, activeIndex));
   const activeItem = itemsToRender[safeActiveIndex];
 
+  const handleTouchStart = (e: any) => {
+    touchStartX.current = e.nativeEvent?.pageX ?? null;
+    touchStartY.current = e.nativeEvent?.pageY ?? null;
+  };
+
+  const handleTouchEnd = (e: any) => {
+    if (touchStartX.current === null || totalItems <= 1) return;
+    const endX = e.nativeEvent?.pageX ?? touchStartX.current;
+    const endY = e.nativeEvent?.pageY ?? (touchStartY.current ?? 0);
+    const deltaX = endX - touchStartX.current;
+    const deltaY = endY - (touchStartY.current ?? endY);
+    // Detect horizontal swipe
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+      if (deltaX < 0) {
+        // Swiped left -> Next item (cycle)
+        onSelectIndex?.((safeActiveIndex + 1) % totalItems);
+      } else {
+        // Swiped right -> Previous item (cycle)
+        onSelectIndex?.(safeActiveIndex === 0 ? totalItems - 1 : safeActiveIndex - 1);
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
   return (
     <View
       accessibilityLabel="Detection preview with focused bounding box"
       onLayout={onLayout}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       style={{
         height: 290,
         borderRadius: 16,
@@ -143,7 +172,7 @@ export function DetectionPreview({
         })()
       )}
 
-      {/* Sleek bottom overlay pagination & capture bar */}
+      {/* Sleek bottom overlay pagination bar */}
       {totalItems > 0 && (
         <View
           style={{
@@ -180,12 +209,14 @@ export function DetectionPreview({
               </Txt>
             </View>
             <Txt size={12} weight="600" color="#FFFFFF" numberOfLines={1}>
-              {totalItems > 1 ? activeItem?.label || 'Item' : `${activeItem?.label || 'Item'} detected`}
+              {totalItems > 1
+                ? `${activeItem?.label || 'Item'}${activeItem?.confidence ? ` (${activeItem.confidence}%)` : ''}`
+                : `${activeItem?.label || 'Item'} detected`}
             </Txt>
 
             {/* Direct jump dot indicators for multiple items */}
             {totalItems > 1 && (
-              <Row style={{ gap: 4, alignItems: 'center', marginLeft: 4 }}>
+              <Row style={{ gap: 5, alignItems: 'center', marginLeft: 4 }}>
                 {itemsToRender.map((_, dotIdx) => {
                   const isCurrent = dotIdx === safeActiveIndex;
                   return (
@@ -194,13 +225,18 @@ export function DetectionPreview({
                       onPress={() => onSelectIndex?.(dotIdx)}
                       accessibilityRole="button"
                       accessibilityLabel={`Go to item ${dotIdx + 1}`}
-                      hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                      style={{
-                        width: isCurrent ? 14 : 6,
-                        height: 6,
-                        borderRadius: 3,
-                        backgroundColor: isCurrent ? '#2EC27E' : 'rgba(255, 255, 255, 0.28)',
-                      }}
+                      hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }}
+                      style={({ pressed, hovered }) => ({
+                        width: isCurrent ? 16 : 7,
+                        height: 7,
+                        borderRadius: 4,
+                        backgroundColor: isCurrent
+                          ? '#2EC27E'
+                          : hovered
+                            ? 'rgba(255, 255, 255, 0.6)'
+                            : 'rgba(255, 255, 255, 0.3)',
+                        opacity: pressed ? 0.7 : 1,
+                      })}
                     />
                   );
                 })}
@@ -208,45 +244,45 @@ export function DetectionPreview({
             )}
           </Row>
 
-          {/* Stepper buttons or Capture new image action */}
+          {/* Stepper buttons */}
           <Row style={{ gap: 6, alignItems: 'center', flexShrink: 0 }}>
-            {totalItems > 1 && safeActiveIndex > 0 && (
-              <Pressable
-                onPress={() => onSelectIndex?.(safeActiveIndex - 1)}
-                accessibilityRole="button"
-                accessibilityLabel="Previous detected item"
-                style={({ pressed }) => ({
-                  paddingHorizontal: 9,
-                  paddingVertical: 5,
-                  borderRadius: 12,
-                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                  opacity: pressed ? 0.7 : 1,
-                })}
-              >
-                <Txt size={11} weight="600" color="#FFFFFF">
-                  ‹ Prev
-                </Txt>
-              </Pressable>
-            )}
+            {totalItems > 1 ? (
+              <>
+                <Pressable
+                  onPress={() => onSelectIndex?.(safeActiveIndex === 0 ? totalItems - 1 : safeActiveIndex - 1)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Previous detected item"
+                  style={({ pressed, hovered }) => ({
+                    paddingHorizontal: 9,
+                    paddingVertical: 5,
+                    borderRadius: 12,
+                    backgroundColor: hovered ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.12)',
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                >
+                  <Txt size={11} weight="600" color="#FFFFFF">
+                    ‹ Prev
+                  </Txt>
+                </Pressable>
 
-            {totalItems > 1 && safeActiveIndex < totalItems - 1 ? (
-              <Pressable
-                onPress={() => onSelectIndex?.(safeActiveIndex + 1)}
-                accessibilityRole="button"
-                accessibilityLabel="Next detected item"
-                style={({ pressed }) => ({
-                  paddingHorizontal: 10,
-                  paddingVertical: 5,
-                  borderRadius: 12,
-                  backgroundColor: '#1B5E3F',
-                  opacity: pressed ? 0.7 : 1,
-                })}
-              >
-                <Txt size={11} weight="600" color="#FFFFFF">
-                  Next ›
-                </Txt>
-              </Pressable>
-            ) : (
+                <Pressable
+                  onPress={() => onSelectIndex?.((safeActiveIndex + 1) % totalItems)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Next detected item"
+                  style={({ pressed, hovered }) => ({
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 12,
+                    backgroundColor: hovered ? '#237B52' : '#1B5E3F',
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                >
+                  <Txt size={11} weight="600" color="#FFFFFF">
+                    Next ›
+                  </Txt>
+                </Pressable>
+              </>
+            ) : onCaptureNewImage ? (
               <Pressable
                 onPress={onCaptureNewImage}
                 accessibilityRole="button"
@@ -263,7 +299,7 @@ export function DetectionPreview({
                   Capture new image
                 </Txt>
               </Pressable>
-            )}
+            ) : null}
           </Row>
         </View>
       )}

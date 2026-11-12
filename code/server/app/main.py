@@ -396,9 +396,18 @@ async def assistant_chat(request: Request) -> dict[str, Any]:
     if not query:
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
+    mode = str(body.get("mode", "local")).lower()
+    api_url = body.get("api_url")
+    model = body.get("model")
+
     from app.rag import asdict, rag_engine
 
-    reply, context, trace = rag_engine.answer_query(query)
+    reply, context, trace = rag_engine.answer_query(
+        query,
+        mode=mode,
+        custom_api_url=api_url,
+        custom_model=model,
+    )
     return {
         "reply": reply,
         "context": context,

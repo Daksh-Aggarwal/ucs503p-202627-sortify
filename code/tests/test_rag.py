@@ -59,4 +59,13 @@ clean = remove_emojis(dirty)
 assert '⚠️' not in clean and '♻️' not in clean and '👍' not in clean and '✅' not in clean
 print('PASS: remove_emojis cleanly strips symbols')
 
+# 4. Test Qwen modes in Python RAG engine
+local_reply, _, local_trace = rag_engine.answer_query('How to dispose of cardboard?', mode='local')
+assert len(local_reply) > 0 and 'Local' in local_trace.model
+print('PASS: Python RAG engine answer_query mode="local" works')
+
+api_reply, _, api_trace = rag_engine.answer_query('How to dispose of cardboard?', mode='api', custom_api_url='http://invalid:9999')
+assert len(api_reply) > 0 and 'API' in api_trace.model
+print('PASS: Python RAG engine answer_query mode="api" falls back cleanly when offline')
+
 print('\nALL PYTHON RAG TESTS PASSED!')

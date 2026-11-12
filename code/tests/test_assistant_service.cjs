@@ -73,5 +73,15 @@ console.log('PASS: stripEmojis successfully strips all emojis and symbols');
   assert.equal(proseRes.reply.includes('•'), false, 'Prose reply should not contain bullets');
   console.log('PASS: askAssistant localClientRag prose query returned clean prose without bullets');
 
+  // 3. Test Qwen mode config (local vs api)
+  const localRes = await askAssistant('How do I recycle a cardboard box?', undefined, { mode: 'local' });
+  assert.ok(localRes.traces.model.includes('Local Grounded Engine'), 'Local mode should reflect local engine');
+  console.log('PASS: askAssistant supports mode: "local" with local grounded model');
+
+  const apiFallbackRes = await askAssistant('How do I recycle a cardboard box?', undefined, { mode: 'api', apiUrl: 'http://invalid-endpoint:9999/v1' });
+  assert.ok(apiFallbackRes.reply.length > 0, 'API fallback should return reply');
+  assert.ok(apiFallbackRes.traces.model.includes('Custom API Offline'), 'API fallback trace should indicate offline fallback');
+  console.log('PASS: askAssistant supports mode: "api" with graceful fallback when endpoint unreachable');
+
   console.log('\nALL ASSISTANT SERVICE TESTS PASSED!');
 })();
