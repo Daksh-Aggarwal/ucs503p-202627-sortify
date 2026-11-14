@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { router, usePathname, type Href } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '@/state/app-state';
 import { Button, C, Icon, IconButton, Row, Txt } from './ui';
 const links = [
@@ -25,7 +25,6 @@ const links = [
 export function Shell({ children }: React.PropsWithChildren) {
   const { width } = useWindowDimensions();
   const desktop = width >= 1000;
-  const insets = useSafeAreaInsets();
   const { state, notice, refreshLocation, locationBusy, locationError } = useApp();
   const pathname = usePathname();
   const [locationOpen, setLocationOpen] = useState(false);
@@ -35,14 +34,14 @@ export function Shell({ children }: React.PropsWithChildren) {
     router.navigate(href as Href);
   };
   const nav = (
-    <View style={{ flex: 1, backgroundColor: '#F2F4EC', padding: 22, paddingTop: 28, gap: 24 }}>
+    <View style={{ flex: 1, backgroundColor: '#F2F4EC', padding: 24, gap: 24 }}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Sortify home"
         style={{ minHeight: 44, justifyContent: 'center' }}
         onPress={() => navigate('/')}
       >
-        <Row style={{ gap: 10, paddingHorizontal: 8, alignItems: 'center' }}>
+        <Row style={{ gap: 8, paddingHorizontal: 8, alignItems: 'center' }}>
           <Image
             source={require('@/assets/images/logo.png')}
             style={{ width: 34, height: 34 }}
@@ -57,7 +56,7 @@ export function Shell({ children }: React.PropsWithChildren) {
           </Txt>
         </Row>
       </Pressable>
-      <View style={{ gap: 6 }}>
+      <View style={{ gap: 4 }}>
         {links.map((link) => {
           const active =
             pathname === link.href || (pathname === '/result' && link.href === '/explore');
@@ -68,34 +67,34 @@ export function Shell({ children }: React.PropsWithChildren) {
               accessibilityState={{ selected: active }}
               aria-current={active ? 'page' : undefined}
               onPress={() => navigate(link.href)}
-              style={({ hovered }) => ({
+              style={({ hovered, pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 12,
-                padding: 13,
-                borderRadius: 9,
-                backgroundColor: active ? '#E0E8D6' : hovered ? '#E9EEDF' : 'transparent',
+                padding: 12,
+                minHeight: 44,
+                borderRadius: 8,
+                backgroundColor: active
+                  ? '#E0E8D6'
+                  : hovered || pressed
+                    ? '#E9EEDF'
+                    : 'transparent',
               })}
             >
-              <Icon name={link.icon} size={19} color={active ? C.green : '#78816E'} />
-              <Txt size={13} weight={active ? '600' : '400'} color={active ? C.green : '#67725F'}>
+              <Icon name={link.icon} size={19} color={active ? C.green : C.muted} />
+              <Txt size={13} weight={active ? '600' : '400'} color={active ? C.green : C.muted}>
                 {link.label}
               </Txt>
-              {link.icon === 'chat' && (
-                <View style={{ marginLeft: 'auto' }}>
-                  <Icon name="sparkle" size={13} color="#8A9A75" />
-                </View>
-              )}
             </Pressable>
           );
         })}
       </View>
       <View style={{ flex: 1 }} />
-      <View style={{ gap: 5 }}>
+      <View style={{ gap: 4 }}>
         <Pressable
           accessibilityRole="button"
           onPress={() => navigate('/profile')}
-          style={{ padding: 10, minHeight: 44, justifyContent: 'center' }}
+          style={{ padding: 8, minHeight: 44, justifyContent: 'center' }}
         >
           <Row>
             <Icon name="settings" size={18} color={C.muted} />
@@ -107,7 +106,7 @@ export function Shell({ children }: React.PropsWithChildren) {
         <Pressable
           accessibilityRole="button"
           onPress={() => navigate('/admin')}
-          style={{ padding: 10, minHeight: 44, justifyContent: 'center' }}
+          style={{ padding: 8, minHeight: 44, justifyContent: 'center' }}
         >
           <Row>
             <Icon name="shield" size={18} color={C.muted} />
@@ -120,14 +119,14 @@ export function Shell({ children }: React.PropsWithChildren) {
       <Pressable
         accessibilityRole="button"
         onPress={() => navigate('/profile')}
-        style={{ borderTopWidth: 1, borderColor: '#DDE4D2', paddingTop: 22 }}
+        style={{ borderTopWidth: 1, borderColor: '#DDE4D2', paddingTop: 24 }}
       >
         <Row>
           <View
             style={{
               width: 36,
               height: 36,
-              borderRadius: 18,
+              borderRadius: 12,
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: '#E4E9D9',
@@ -151,19 +150,25 @@ export function Shell({ children }: React.PropsWithChildren) {
     </View>
   );
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg, flexDirection: 'row' }}>
+    <SafeAreaView
+      edges={['left', 'right']}
+      style={{ flex: 1, backgroundColor: C.bg, flexDirection: 'row' }}
+    >
       {desktop && (
-        <View style={{ width: 244, borderRightWidth: 1, borderColor: C.line }}>
+        <SafeAreaView
+          edges={['top', 'bottom']}
+          style={{ width: 244, borderRightWidth: 1, borderColor: C.line }}
+        >
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>{nav}</ScrollView>
-        </View>
+        </SafeAreaView>
       )}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1, minWidth: 0 }}
       >
-        <View
+        <SafeAreaView
+          edges={['top']}
           style={{
-            paddingTop: insets.top,
             backgroundColor: C.bg,
             borderBottomWidth: 1,
             borderColor: C.line,
@@ -172,17 +177,24 @@ export function Shell({ children }: React.PropsWithChildren) {
           <Row
             style={{
               minHeight: 64,
-              paddingHorizontal: desktop ? 38 : 18,
+              paddingHorizontal: desktop ? 32 : 16,
               justifyContent: 'space-between',
             }}
           >
-            <Row style={{ alignItems: 'center', gap: 7 }}>
+            <Row style={{ alignItems: 'center', gap: 8, flexShrink: 1 }}>
               {!desktop && (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Sortify home"
                   onPress={() => navigate('/')}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                    minWidth: 44,
+                    minHeight: 44,
+                    flexShrink: 1,
+                  }}
                 >
                   <Image
                     source={require('@/assets/images/logo.png')}
@@ -190,8 +202,8 @@ export function Shell({ children }: React.PropsWithChildren) {
                     resizeMode="contain"
                     accessibilityLabel="Sortify logo"
                   />
-                  <Txt size={12} color={C.muted}>
-                    sortify.
+                  <Txt size={14} weight="600" numberOfLines={1} style={{ flexShrink: 1 }}>
+                    Sortify
                   </Txt>
                 </Pressable>
               )}
@@ -201,16 +213,20 @@ export function Shell({ children }: React.PropsWithChildren) {
                 </Txt>
               )}
             </Row>
-            <Row style={{ gap: desktop ? 20 : 8 }}>
+            <Row style={{ gap: desktop ? 16 : 8, flexShrink: 1 }}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Location details"
                 onPress={() => setLocationOpen(true)}
-                style={{ minHeight: 44, justifyContent: 'center', flexShrink: 1 }}
+                style={{ minHeight: 44, minWidth: 44, justifyContent: 'center', flexShrink: 1 }}
               >
-                <Row style={{ gap: 7, flexShrink: 1 }}>
+                <Row style={{ gap: 8, flexShrink: 1 }}>
                   <Icon name="pin" size={15} color={C.muted} />
-                  <Txt size={12} numberOfLines={1} style={{ maxWidth: width < 400 ? 110 : 200 }}>
+                  <Txt
+                    size={12}
+                    numberOfLines={1}
+                    style={{ maxWidth: width < 400 ? 112 : 200, flexShrink: 1 }}
+                  >
                     {locationBusy ? 'Finding location…' : state.location || 'Location unavailable'}
                   </Txt>
                   <Icon name="down" size={12} />
@@ -220,11 +236,11 @@ export function Shell({ children }: React.PropsWithChildren) {
               <Badge text="Online" icon="sparkle" background="#EFF6E9" color="#4F7A28" /> */}
             </Row>
           </Row>
-        </View>
+        </SafeAreaView>
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
-            padding: desktop ? 28 : 20,
+            padding: desktop ? 32 : 16,
             paddingBottom: 24,
             width: '100%',
             maxWidth: 1200,
@@ -234,14 +250,16 @@ export function Shell({ children }: React.PropsWithChildren) {
           {children}
         </ScrollView>
         {!desktop && (
-          <Row
+          <SafeAreaView
+            edges={{ bottom: 'maximum' }}
             style={{
+              flexDirection: 'row',
               backgroundColor: C.white,
               justifyContent: 'space-around',
               borderTopWidth: 1,
               borderColor: C.line,
-              paddingTop: 11,
-              paddingBottom: Math.max(insets.bottom, 11),
+              paddingTop: 8,
+              paddingBottom: 8,
               gap: 0,
             }}
           >
@@ -273,6 +291,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                     justifyContent: 'center',
                     gap: 4,
                     minHeight: 48,
+                    minWidth: 44,
                     flex: 1,
                     borderRadius: 8,
                     backgroundColor: active ? '#EFF3E7' : 'transparent',
@@ -291,7 +310,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                 </Pressable>
               );
             })}
-          </Row>
+          </SafeAreaView>
         )}
       </KeyboardAvoidingView>
       {!!notice && (
@@ -321,14 +340,14 @@ export function Shell({ children }: React.PropsWithChildren) {
         animationType="fade"
         onRequestClose={() => setLocationOpen(false)}
       >
-        <View
+        <SafeAreaView
           style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#14291C66' }}
         >
           <View
             style={{
               backgroundColor: C.white,
-              borderRadius: 20,
-              padding: 25,
+              borderRadius: 12,
+              padding: 24,
               width: '100%',
               maxWidth: 440,
               alignSelf: 'center',
@@ -347,8 +366,8 @@ export function Shell({ children }: React.PropsWithChildren) {
             </Row>
             <Txt color={C.muted}>
               {state.nearbyDisposalEnabled
-                ? 'Your device location is used for nearby searches and refreshed when you return to the app.'
-                : 'Enable nearby disposal options in your profile to use your device location.'}
+                ? 'Sortify uses your location to find nearby drop-off sites.'
+                : 'Enable nearby disposal in Settings to use your location.'}
             </Txt>
             {state.nearbyDisposalEnabled ? (
               <>
@@ -356,7 +375,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                   {locationBusy ? 'Finding location…' : state.location || 'Location unavailable'}
                 </Txt>
                 {!!locationError && (
-                  <Txt size={12} color="#AE5B41">
+                  <Txt size={12} color="#963F2B">
                     {locationError}
                   </Txt>
                 )}
@@ -371,7 +390,7 @@ export function Shell({ children }: React.PropsWithChildren) {
               </>
             ) : (
               <Button
-                title="Open profile settings"
+                title="Open settings"
                 onPress={() => {
                   setLocationOpen(false);
                   router.push('/profile');
@@ -379,7 +398,7 @@ export function Shell({ children }: React.PropsWithChildren) {
               />
             )}
           </View>
-        </View>
+        </SafeAreaView>
       </Modal>
       <Modal
         transparent
@@ -387,11 +406,10 @@ export function Shell({ children }: React.PropsWithChildren) {
         animationType="fade"
         onRequestClose={() => setMenuOpen(false)}
       >
-        <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#14291C66' }}>
+        <SafeAreaView style={{ flex: 1, flexDirection: 'row', backgroundColor: '#14291C66' }}>
           <View
             style={{
               width: Math.min(300, width - 60),
-              paddingTop: insets.top,
               backgroundColor: '#F2F4EC',
             }}
           >
@@ -401,12 +419,12 @@ export function Shell({ children }: React.PropsWithChildren) {
             accessibilityRole="button"
             accessibilityLabel="Close navigation"
             onPress={() => setMenuOpen(false)}
-            style={{ flex: 1, padding: 20 }}
+            style={{ flex: 1, padding: 16 }}
           >
             <Icon name="close" color="white" />
           </Pressable>
-        </View>
+        </SafeAreaView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
