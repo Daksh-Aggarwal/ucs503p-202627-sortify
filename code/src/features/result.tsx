@@ -327,7 +327,7 @@ export default function ResultScreen() {
         }}
       >
         <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-          <Row style={{ gap: 8, alignItems: 'center' }}>
+          <Row style={{ gap: 8, alignItems: 'center', flex: 1, minWidth: 200, flexShrink: 1 }}>
             <View
               style={{
                 width: 28,
@@ -417,7 +417,7 @@ export default function ResultScreen() {
 
       <Row style={{ marginBottom: 20, alignItems: 'flex-start' }}>
         <ItemArt item={activeItem} size={64} />
-        <View style={{ flex: 1, gap: 5 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
           <Txt accessibilityRole="header" size={26} weight="500" style={{ lineHeight: 32 }}>
             {activeItem.name}
           </Txt>

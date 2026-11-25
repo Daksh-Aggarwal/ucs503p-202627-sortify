@@ -243,7 +243,7 @@ export default function ScanScreen() {
                 alignItems: 'center',
                 gap: 6,
                 flex: 1,
-                minWidth: 180,
+                minWidth: 140,
                 maxWidth: '100%',
               }}
             >

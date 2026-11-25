@@ -117,11 +117,13 @@ export function AssistantMessageRenderer({ text }: { text: string }) {
                 borderRadius: 8,
                 paddingHorizontal: 12,
                 paddingVertical: 9,
-                marginTop: 2,
+                marginTop: 4,
                 gap: 3,
+                width: '100%',
               }}
             >
               <Row style={{ gap: 6, alignItems: 'center' }}>
+                <Icon name="warning" size={14} color="#92400E" />
                 <Txt size={11} weight="700" color="#92400E" style={{ letterSpacing: 0.4 }}>
                   CAUTION
                 </Txt>
@@ -151,8 +153,9 @@ export function AssistantMessageRenderer({ text }: { text: string }) {
                 borderRadius: 8,
                 paddingHorizontal: 12,
                 paddingVertical: 8,
-                marginTop: 2,
+                marginTop: 4,
                 gap: 3,
+                width: '100%',
               }}
             >
               <Txt size={11} weight="700" color={C.green}>
@@ -176,12 +179,13 @@ export function AssistantMessageRenderer({ text }: { text: string }) {
                 alignItems: 'flex-start',
                 gap: 8,
                 paddingLeft: 2,
+                width: '100%',
               }}
             >
               <Txt size={13} color={C.green} weight="700" style={{ lineHeight: 20 }}>
                 •
               </Txt>
-              <Txt size={13} color={C.ink} style={{ flex: 1, lineHeight: 20 }}>
+              <Txt size={13} color={C.ink} style={{ flex: 1, minWidth: 0, lineHeight: 20 }}>
                 {renderInlineFormatted(bulletMatch[1])}
               </Txt>
             </View>
@@ -199,12 +203,13 @@ export function AssistantMessageRenderer({ text }: { text: string }) {
                 alignItems: 'flex-start',
                 gap: 8,
                 paddingLeft: 2,
+                width: '100%',
               }}
             >
               <Txt size={12} color={C.green} weight="700" style={{ lineHeight: 20, minWidth: 16 }}>
                 {numMatch[1]}.
               </Txt>
-              <Txt size={13} color={C.ink} style={{ flex: 1, lineHeight: 20 }}>
+              <Txt size={13} color={C.ink} style={{ flex: 1, minWidth: 0, lineHeight: 20 }}>
                 {renderInlineFormatted(numMatch[2])}
               </Txt>
             </View>
@@ -222,12 +227,13 @@ export function AssistantMessageRenderer({ text }: { text: string }) {
                 alignItems: 'flex-start',
                 gap: 8,
                 paddingLeft: 2,
+                width: '100%',
               }}
             >
               <Txt size={13} color={C.green} weight="700" style={{ lineHeight: 20 }}>
                 •
               </Txt>
-              <Txt size={13} color={C.ink} style={{ flex: 1, lineHeight: 20 }}>
+              <Txt size={13} color={C.ink} style={{ flex: 1, minWidth: 0, lineHeight: 20 }}>
                 {renderInlineFormatted(sectionMatch[1])}
               </Txt>
             </View>
@@ -238,7 +244,7 @@ export function AssistantMessageRenderer({ text }: { text: string }) {
         const sentences = line.split(/(?<=[.!?])\s+(?=[A-Z0-9])/).filter((s) => s.trim().length > 0);
         if (sentences.length > 1 && !line.startsWith('I ') && !line.startsWith('You ')) {
           return (
-            <View key={idx} style={{ gap: 6, marginVertical: 2 }}>
+            <View key={idx} style={{ gap: 6, marginVertical: 2, width: '100%' }}>
               {sentences.map((sent, sIdx) => (
                 <View
                   key={sIdx}
@@ -247,12 +253,13 @@ export function AssistantMessageRenderer({ text }: { text: string }) {
                     alignItems: 'flex-start',
                     gap: 8,
                     paddingLeft: 2,
+                    width: '100%',
                   }}
                 >
                   <Txt size={13} color={C.green} weight="700" style={{ lineHeight: 20 }}>
                     •
                   </Txt>
-                  <Txt size={13} color={C.ink} style={{ flex: 1, lineHeight: 20 }}>
+                  <Txt size={13} color={C.ink} style={{ flex: 1, minWidth: 0, lineHeight: 20 }}>
                     {renderInlineFormatted(sent)}
                   </Txt>
                 </View>
@@ -263,7 +270,7 @@ export function AssistantMessageRenderer({ text }: { text: string }) {
 
         // 8. Regular paragraph with styled bold/italic tokens
         return (
-          <Txt key={idx} size={13} color={C.ink} style={{ lineHeight: 21 }}>
+          <Txt key={idx} size={13} color={C.ink} style={{ lineHeight: 21, width: '100%' }}>
             {renderInlineFormatted(line)}
           </Txt>
         );
@@ -277,7 +284,7 @@ export default function AssistantScreen() {
   const { state, update } = useApp();
   const [draft, setDraft] = useState('');
   const [openContexts, setOpenContexts] = useState<Record<string, boolean>>({});
-  const messagesRef = useRef<ScrollView>(null);
+  const messagesRef = useRef<any>(null);
   const { height } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
 
@@ -381,14 +388,19 @@ export default function AssistantScreen() {
         <ScrollView
           ref={messagesRef}
           nestedScrollEnabled
-          style={{ maxHeight: Math.max(180, Math.min(height - 380, 420)) }}
+          style={{ maxHeight: Math.max(260, Math.min(height - 340, 580)) }}
           contentContainerStyle={{
             padding: 16,
+            paddingBottom: 24,
             gap: 14,
-            minHeight: Math.max(150, Math.min(height - 420, 220)),
+            minHeight: Math.max(160, Math.min(height - 420, 240)),
           }}
           onContentSizeChange={() => {
-            if (state.messages.length) messagesRef.current?.scrollToEnd({ animated: true });
+            if (state.messages.length) {
+              setTimeout(() => {
+                messagesRef.current?.scrollToEnd({ animated: true });
+              }, 50);
+            }
           }}
         >
           {context && (
@@ -413,10 +425,11 @@ export default function AssistantScreen() {
                 <View
                   key={m.id}
                   style={{
-                    alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-                    maxWidth: '92%',
+                    alignSelf: m.role === 'user' ? 'flex-end' : 'stretch',
+                    width: m.role === 'user' ? undefined : '100%',
+                    maxWidth: m.role === 'user' ? '85%' : '100%',
                     backgroundColor: m.role === 'user' ? C.green : '#F1F4EA',
-                    padding: 18,
+                    padding: 16,
                     borderRadius: 14,
                     gap: 12,
                   }}
@@ -427,6 +440,7 @@ export default function AssistantScreen() {
                       justifyContent: 'space-between',
                       alignItems: 'flex-start',
                       gap: 12,
+                      width: '100%',
                     }}
                   >
                     {m.role === 'user' ? (
@@ -434,7 +448,7 @@ export default function AssistantScreen() {
                         {m.text}
                       </Txt>
                     ) : (
-                      <View style={{ flex: 1 }}>
+                      <View style={{ flex: 1, minWidth: 0 }}>
                         <AssistantMessageRenderer text={m.text} />
                       </View>
                     )}
@@ -580,6 +594,7 @@ export default function AssistantScreen() {
                       title="Open disposal guide"
                       icon="arrow"
                       variant="secondary"
+                      style={{ alignSelf: 'flex-start' }}
                       onPress={() => router.push({ pathname: '/result', params: { id: m.itemId! } })}
                     />
                   )}
@@ -628,6 +643,7 @@ export default function AssistantScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 6,
+                maxWidth: '100%',
                 opacity: busy ? 0.5 : 1,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
@@ -637,7 +653,7 @@ export default function AssistantScreen() {
               })}
             >
               <Icon name="sparkle" size={13} color={C.green} />
-              <Txt size={12} weight="500" color={C.green}>
+              <Txt size={12} weight="500" color={C.green} numberOfLines={2} style={{ flexShrink: 1 }}>
                 {chip}
               </Txt>
             </Pressable>
@@ -646,8 +662,8 @@ export default function AssistantScreen() {
 
         {/* Chat input field */}
         <View style={{ padding: 14, borderTopWidth: 1, borderColor: C.line }}>
-          <Row style={{ alignItems: 'flex-end' }}>
-            <View style={{ flex: 1 }}>
+          <Row style={{ alignItems: 'flex-end', gap: 10 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
               <Field
                 placeholder="Ask about an item…"
                 value={draft}
@@ -656,6 +672,8 @@ export default function AssistantScreen() {
                 onSubmitEditing={() => send()}
                 returnKeyType="send"
                 editable={!busy}
+                containerStyle={{ flex: 1 }}
+                style={{ flex: 1 }}
               />
             </View>
             <Button
