@@ -208,7 +208,7 @@ export function DetectionPreview({
                 {safeActiveIndex + 1}
               </Txt>
             </View>
-            <Txt size={12} weight="600" color="#FFFFFF" numberOfLines={1}>
+            <Txt size={12} weight="600" color="#FFFFFF" numberOfLines={1} style={{ flexShrink: 1 }}>
               {totalItems > 1
                 ? `${activeItem?.label || 'Item'}${activeItem?.confidence ? ` (${activeItem.confidence}%)` : ''}`
                 : `${activeItem?.label || 'Item'} detected`}

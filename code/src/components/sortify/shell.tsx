@@ -358,7 +358,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                     weight="500"
                     color={C.ink}
                     numberOfLines={1}
-                    style={{ maxWidth: width < 400 ? 120 : 210, flexShrink: 1 }}
+                    style={{ maxWidth: width < 360 ? 110 : width < 420 ? 160 : 220, flexShrink: 1 }}
                   >
                     {locationLabelText}
                   </Txt>

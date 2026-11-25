@@ -30,7 +30,7 @@ export function Segments({
           accessibilityState={{ selected: option === value }}
           aria-selected={option === value}
           {...(Platform.OS === 'web'
-            ? {
+            ? ({
                 tabIndex: option === value ? (0 as const) : (-1 as const),
                 onKeyDown: (event: {
                   key: string;
@@ -55,7 +55,7 @@ export function Segments({
                     ?.querySelectorAll<HTMLElement>('[role="tab"]')
                     [next]?.focus();
                 },
-              }
+              } as any)
             : {})}
           onPress={() => onChange(option)}
           style={({ hovered }) => ({

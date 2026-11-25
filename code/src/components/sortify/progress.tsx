@@ -6,7 +6,7 @@ import { C, Txt } from './ui';
 
 export function StatsSummary() {
   const { state } = useApp();
-  const { fontScale } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
   const sorted = state.scans.filter((s) => s.sorted).length;
   const categoryCount = new Set(
     state.scans.flatMap((s) => {
@@ -15,14 +15,16 @@ export function StatsSummary() {
     }),
   ).size;
 
+  const shouldStack = fontScale >= 1.3 || width < 340;
+
   return (
-    <View style={[styles.stats, fontScale >= 1.3 && styles.stackedStats]}>
+    <View style={[styles.stats, shouldStack && styles.stackedStats]}>
       {[
         { label: 'Items logged', value: state.scans.length },
         { label: 'Items sorted', value: sorted },
         { label: 'Categories', value: `${categoryCount}/5` },
       ].map(({ label, value }) => (
-        <View key={label} style={[styles.stat, fontScale >= 1.3 && styles.stackedStat]}>
+        <View key={label} style={[styles.stat, shouldStack && styles.stackedStat]}>
           <Txt size={24} weight="700" style={styles.value}>
             {value}
           </Txt>

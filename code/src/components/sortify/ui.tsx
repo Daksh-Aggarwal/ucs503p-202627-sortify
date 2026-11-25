@@ -206,6 +206,7 @@ export function Button({
         style={({ pressed, hovered }) => [
           s.button,
           {
+            width: '100%',
             backgroundColor:
               variant === 'primary'
                 ? C.green
@@ -291,10 +292,21 @@ export function CategoryBadge({ category }: { category: Category }) {
   const cat = categories.find((c) => c.name === category)!;
   return <Badge text={category} color={cat.color} background={cat.background} />;
 }
-export function Field({ label, onFocus, onBlur, ...props }: TextInputProps & { label?: string }) {
+export function Field({
+  label,
+  onFocus,
+  onBlur,
+  containerStyle,
+  style,
+  ...props
+}: TextInputProps & { label?: string; containerStyle?: StyleProp<ViewStyle> }) {
   const [focused, setFocused] = useState(false);
+  const flexStyle =
+    style && typeof style === 'object' && 'flex' in (style as Record<string, unknown>)
+      ? { flex: (style as Record<string, unknown>).flex as number }
+      : null;
   return (
-    <View style={{ gap: 7 }}>
+    <View style={[{ gap: 7 }, flexStyle, containerStyle]}>
       {!!label && (
         <Txt size={12} weight="600">
           {label}
@@ -312,7 +324,7 @@ export function Field({ label, onFocus, onBlur, ...props }: TextInputProps & { l
           setFocused(false);
           onBlur?.(e);
         }}
-        style={[s.input, focused && s.inputFocused, props.style]}
+        style={[s.input, focused && s.inputFocused, style]}
       />
     </View>
   );
@@ -446,9 +458,9 @@ export function ItemRow({
     >
       <Row>
         <ItemArt item={item} size={45} />
-        <View style={{ flex: 1, gap: 3 }}>
-          <Txt weight="500">{item.name}</Txt>
-          <Txt size={11} color={C.muted}>
+        <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+          <Txt weight="500" numberOfLines={1}>{item.name}</Txt>
+          <Txt size={11} color={C.muted} numberOfLines={1}>
             {subtitle || item.material}
           </Txt>
         </View>
