@@ -66,7 +66,7 @@ type State = {
 const seed: State = {
   profile: null,
   location: '',
-  nearbyDisposalEnabled: false,
+  nearbyDisposalEnabled: true,
   catalogVersion: 3,
   scans: [
     {
@@ -106,7 +106,7 @@ type Context = {
   notify: (text: string) => void;
   update: (fn: (previous: State) => State) => void;
   reset: () => void;
-  refreshLocation: (coords?: Coordinates) => Promise<void>;
+  refreshLocation: (coords?: Coordinates, requestIfNeeded?: boolean) => Promise<void>;
   locationBusy: boolean;
   locationError: string;
   saveScan: (
@@ -183,12 +183,12 @@ export function AppProvider({ children }: React.PropsWithChildren) {
         );
     }
   }, [state, ready]);
-  const refreshLocation = useCallback(async (coords?: Coordinates) => {
+  const refreshLocation = useCallback(async (coords?: Coordinates, requestIfNeeded = false) => {
     const request = ++locationRequest.current;
     setLocationBusy(true);
     setLocationError('');
     try {
-      const position = coords || (await currentLocation());
+      const position = coords || (await currentLocation(requestIfNeeded));
       const label = await locationLabel(position);
       if (request === locationRequest.current) {
         setState((previous) =>
@@ -213,7 +213,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     if (!ready) return;
     if (!state.nearbyDisposalEnabled) return;
     const initialRefresh = setTimeout(() => {
-      void refreshLocation();
+      void refreshLocation(undefined, true);
     }, 0);
     const subscription = AppState.addEventListener('change', (status) => {
       if (status === 'active') void refreshLocation();

@@ -25,10 +25,13 @@ export async function requestLocationPermission() {
   return (await Location.requestForegroundPermissionsAsync()).granted;
 }
 
-export async function currentLocation() {
+export async function currentLocation(requestIfNeeded = false) {
   let permission: Location.LocationPermissionResponse;
   try {
     permission = await Location.getForegroundPermissionsAsync();
+    if (!permission.granted && requestIfNeeded && permission.canAskAgain !== false) {
+      permission = await Location.requestForegroundPermissionsAsync();
+    }
   } catch (error) {
     if (__DEV__) console.log('[Sortify] Location permission check failed:', error);
     throw new Error(

@@ -20,7 +20,7 @@ export function NearbyDisposal({ item }: { item: WasteItem }) {
     setError('');
     setPlaces(null);
     try {
-      const coords = await currentLocation();
+      const coords = await currentLocation(true);
       void refreshLocation(coords);
       setPlaces(await findNearby(kind, coords));
     } catch (err) {
