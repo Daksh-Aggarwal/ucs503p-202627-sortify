@@ -137,19 +137,19 @@ export function ActivityScreen() {
     <View style={{ maxWidth: 950, width: '100%', alignSelf: 'center' }}>
       <Heading title="Activity" />
       <StatsSummary />
-      <View style={{ marginVertical: 16 }}>
+      <View style={{ marginVertical: 12 }}>
         <Milestone />
       </View>
-      <Card style={{ padding: 20 }}>
+      <Card style={{ padding: 16 }}>
         <Segments options={['This week', 'Categories']} value={view} onChange={setView} />
         {view === 'This week' ? (
           <>
             <Txt size={13} color={C.muted}>
               Saved items in the last seven days
             </Txt>
-            <Row style={{ height: 185, alignItems: 'flex-end', gap: 12, marginTop: 8 }}>
+            <Row style={{ height: 155, alignItems: 'flex-end', gap: 12, marginTop: 8 }}>
               {days.map((d, i) => (
-                <View key={i} style={{ flex: 1, alignItems: 'center', gap: 8 }}>
+                <View key={i} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
                   <Txt size={12} color={C.muted}>
                     {d.count}
                   </Txt>
@@ -157,7 +157,7 @@ export function ActivityScreen() {
                     accessibilityRole="image"
                     accessibilityLabel={`${d.label}: ${d.count} saved items`}
                     style={{
-                      height: 8 + (d.count / dayMax) * 115,
+                      height: 8 + (d.count / dayMax) * 95,
                       width: '100%',
                       maxWidth: 50,
                       borderRadius: 5,

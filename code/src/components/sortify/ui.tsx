@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -181,39 +183,53 @@ export function Button({
   style?: StyleProp<ViewStyle>;
 }) {
   const color = variant === 'primary' ? '#fff' : variant === 'danger' ? '#A44836' : C.green;
+  const [scale] = useState(() => new Animated.Value(1));
+  const animateTo = (toValue: number) => {
+    Animated.spring(scale, {
+      toValue,
+      speed: 50,
+      bounciness: 4,
+      useNativeDriver: Platform.OS !== 'web',
+    }).start();
+  };
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled: !!disabled || !!loading }}
-      onPress={onPress}
-      disabled={disabled || loading}
-      style={({ pressed, hovered }) => [
-        s.button,
-        {
-          backgroundColor:
-            variant === 'primary'
-              ? C.green
-              : variant === 'secondary'
-                ? C.white
-                : variant === 'danger'
-                  ? '#FAEDE7'
-                  : 'transparent',
-          borderWidth: variant === 'secondary' ? 1 : 0,
-          borderColor: C.line,
-          opacity: disabled ? 0.45 : pressed ? 0.65 : hovered ? 0.85 : 1,
-        },
-        style,
-      ]}
-    >
-      {loading ? (
-        <ActivityIndicator color={color} size="small" />
-      ) : icon ? (
-        <Icon name={icon} size={18} color={color} />
-      ) : null}
-      <Txt color={color} weight="600" size={13} style={{ flexShrink: 1 }}>
-        {title}
-      </Txt>
-    </Pressable>
+    <Animated.View style={[{ transform: [{ scale }] }, style]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !!disabled || !!loading }}
+        onPress={onPress}
+        onPressIn={() => {
+          if (!disabled && !loading) animateTo(0.97);
+        }}
+        onPressOut={() => animateTo(1)}
+        disabled={disabled || loading}
+        style={({ pressed, hovered }) => [
+          s.button,
+          {
+            backgroundColor:
+              variant === 'primary'
+                ? C.green
+                : variant === 'secondary'
+                  ? C.white
+                  : variant === 'danger'
+                    ? '#FAEDE7'
+                    : 'transparent',
+            borderWidth: variant === 'secondary' ? 1 : 0,
+            borderColor: C.line,
+            opacity: disabled ? 0.45 : pressed ? 0.88 : hovered ? 0.92 : 1,
+          },
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color={color} size="small" />
+        ) : icon ? (
+          <Icon name={icon} size={18} color={color} />
+        ) : null}
+        <Txt color={color} weight="600" size={13} style={{ flexShrink: 1 }}>
+          {title}
+        </Txt>
+      </Pressable>
+    </Animated.View>
   );
 }
 export function IconButton({
@@ -275,7 +291,8 @@ export function CategoryBadge({ category }: { category: Category }) {
   const cat = categories.find((c) => c.name === category)!;
   return <Badge text={category} color={cat.color} background={cat.background} />;
 }
-export function Field({ label, ...props }: TextInputProps & { label?: string }) {
+export function Field({ label, onFocus, onBlur, ...props }: TextInputProps & { label?: string }) {
+  const [focused, setFocused] = useState(false);
   return (
     <View style={{ gap: 7 }}>
       {!!label && (
@@ -287,7 +304,15 @@ export function Field({ label, ...props }: TextInputProps & { label?: string }) 
         accessibilityLabel={label || props.placeholder}
         placeholderTextColor="#717B6B"
         {...props}
-        style={[s.input, props.style]}
+        onFocus={(e) => {
+          setFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
+        style={[s.input, focused && s.inputFocused, props.style]}
       />
     </View>
   );
@@ -304,7 +329,7 @@ export function Heading({
   action?: React.ReactNode;
 }) {
   return (
-    <View style={{ gap: 6, marginBottom: 20 }}>
+    <View style={{ gap: 4, marginBottom: 14 }}>
       {!!eyebrow && (
         <Txt size={10} weight="600" color={C.muted} style={{ letterSpacing: 2 }}>
           {eyebrow}
@@ -410,12 +435,13 @@ export function ItemRow({
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={({ hovered }) => ({
+      style={({ hovered, pressed }) => ({
         paddingVertical: 15,
-        paddingHorizontal: 4,
+        paddingHorizontal: 8,
         borderBottomWidth: 1,
         borderColor: C.line,
-        backgroundColor: hovered ? '#F7F9F2' : 'transparent',
+        borderRadius: 10,
+        backgroundColor: pressed ? '#EFF4E7' : hovered ? '#F7F9F2' : 'transparent',
       })}
     >
       <Row>
@@ -487,12 +513,17 @@ export const s = StyleSheet.create({
     borderColor: C.line,
     borderRadius: 18,
     padding: 24,
+    shadowColor: '#1B5E3F',
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
   },
   button: {
     minHeight: 44,
     paddingHorizontal: 19,
     paddingVertical: 11,
-    borderRadius: 9,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -502,12 +533,16 @@ export const s = StyleSheet.create({
     minHeight: 46,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 9,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: C.line,
     backgroundColor: C.white,
     fontSize: 14,
     color: C.ink,
+  },
+  inputFocused: {
+    borderColor: C.green,
+    borderWidth: 1.5,
   },
   stack: { gap: 22 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },

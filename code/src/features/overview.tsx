@@ -1,39 +1,88 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useApp } from '@/state/app-state';
-import { C, Icon, Txt } from '@/components/sortify/ui';
+import { Button, C, Icon, Row, Txt } from '@/components/sortify/ui';
 import { Milestone, StatsSummary } from '@/components/sortify/progress';
+
+const quickActions = [
+  {
+    href: '/explore' as const,
+    icon: 'book',
+    title: 'Waste guide',
+    subtitle: 'Browse disposal rules',
+  },
+  {
+    href: '/assistant' as const,
+    icon: 'chat',
+    title: 'Assistant',
+    subtitle: 'Ask sorting questions',
+  },
+  {
+    href: '/history' as const,
+    icon: 'history',
+    title: 'History',
+    subtitle: 'View past scans',
+  },
+];
 
 export default function Overview() {
   const { state } = useApp();
 
   return (
     <View style={styles.screen}>
-      <Txt accessibilityRole="header" size={30} weight="700" style={styles.title}>
-        {state.profile ? `Hi, ${state.profile.name.split(' ')[0]}` : 'Overview'}
-      </Txt>
+      <View style={styles.header}>
+        <Txt accessibilityRole="header" size={30} weight="700" style={styles.title}>
+          {state.profile ? `Hi, ${state.profile.name.split(' ')[0]}` : 'Overview'}
+        </Txt>
+        <Txt size={14} color={C.muted}>
+          Identify items, find the right bin, and track your sorting impact.
+        </Txt>
+      </View>
 
       <View style={styles.scanPanel}>
-        <Txt accessibilityRole="header" size={20} weight="600" style={styles.sectionTitle}>
-          Find the right bin
-        </Txt>
-        <Txt size={16} color={C.muted} style={styles.body}>
-          Take or choose a photo for disposal instructions.
-        </Txt>
-        <Pressable
-          accessibilityRole="button"
+        <Row style={{ gap: 14, alignItems: 'flex-start' }}>
+          <View style={styles.heroIcon}>
+            <Icon name="scan" size={24} color={C.green} />
+          </View>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Txt accessibilityRole="header" size={20} weight="600" style={styles.sectionTitle}>
+              Find the right bin
+            </Txt>
+            <Txt size={15} color={C.muted} style={styles.body}>
+              Take or choose a photo for instant disposal instructions.
+            </Txt>
+          </View>
+        </Row>
+        <Button
+          title="Scan an item"
+          icon="scan"
           onPress={() => router.push('/scan')}
-          style={({ pressed, hovered }) => [
-            styles.action,
-            styles.scanButton,
-            (pressed || hovered) && styles.scanFeedback,
-          ]}
-        >
-          <Icon name="scan" size={20} color={C.white} />
-          <Txt size={16} weight="600" color={C.white} style={styles.actionLabel}>
-            Scan an item
-          </Txt>
-        </Pressable>
+          style={styles.scanButton}
+        />
+      </View>
+
+      <View style={styles.quickGrid}>
+        {quickActions.map((item) => (
+          <Pressable
+            key={item.href}
+            accessibilityRole="button"
+            onPress={() => router.push(item.href)}
+            style={({ pressed, hovered }) => [
+              styles.quickCard,
+              (pressed || hovered) && styles.quickCardActive,
+            ]}
+          >
+            <View style={styles.quickIcon}>
+              <Icon name={item.icon} size={17} color={C.green} />
+            </View>
+            <Txt size={13} weight="600" numberOfLines={1}>
+              {item.title}
+            </Txt>
+            <Txt size={11} color={C.muted} numberOfLines={1}>
+              {item.subtitle}
+            </Txt>
+          </Pressable>
+        ))}
       </View>
 
       <View style={styles.progress}>
@@ -62,17 +111,33 @@ export default function Overview() {
 }
 
 const styles = StyleSheet.create({
-  screen: { width: '100%', maxWidth: 1000, alignSelf: 'center', gap: 24 },
-  title: { lineHeight: 36, letterSpacing: -0.6 },
-  scanPanel: { backgroundColor: '#EDF1E7', borderRadius: 12, padding: 16, gap: 8 },
-  sectionTitle: { lineHeight: 28 },
-  body: { lineHeight: 24 },
+  screen: { width: '100%', maxWidth: 1000, alignSelf: 'center', gap: 16 },
+  header: { gap: 2 },
+  title: { lineHeight: 34, letterSpacing: -0.6 },
+  scanPanel: {
+    backgroundColor: '#EDF2E5',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#DCE4D0',
+    padding: 16,
+    gap: 12,
+  },
+  heroIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#DCE8CD',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionTitle: { lineHeight: 26 },
+  body: { lineHeight: 20 },
   action: {
-    minHeight: 44,
+    minHeight: 40,
     minWidth: 44,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -81,12 +146,41 @@ const styles = StyleSheet.create({
   scanButton: {
     alignSelf: 'flex-start',
     maxWidth: '100%',
-    marginTop: 4,
-    backgroundColor: C.green,
   },
-  scanFeedback: { backgroundColor: '#164B33' },
+  quickGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  quickCard: {
+    flex: 1,
+    minWidth: 0,
+    backgroundColor: C.white,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 14,
+    padding: 12,
+    gap: 4,
+    shadowColor: '#1B5E3F',
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  quickCardActive: {
+    backgroundColor: '#F5F8F0',
+    borderColor: '#CED9C0',
+  },
+  quickIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#EFF3E7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
   actionLabel: { lineHeight: 24, flexShrink: 1 },
-  progress: { gap: 16 },
+  progress: { gap: 14 },
   progressHeader: {
     flexDirection: 'row',
     alignItems: 'center',

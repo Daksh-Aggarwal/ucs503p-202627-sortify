@@ -381,37 +381,30 @@ export default function AssistantScreen() {
         <ScrollView
           ref={messagesRef}
           nestedScrollEnabled
-          style={{ maxHeight: Math.max(200, Math.min(height - 390, 460)) }}
+          style={{ maxHeight: Math.max(180, Math.min(height - 380, 420)) }}
           contentContainerStyle={{
-            padding: 20,
-            gap: 18,
-            minHeight: Math.max(180, Math.min(height - 410, 280)),
+            padding: 16,
+            gap: 14,
+            minHeight: Math.max(150, Math.min(height - 420, 220)),
           }}
           onContentSizeChange={() => {
             if (state.messages.length) messagesRef.current?.scrollToEnd({ animated: true });
           }}
         >
           {context && (
-            <View style={{ backgroundColor: '#EFF3E8', borderRadius: 10, padding: 13 }}>
+            <View style={{ backgroundColor: '#EFF3E8', borderRadius: 10, padding: 11 }}>
               <Txt size={12}>You’re asking about: {context.name}</Txt>
             </View>
           )}
           {!state.messages.length ? (
-            <View style={{ alignItems: 'center', paddingVertical: 20, gap: 18 }}>
-              <Icon name="chat" size={28} strokeWidth={1.5} />
-              <Txt size={20} weight="500" style={{ textAlign: 'center' }}>
+            <View style={{ alignItems: 'center', paddingVertical: 16, gap: 10 }}>
+              <Icon name="chat" size={26} strokeWidth={1.5} />
+              <Txt size={19} weight="500" style={{ textAlign: 'center' }}>
                 {itemName ? `Ask about ${itemName}` : 'What are you sorting?'}
               </Txt>
-              <Txt size={13} color={C.muted} style={{ textAlign: 'center' }}>
-                Choose a question below or type your own question.
+              <Txt size={13} color={C.muted} style={{ textAlign: 'center', maxWidth: 300 }}>
+                Tap a suggestion below or type your own question.
               </Txt>
-              <View
-                style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}
-              >
-                {suggestionChips.map((q) => (
-                  <Button key={q} title={q} variant="secondary" onPress={() => send(q)} />
-                ))}
-              </View>
             </View>
           ) : (
             state.messages.map((m) => {
@@ -652,7 +645,7 @@ export default function AssistantScreen() {
         </View>
 
         {/* Chat input field */}
-        <View style={{ padding: 16, borderTopWidth: 1, borderColor: C.line, gap: 10 }}>
+        <View style={{ padding: 14, borderTopWidth: 1, borderColor: C.line }}>
           <Row style={{ alignItems: 'flex-end' }}>
             <View style={{ flex: 1 }}>
               <Field
@@ -672,12 +665,9 @@ export default function AssistantScreen() {
               onPress={() => send()}
             />
           </Row>
-          <Txt size={10} color={C.muted}>
-            RAG replies pull context from rag.txt grounded with lightweight Qwen model.
-          </Txt>
         </View>
       </Card>
-      <Row style={{ justifyContent: 'flex-end', marginTop: 12, flexWrap: 'wrap' }}>
+      <Row style={{ justifyContent: 'flex-end', marginTop: 8, flexWrap: 'wrap' }}>
         <Button
           title="New conversation"
           icon="reset"

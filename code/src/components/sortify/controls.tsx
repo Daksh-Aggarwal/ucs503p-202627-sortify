@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Animated, Platform, Pressable, View } from 'react-native';
 import { Button, C, Icon, Row, Txt } from './ui';
 export function Segments({
   options,
@@ -63,10 +63,19 @@ export function Segments({
             minHeight: 44,
             paddingHorizontal: 14,
             paddingVertical: 11,
-            borderRadius: 8,
+            borderRadius: 9,
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: value === option ? 'white' : hovered ? '#E3E9DB' : 'transparent',
+            ...(value === option
+              ? {
+                  shadowColor: '#1B5E3F',
+                  shadowOpacity: 0.06,
+                  shadowRadius: 4,
+                  shadowOffset: { width: 0, height: 1 },
+                  elevation: 1,
+                }
+              : {}),
           })}
         >
           <Txt
@@ -87,6 +96,18 @@ export function Disclosure({
   icon = 'help',
 }: React.PropsWithChildren<{ title: string; icon?: string }>) {
   const [open, setOpen] = useState(false);
+  const [anim] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: open ? 1 : 0,
+      duration: 180,
+      useNativeDriver: Platform.OS !== 'web',
+    }).start();
+  }, [open, anim]);
+  const rotate = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '90deg'],
+  });
   return (
     <View style={{ borderTopWidth: 1, borderColor: C.line }}>
       <Pressable
@@ -101,10 +122,16 @@ export function Disclosure({
           <Txt size={13} weight="500" style={{ flex: 1 }}>
             {title}
           </Txt>
-          <Icon name={open ? 'down' : 'chevron'} size={16} />
+          <Animated.View style={{ transform: [{ rotate }] }}>
+            <Icon name="chevron" size={16} />
+          </Animated.View>
         </Row>
       </Pressable>
-      {open && <View style={{ paddingBottom: 16, gap: 12 }}>{children}</View>}
+      {open && (
+        <Animated.View style={{ paddingBottom: 16, gap: 12, opacity: anim }}>
+          {children}
+        </Animated.View>
+      )}
     </View>
   );
 }
