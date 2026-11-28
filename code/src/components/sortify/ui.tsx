@@ -12,6 +12,7 @@ import {
   View,
   ViewStyle,
   StyleProp,
+  useWindowDimensions,
 } from 'react-native';
 import {
   ArrowRight,
@@ -163,7 +164,13 @@ export function Card({
   children,
   style,
 }: React.PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
-  return <View style={[s.card, style]}>{children}</View>;
+  const { width } = useWindowDimensions();
+  const isMobile = width < 420;
+  return (
+    <View style={[s.card, isMobile && { padding: 16, borderRadius: 14 }, style]}>
+      {children}
+    </View>
+  );
 }
 export function Button({
   title,
@@ -206,7 +213,6 @@ export function Button({
         style={({ pressed, hovered }) => [
           s.button,
           {
-            width: '100%',
             backgroundColor:
               variant === 'primary'
                 ? C.green
@@ -226,7 +232,7 @@ export function Button({
         ) : icon ? (
           <Icon name={icon} size={18} color={color} />
         ) : null}
-        <Txt color={color} weight="600" size={13} style={{ flexShrink: 1 }}>
+        <Txt color={color} weight="600" size={13} numberOfLines={1} style={{ flexShrink: 1 }}>
           {title}
         </Txt>
       </Pressable>
@@ -288,9 +294,15 @@ export function Badge({
     </Row>
   );
 }
-export function CategoryBadge({ category }: { category: Category }) {
-  const cat = categories.find((c) => c.name === category)!;
-  return <Badge text={category} color={cat.color} background={cat.background} />;
+export function CategoryBadge({ category }: { category: Category | string }) {
+  const cat = categories.find((c) => c.name === category);
+  return (
+    <Badge
+      text={category}
+      color={cat?.color || C.ink}
+      background={cat?.background || '#ECEFE6'}
+    />
+  );
 }
 export function Field({
   label,
@@ -340,25 +352,48 @@ export function Heading({
   subtitle?: string;
   action?: React.ReactNode;
 }) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const isNarrow = width < 360;
+
   return (
-    <View style={{ gap: 4, marginBottom: 14 }}>
+    <View style={{ gap: 4, marginBottom: 16 }}>
       {!!eyebrow && (
-        <Txt size={10} weight="600" color={C.muted} style={{ letterSpacing: 2 }}>
+        <Txt
+          size={10}
+          weight="700"
+          color={C.green}
+          style={{ letterSpacing: 1.5, textTransform: 'uppercase' }}
+        >
           {eyebrow}
         </Txt>
       )}
-      <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <Txt
-          accessibilityRole="header"
-          size={28}
-          weight="500"
-          style={{ letterSpacing: -0.7, lineHeight: 36, flexShrink: 1 }}
-        >
-          {title}
-        </Txt>
-        {action}
+      <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+          <Txt
+            accessibilityRole="header"
+            size={isNarrow ? 22 : isMobile ? 24 : 28}
+            weight="700"
+            color={C.ink}
+            style={{
+              letterSpacing: isMobile ? -0.5 : -0.7,
+              lineHeight: isNarrow ? 28 : isMobile ? 30 : 34,
+            }}
+          >
+            {title}
+          </Txt>
+          {!!subtitle && (
+            <Txt
+              size={isMobile ? 13 : 14}
+              color={C.muted}
+              style={{ lineHeight: isMobile ? 18 : 20 }}
+            >
+              {subtitle}
+            </Txt>
+          )}
+        </View>
+        {action ? <View style={{ flexShrink: 0 }}>{action}</View> : null}
       </Row>
-      {!!subtitle && <Txt color={C.muted}>{subtitle}</Txt>}
     </View>
   );
 }
@@ -533,7 +568,7 @@ export const s = StyleSheet.create({
   },
   button: {
     minHeight: 44,
-    paddingHorizontal: 19,
+    paddingHorizontal: 15,
     paddingVertical: 11,
     borderRadius: 10,
     flexDirection: 'row',

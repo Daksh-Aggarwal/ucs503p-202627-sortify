@@ -15,7 +15,7 @@ export function StatsSummary() {
     }),
   ).size;
 
-  const shouldStack = fontScale >= 1.3 || width < 340;
+  const shouldStack = fontScale >= 1.25 || width < 360;
 
   return (
     <View style={[styles.stats, shouldStack && styles.stackedStats]}>
@@ -28,7 +28,7 @@ export function StatsSummary() {
           <Txt size={24} weight="700" style={styles.value}>
             {value}
           </Txt>
-          <Txt size={14} color={C.muted} style={styles.caption}>
+          <Txt size={12} color={C.muted} style={styles.caption} numberOfLines={1}>
             {label}
           </Txt>
         </View>
