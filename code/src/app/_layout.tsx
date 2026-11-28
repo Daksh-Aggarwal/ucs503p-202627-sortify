@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppProvider , useApp } from '@/state/app-state';
 import { Shell } from '@/components/sortify/shell';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
 import { C } from '@/components/sortify/ui';
 function AppContent() {
   const { ready } = useApp();
@@ -16,11 +16,15 @@ function AppContent() {
     <Stack
       screenOptions={{
         headerShown: false,
-        animation: 'fade',
+        animation: Platform.OS === 'ios' ? 'default' : 'fade',
         contentStyle: { backgroundColor: C.bg },
       }}
-      screenLayout={({ children }) => <Shell>{children}</Shell>}
-    />
+      screenLayout={({ children, route }) =>
+        route.name === '(tabs)' ? children : <Shell>{children}</Shell>
+      }
+    >
+      <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+    </Stack>
   );
 }
 export default function RootLayout() {

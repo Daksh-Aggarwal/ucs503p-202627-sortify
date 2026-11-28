@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Animated,
   Image,
+  Keyboard,
   Pressable,
   ScrollView,
   View,
@@ -11,7 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { router, usePathname, type Href } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/state/app-state';
 import { Button, C, Icon, IconButton, Row, Txt } from './ui';
 const links = [
@@ -24,18 +25,42 @@ const links = [
   { href: '/learn', label: 'Learn', icon: 'leaf' },
 ];
 export function Shell({ children }: React.PropsWithChildren) {
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const desktop = width >= 1000;
   const { state, notice, refreshLocation, locationBusy, locationError } = useApp();
   const pathname = usePathname();
   const [locationOpen, setLocationOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [pageAnim] = useState(() => new Animated.Value(1));
   const [pageSlide] = useState(() => new Animated.Value(0));
   const [toastAnim] = useState(() => new Animated.Value(0));
   const [sheetAnim] = useState(() => new Animated.Value(320));
 
-  const isPrimaryTab = ['/', '/explore', '/scan', '/assistant'].includes(pathname);
+  const isAssistant =
+    pathname === '/assistant' ||
+    pathname.endsWith('/assistant') ||
+    pathname.includes('/assistant');
+  const isPrimaryTab =
+    ['/', '/explore', '/scan', '/assistant', '/more'].includes(pathname) || isAssistant;
+
+  // Bottom padding for the assistant view:
+  // On iOS, NativeTabs renders a ~49pt UITabBar at the bottom (+ insets.bottom home indicator).
+  // When keyboard is closed, pad by insets.bottom + 56 so the chat input is 100% above the native tab bar.
+  // When keyboard is open, pad by Math.max(insets.bottom, 8).
+  // On Web / Android, the custom tab bar sits below isAssistant (when closed), so 10px is enough;
+  // when open, custom tab bar hides and 6px is above keyboard.
+  const assistantBottomPadding = desktop
+    ? 24
+    : Platform.OS === 'ios'
+      ? keyboardOpen
+        ? Math.max(insets.bottom, 8)
+        : insets.bottom + 56
+      : keyboardOpen
+        ? 6
+        : 10;
+
   const subRouteTitle: Record<string, string> = {
     '/result': 'Disposal guide',
     '/history': 'History',
@@ -55,6 +80,64 @@ export function Shell({ children }: React.PropsWithChildren) {
   };
 
   useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardOpen(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardOpen(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  // Web mobile viewport virtual keyboard and input focus detection
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const handleFocusIn = (e: FocusEvent) => {
+        const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+        if (tag === 'input' || tag === 'textarea') {
+          if (window.innerWidth < 1000) {
+            setKeyboardOpen(true);
+          }
+        }
+      };
+      const handleFocusOut = (e: FocusEvent) => {
+        const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+        if (tag === 'input' || tag === 'textarea') {
+          setKeyboardOpen(false);
+        }
+      };
+      window.addEventListener('focusin', handleFocusIn);
+      window.addEventListener('focusout', handleFocusOut);
+
+      let handleResize: (() => void) | undefined;
+      if (window.visualViewport) {
+        const vp = window.visualViewport;
+        handleResize = () => {
+          if (window.innerWidth < 1000) {
+            const isShrunk = vp.height < window.innerHeight * 0.75;
+            if (isShrunk) setKeyboardOpen(true);
+          }
+        };
+        vp.addEventListener('resize', handleResize);
+      }
+
+      return () => {
+        window.removeEventListener('focusin', handleFocusIn);
+        window.removeEventListener('focusout', handleFocusOut);
+        if (handleResize && window.visualViewport) {
+          window.visualViewport.removeEventListener('resize', handleResize);
+        }
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      pageAnim.setValue(1);
+      pageSlide.setValue(0);
+      return;
+    }
     pageAnim.setValue(0.88);
     pageSlide.setValue(6);
     Animated.parallel([
@@ -238,7 +321,8 @@ export function Shell({ children }: React.PropsWithChildren) {
       )}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1, minWidth: 0 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden' }}
       >
         <SafeAreaView
           edges={['top']}
@@ -358,7 +442,19 @@ export function Shell({ children }: React.PropsWithChildren) {
                     weight="500"
                     color={C.ink}
                     numberOfLines={1}
-                    style={{ maxWidth: width < 360 ? 110 : width < 420 ? 160 : 220, flexShrink: 1 }}
+                    style={{
+                      maxWidth:
+                        width < 360
+                          ? !isPrimaryTab
+                            ? 68
+                            : 110
+                          : width < 420
+                            ? !isPrimaryTab
+                              ? 100
+                              : 150
+                            : 220,
+                      flexShrink: 1,
+                    }}
                   >
                     {locationLabelText}
                   </Txt>
@@ -370,38 +466,65 @@ export function Shell({ children }: React.PropsWithChildren) {
             </Row>
           </Row>
         </SafeAreaView>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
-            padding: desktop ? 32 : 14,
-            paddingBottom: desktop ? 28 : 16,
-            width: '100%',
-            maxWidth: 1200,
-            alignSelf: 'center',
-          }}
-        >
-          <Animated.View
+        {isAssistant ? (
+          <View
             style={{
-              opacity: pageAnim,
-              transform: [{ translateY: pageSlide }],
+              flex: 1,
+              minHeight: 0,
+              paddingHorizontal: desktop ? 32 : 12,
+              paddingTop: desktop ? 24 : keyboardOpen ? 4 : 10,
+              paddingBottom: assistantBottomPadding,
+              width: '100%',
+              maxWidth: 1200,
+              alignSelf: 'center',
             }}
           >
-            {children}
-          </Animated.View>
-        </ScrollView>
-        {!desktop && (
+            <Animated.View
+              style={{
+                flex: 1,
+                minHeight: 0,
+                opacity: pageAnim,
+                transform: [{ translateY: pageSlide }],
+              }}
+            >
+              {children}
+            </Animated.View>
+          </View>
+        ) : (
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentInsetAdjustmentBehavior="automatic"
+            contentContainerStyle={{
+              padding: desktop ? 32 : 16,
+              paddingBottom: desktop ? 32 : Platform.OS === 'ios' ? 32 : 24,
+              width: '100%',
+              maxWidth: 1200,
+              alignSelf: 'center',
+            }}
+          >
+            <Animated.View
+              style={{
+                opacity: pageAnim,
+                transform: [{ translateY: pageSlide }],
+              }}
+            >
+              {children}
+            </Animated.View>
+          </ScrollView>
+        )}
+        {!desktop && Platform.OS !== 'ios' && !keyboardOpen && (
           <SafeAreaView
-            edges={{ bottom: 'maximum' }}
+            edges={['bottom']}
             style={{
               flexDirection: 'row',
               backgroundColor: C.white,
               justifyContent: 'space-around',
               borderTopWidth: 1,
               borderColor: C.line,
-              paddingTop: 6,
-              paddingBottom: 6,
-              paddingHorizontal: 6,
-              gap: 4,
+              paddingTop: 8,
+              paddingBottom: Math.max(insets.bottom, 6),
+              paddingHorizontal: 8,
+              gap: 6,
               shadowColor: '#1B5E3F',
               shadowOpacity: 0.05,
               shadowRadius: 10,
@@ -491,7 +614,7 @@ export function Shell({ children }: React.PropsWithChildren) {
           accessibilityLiveRegion="polite"
           style={{
             position: 'absolute',
-            bottom: desktop ? 25 : 90,
+            bottom: desktop ? 25 : Platform.OS === 'ios' ? 96 : 90,
             alignSelf: 'center',
             left: desktop ? 270 : 20,
             right: 20,
@@ -532,70 +655,81 @@ export function Shell({ children }: React.PropsWithChildren) {
         onRequestClose={() => setLocationOpen(false)}
       >
         <SafeAreaView
-          style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#14291C66' }}
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            padding: width < 400 ? 16 : 24,
+            backgroundColor: '#14291C66',
+          }}
         >
           <View
             style={{
               backgroundColor: C.white,
-              borderRadius: 12,
-              padding: 24,
+              borderRadius: 16,
+              padding: width < 400 ? 18 : 24,
               width: '100%',
               maxWidth: 440,
+              maxHeight: '85%',
               alignSelf: 'center',
-              gap: 16,
             }}
           >
-            <Row style={{ justifyContent: 'space-between' }}>
-              <Txt size={22} weight="500">
-                Location
-              </Txt>
-              <IconButton
-                name="close"
-                label="Close location selector"
-                onPress={() => setLocationOpen(false)}
-              />
-            </Row>
-            <Txt color={C.muted}>
-              {state.nearbyDisposalEnabled
-                ? 'Sortify uses your location to find nearby drop-off sites.'
-                : 'Enable nearby disposal in Settings to use your location.'}
-            </Txt>
-            {state.nearbyDisposalEnabled ? (
-              <>
-                <Txt weight="500">
-                  {locationBusy
-                    ? 'Finding location…'
-                    : state.location || 'Location not yet enabled'}
+            <ScrollView
+              bounces={false}
+              contentContainerStyle={{ gap: 16 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <Row style={{ justifyContent: 'space-between' }}>
+                <Txt size={22} weight="500">
+                  Location
                 </Txt>
-                {!!locationError && (
-                  <Txt size={12} color="#963F2B">
-                    {locationError}
+                <IconButton
+                  name="close"
+                  label="Close location selector"
+                  onPress={() => setLocationOpen(false)}
+                />
+              </Row>
+              <Txt color={C.muted}>
+                {state.nearbyDisposalEnabled
+                  ? 'Sortify uses your location to find nearby drop-off sites.'
+                  : 'Enable nearby disposal in Settings to use your location.'}
+              </Txt>
+              {state.nearbyDisposalEnabled ? (
+                <>
+                  <Txt weight="500">
+                    {locationBusy
+                      ? 'Finding location…'
+                      : state.location || 'Location not yet enabled'}
                   </Txt>
-                )}
+                  {!!locationError && (
+                    <Txt size={12} color="#963F2B">
+                      {locationError}
+                    </Txt>
+                  )}
+                  <Button
+                    title={
+                      locationBusy
+                        ? 'Updating…'
+                        : state.location
+                          ? 'Refresh location'
+                          : 'Allow & detect location'
+                    }
+                    disabled={locationBusy}
+                    icon="pin"
+                    onPress={() => {
+                      void refreshLocation(undefined, true);
+                    }}
+                  />
+                </>
+              ) : (
                 <Button
-                  title={
-                    locationBusy
-                      ? 'Updating…'
-                      : state.location
-                        ? 'Refresh location'
-                        : 'Allow & detect location'
-                  }
-                  disabled={locationBusy}
-                  icon="pin"
+                  title="Open settings"
                   onPress={() => {
-                    void refreshLocation(undefined, true);
+                    setLocationOpen(false);
+                    router.push('/profile');
                   }}
                 />
-              </>
-            ) : (
-              <Button
-                title="Open settings"
-                onPress={() => {
-                  setLocationOpen(false);
-                  router.push('/profile');
-                }}
-              />
-            )}
+              )}
+            </ScrollView>
           </View>
         </SafeAreaView>
       </Modal>
@@ -618,8 +752,9 @@ export function Shell({ children }: React.PropsWithChildren) {
               borderTopLeftRadius: 24,
               borderTopRightRadius: 24,
               paddingTop: 10,
-              paddingHorizontal: 20,
+              paddingHorizontal: width < 400 ? 16 : 20,
               paddingBottom: 24,
+              maxHeight: '85%',
               gap: 14,
               transform: [{ translateY: sheetAnim }],
               shadowColor: '#14291C',
@@ -639,94 +774,96 @@ export function Shell({ children }: React.PropsWithChildren) {
                 marginBottom: 4,
               }}
             />
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => navigate('/profile')}
-              style={({ pressed }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-                padding: 12,
-                borderRadius: 14,
-                backgroundColor: pressed ? '#E8EFE0' : '#F4F7EE',
-                borderWidth: 1,
-                borderColor: C.line,
-              })}
-            >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
+            <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => navigate('/profile')}
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: '#DDE7CE',
-                }}
+                  gap: 12,
+                  padding: 12,
+                  borderRadius: 14,
+                  backgroundColor: pressed ? '#E8EFE0' : '#F4F7EE',
+                  borderWidth: 1,
+                  borderColor: C.line,
+                })}
               >
-                <Txt weight="600" size={13} color={C.green}>
-                  {state.profile?.name.slice(0, 2).toUpperCase() || 'YO'}
-                </Txt>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Txt size={14} weight="600">
-                  {state.profile?.name || 'Guest'}
-                </Txt>
-                <Txt color={C.muted} size={11}>
-                  {state.profile ? state.profile.email : 'Tap to sign in or manage profile'}
-                </Txt>
-              </View>
-              <Icon name="chevron" size={16} color={C.muted} />
-            </Pressable>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#DDE7CE',
+                  }}
+                >
+                  <Txt weight="600" size={13} color={C.green}>
+                    {state.profile?.name.slice(0, 2).toUpperCase() || 'YO'}
+                  </Txt>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Txt size={14} weight="600">
+                    {state.profile?.name || 'Guest'}
+                  </Txt>
+                  <Txt color={C.muted} size={11}>
+                    {state.profile ? state.profile.email : 'Tap to sign in or manage profile'}
+                  </Txt>
+                </View>
+                <Icon name="chevron" size={16} color={C.muted} />
+              </Pressable>
 
-            <View style={{ gap: 4 }}>
-              {[
-                { href: '/history', label: 'History', subtitle: 'Past scans & saved items', icon: 'history' },
-                { href: '/activity', label: 'Activity', subtitle: 'Weekly stats & categories', icon: 'chart' },
-                { href: '/learn', label: 'Learn', subtitle: 'Practical sorting guides', icon: 'leaf' },
-                { href: '/profile', label: 'Settings & profile', subtitle: 'Location, account & data', icon: 'settings' },
-                { href: '/admin', label: 'Admin panel', subtitle: 'Catalog & feedback review', icon: 'shield' },
-              ].map((item) => {
-                const active = pathname === item.href;
-                return (
-                  <Pressable
-                    key={item.href}
-                    accessibilityRole="button"
-                    onPress={() => navigate(item.href)}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 12,
-                      paddingHorizontal: 12,
-                      paddingVertical: 11,
-                      borderRadius: 12,
-                      backgroundColor: active ? '#EFF3E7' : pressed ? '#F6F8F1' : 'transparent',
-                    })}
-                  >
-                    <View
-                      style={{
-                        width: 34,
-                        height: 34,
-                        borderRadius: 10,
-                        backgroundColor: active ? '#DCE7CC' : '#F2F4EC',
+              <View style={{ gap: 4 }}>
+                {[
+                  { href: '/history', label: 'History', subtitle: 'Past scans & saved items', icon: 'history' },
+                  { href: '/activity', label: 'Activity', subtitle: 'Weekly stats & categories', icon: 'chart' },
+                  { href: '/learn', label: 'Learn', subtitle: 'Practical sorting guides', icon: 'leaf' },
+                  { href: '/profile', label: 'Settings & profile', subtitle: 'Location, account & data', icon: 'settings' },
+                  { href: '/admin', label: 'Admin panel', subtitle: 'Catalog & feedback review', icon: 'shield' },
+                ].map((item) => {
+                  const active = pathname === item.href;
+                  return (
+                    <Pressable
+                      key={item.href}
+                      accessibilityRole="button"
+                      onPress={() => navigate(item.href)}
+                      style={({ pressed }) => ({
+                        flexDirection: 'row',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                        gap: 12,
+                        paddingHorizontal: 12,
+                        paddingVertical: 11,
+                        borderRadius: 12,
+                        backgroundColor: active ? '#EFF3E7' : pressed ? '#F6F8F1' : 'transparent',
+                      })}
                     >
-                      <Icon name={item.icon} size={17} color={active ? C.green : C.muted} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Txt size={14} weight={active ? '600' : '500'} color={active ? C.green : C.ink}>
-                        {item.label}
-                      </Txt>
-                      <Txt size={11} color={C.muted}>
-                        {item.subtitle}
-                      </Txt>
-                    </View>
-                    <Icon name="chevron" size={15} color={C.muted} />
-                  </Pressable>
-                );
-              })}
-            </View>
+                      <View
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 10,
+                          backgroundColor: active ? '#DCE7CC' : '#F2F4EC',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Icon name={item.icon} size={17} color={active ? C.green : C.muted} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Txt size={14} weight={active ? '600' : '500'} color={active ? C.green : C.ink}>
+                          {item.label}
+                        </Txt>
+                        <Txt size={11} color={C.muted}>
+                          {item.subtitle}
+                        </Txt>
+                      </View>
+                      <Icon name="chevron" size={15} color={C.muted} />
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
           </Animated.View>
         </View>
       </Modal>
