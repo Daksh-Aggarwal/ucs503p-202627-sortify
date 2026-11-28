@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useApp } from '@/state/app-state';
-import { Button, C, Icon, Row, Txt } from '@/components/sortify/ui';
+import { Button, C, Heading, Icon, Row, Txt } from '@/components/sortify/ui';
 import { Milestone, StatsSummary } from '@/components/sortify/progress';
 
 const quickActions = [
@@ -9,35 +9,33 @@ const quickActions = [
     href: '/explore' as const,
     icon: 'book',
     title: 'Waste guide',
-    subtitle: 'Browse disposal rules',
+    subtitle: 'Disposal rules',
   },
   {
     href: '/assistant' as const,
     icon: 'chat',
     title: 'Assistant',
-    subtitle: 'Ask sorting questions',
+    subtitle: 'Ask sorting AI',
   },
   {
     href: '/history' as const,
     icon: 'history',
     title: 'History',
-    subtitle: 'View past scans',
+    subtitle: 'Past scans',
   },
 ];
 
 export default function Overview() {
   const { state } = useApp();
+  const { width } = useWindowDimensions();
+  const isNarrow = width < 380;
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <Txt accessibilityRole="header" size={30} weight="700" style={styles.title}>
-          {state.profile ? `Hi, ${state.profile.name.split(' ')[0]}` : 'Overview'}
-        </Txt>
-        <Txt size={14} color={C.muted}>
-          Identify items, find the right bin, and track your sorting impact.
-        </Txt>
-      </View>
+      <Heading
+        title={state.profile ? `Hi, ${state.profile.name.split(' ')[0]}` : 'Overview'}
+        subtitle="Identify items, find the right bin, and track your sorting impact."
+      />
 
       <View style={styles.scanPanel}>
         <Row style={{ gap: 14, alignItems: 'flex-start' }}>
@@ -45,7 +43,7 @@ export default function Overview() {
             <Icon name="scan" size={24} color={C.green} />
           </View>
           <View style={{ flex: 1, gap: 4 }}>
-            <Txt accessibilityRole="header" size={20} weight="600" style={styles.sectionTitle}>
+            <Txt accessibilityRole="header" size={18} weight="600" style={styles.sectionTitle}>
               Find the right bin
             </Txt>
             <Txt size={15} color={C.muted} style={styles.body}>
@@ -61,7 +59,7 @@ export default function Overview() {
         />
       </View>
 
-      <View style={styles.quickGrid}>
+      <View style={[styles.quickGrid, isNarrow && { gap: 6 }]}>
         {quickActions.map((item) => (
           <Pressable
             key={item.href}
@@ -69,16 +67,17 @@ export default function Overview() {
             onPress={() => router.push(item.href)}
             style={({ pressed, hovered }) => [
               styles.quickCard,
+              isNarrow && { padding: 9, borderRadius: 12 },
               (pressed || hovered) && styles.quickCardActive,
             ]}
           >
-            <View style={styles.quickIcon}>
-              <Icon name={item.icon} size={17} color={C.green} />
+            <View style={[styles.quickIcon, isNarrow && { width: 30, height: 30 }]}>
+              <Icon name={item.icon} size={isNarrow ? 15 : 17} color={C.green} />
             </View>
-            <Txt size={13} weight="600" numberOfLines={1}>
+            <Txt size={isNarrow ? 12 : 13} weight="600" numberOfLines={1}>
               {item.title}
             </Txt>
-            <Txt size={11} color={C.muted} numberOfLines={1}>
+            <Txt size={isNarrow ? 10 : 11} color={C.muted} numberOfLines={2} style={{ lineHeight: isNarrow ? 13 : 15 }}>
               {item.subtitle}
             </Txt>
           </Pressable>
@@ -87,7 +86,7 @@ export default function Overview() {
 
       <View style={styles.progress}>
         <View style={styles.progressHeader}>
-          <Txt accessibilityRole="header" size={20} weight="600" style={styles.sectionTitle}>
+          <Txt accessibilityRole="header" size={18} weight="600" style={styles.sectionTitle}>
             Progress
           </Txt>
           <Pressable
@@ -119,8 +118,8 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: '#DCE4D0',
-    padding: 16,
-    gap: 12,
+    padding: 18,
+    gap: 14,
   },
   heroIcon: {
     width: 42,
@@ -144,8 +143,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   scanButton: {
-    alignSelf: 'flex-start',
-    maxWidth: '100%',
+    width: '100%',
   },
   quickGrid: {
     flexDirection: 'row',

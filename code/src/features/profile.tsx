@@ -56,14 +56,17 @@ export default function ProfileScreen() {
   }
   return (
     <View style={{ maxWidth: 820, width: '100%', alignSelf: 'center' }}>
-      <Heading title="Profile & settings" />
+      <Heading
+        title="Profile & settings"
+        subtitle="Manage your profile, preferences, and local sorting rules."
+      />
       <Segments options={['Profile', 'Data & privacy']} value={section} onChange={setSection} />
       {section === 'Profile' ? (
         <>
           <Card style={{ gap: 21 }}>
             <Badge text="User profile" icon="user" />
             {!state.profile && (
-              <Row>
+              <Row style={{ gap: 8, flexWrap: 'wrap' }}>
                 <Button
                   title="Create account"
                   variant={mode === 'register' ? 'primary' : 'secondary'}
@@ -71,6 +74,7 @@ export default function ProfileScreen() {
                     setMode('register');
                     setError('');
                   }}
+                  style={{ flex: 1, minWidth: 120 }}
                 />
                 <Button
                   title="Sign in"
@@ -79,6 +83,7 @@ export default function ProfileScreen() {
                     setMode('login');
                     setError('');
                   }}
+                  style={{ flex: 1, minWidth: 120 }}
                 />
               </Row>
             )}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useApp } from '@/state/app-state';
 import { categories } from '@/data/catalog';
@@ -36,7 +36,7 @@ export default function HistoryScreen() {
   const currentPage = Math.min(page, Math.max(0, Math.ceil(scans.length / 6) - 1));
   return (
     <View style={{ maxWidth: 900, width: '100%', alignSelf: 'center' }}>
-      <Heading title="History" />
+      <Heading title="History" subtitle="Search and review your past waste scans." />
       <Field
         placeholder="Search history"
         value={query}
@@ -115,6 +115,7 @@ export default function HistoryScreen() {
 }
 export function ActivityScreen() {
   const { state } = useApp();
+  const { width } = useWindowDimensions();
   const [view, setView] = useState('This week');
   const totals = categories.map((c) => ({
     ...c,
@@ -135,7 +136,7 @@ export function ActivityScreen() {
   const dayMax = Math.max(1, ...days.map((d) => d.count));
   return (
     <View style={{ maxWidth: 950, width: '100%', alignSelf: 'center' }}>
-      <Heading title="Activity" />
+      <Heading title="Activity" subtitle="Track your sorting milestones and weekly impact." />
       <StatsSummary />
       <View style={{ marginVertical: 12 }}>
         <Milestone />
@@ -147,7 +148,7 @@ export function ActivityScreen() {
             <Txt size={13} color={C.muted}>
               Saved items in the last seven days
             </Txt>
-            <Row style={{ height: 155, alignItems: 'flex-end', gap: 12, marginTop: 8 }}>
+            <Row style={{ height: 155, alignItems: 'flex-end', gap: width < 380 ? 6 : 10, marginTop: 8 }}>
               {days.map((d, i) => (
                 <View key={i} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
                   <Txt size={12} color={C.muted}>

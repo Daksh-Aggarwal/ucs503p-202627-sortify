@@ -33,7 +33,10 @@ export default function GuideScreen() {
   const currentPage = Math.min(page, Math.max(0, Math.ceil(items.length / 6) - 1));
   return (
     <View style={{ maxWidth: 900, width: '100%', alignSelf: 'center' }}>
-      <Heading title="Waste guide" />
+      <Heading
+        title="Waste guide"
+        subtitle="Search common household items and municipal disposal rules."
+      />
       <Field
         placeholder="Search an item or material"
         value={query}
@@ -54,9 +57,9 @@ export default function GuideScreen() {
               setPage(0);
             }}
             style={({ hovered }) => ({
-              minHeight: 44,
-              paddingHorizontal: 14,
-              paddingVertical: 10,
+              minHeight: 40,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
               borderRadius: 9,
               backgroundColor: filter === c ? C.green : hovered ? '#E8EEDF' : 'white',
               borderWidth: 1,
@@ -131,8 +134,8 @@ export function LearnScreen() {
           >
             <Icon name={lesson.icon} size={44} strokeWidth={1} />
           </View>
-          {lesson.paragraphs.map((p, i) => (
-            <Txt key={p} size={16} style={{ lineHeight: 29 }}>
+          {lesson.paragraphs.map((p) => (
+            <Txt key={p} size={15} style={{ lineHeight: 24 }}>
               {p}
             </Txt>
           ))}

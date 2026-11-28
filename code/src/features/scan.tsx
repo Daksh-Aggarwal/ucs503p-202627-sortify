@@ -1,6 +1,6 @@
 import { Disclosure, Segments } from '@/components/sortify/controls';
 import { useEffect, useState } from 'react';
-import { Image, Platform, Pressable, View } from 'react-native';
+import { ActivityIndicator, Image, Platform, Pressable, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useApp } from '@/state/app-state';
@@ -26,21 +26,32 @@ export default function ScanScreen() {
   const [uncertain, setUncertain] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  // Confidence threshold
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceTier>('medium');
-  const [showConfidencePicker, setShowConfidencePicker] = useState<boolean>(false);
-
-  // Model switching
   const [models, setModels] = useState<ModelOption[]>([
-    { id: 'best.pt', name: 'YOLOv11s v3 Generalization (8 Classes - Production Default)', is_default: true },
-    { id: 'yolo11s_8cls_v3_generalization.pt', name: 'YOLOv11s (8 Classes - v3 Generalization Dataset)' },
+    {
+      id: 'best.pt',
+      name: 'YOLOv11s v3 Generalization (8 Classes - Production Default)',
+      is_default: true,
+    },
+    {
+      id: 'yolo11s_8cls_v3_generalization.pt',
+      name: 'YOLOv11s (8 Classes - v3 Generalization Dataset)',
+    },
     { id: 'yolo11s_8cls_v2_curated.pt', name: 'YOLOv11s (8 Classes - v2 Curated Dataset)' },
-    { id: 'yolo11s_8cls_real_organic.pt', name: 'YOLOv11s (8 Classes - Real Organic Augmentation)' },
-    { id: 'yolo11s_8cls_v1_streamlined_old_dataset.pt', name: 'YOLOv11s (8 Classes - Old 8-Class Streamlined Dataset)' },
-    { id: 'yolo11s_10cls_legacy_old_dataset.pt', name: 'YOLOv11s (10 Classes - Old 10-Class Legacy Dataset)' },
+    {
+      id: 'yolo11s_8cls_real_organic.pt',
+      name: 'YOLOv11s (8 Classes - Real Organic Augmentation)',
+    },
+    {
+      id: 'yolo11s_8cls_v1_streamlined_old_dataset.pt',
+      name: 'YOLOv11s (8 Classes - Old 8-Class Streamlined Dataset)',
+    },
+    {
+      id: 'yolo11s_10cls_legacy_old_dataset.pt',
+      name: 'YOLOv11s (10 Classes - Old 10-Class Legacy Dataset)',
+    },
   ]);
   const [selectedModel, setSelectedModel] = useState<string>('best.pt');
-  const [showModelPicker, setShowModelPicker] = useState<boolean>(false);
 
   useEffect(() => {
     fetchAvailableModels()
@@ -56,40 +67,9 @@ export default function ScanScreen() {
       });
   }, []);
 
-  async function pick(camera: boolean) {
-    setError('');
-    try {
-      if (camera && Platform.OS !== 'web') {
-        const permission = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permission.granted) {
-          setError(
-            'Camera access is off. Enable it in your device settings, upload a photo, or try a sample below.',
-          );
-          return;
-        }
-      }
-      const result = camera
-        ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
-      if (result.canceled) return;
-      const asset = result.assets[0];
-      if ((asset.fileSize || 0) > 10 * 1024 * 1024) {
-        setError('This photo is too large. Please choose an image smaller than 10 MB.');
-        return;
-      }
-      if (!asset.width || !asset.height || Math.min(asset.width, asset.height) < 100) {
-        setError(
-          'This image is too small or unreadable. Try a clear photo at least 100 × 100 pixels.',
-        );
-        return;
-      }
-      setUri(asset.uri);
-    } catch {
-      setError(
-        'The camera or photo picker could not open. Try uploading a photo or choosing a sample below.',
-      );
-    }
-  }
+  const currentConfidenceObj =
+    CONFIDENCE_LEVELS.find((c) => c.id === selectedConfidence) || CONFIDENCE_LEVELS[1];
+  const currentModelObj = models.find((m) => m.id === selectedModel) || models[0];
 
   function openResult(
     predictions: RecognitionPrediction[],
@@ -128,6 +108,65 @@ export default function ScanScreen() {
     });
   }
 
+  async function analyzePhoto(targetUri = uri) {
+    if (!targetUri) return;
+    setBusy(true);
+    setError('');
+    try {
+      const predictions = await recognizeImage(
+        targetUri,
+        selectedModel,
+        currentConfidenceObj.value,
+      );
+      openResult(predictions, 'model', targetUri);
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : 'The image could not be analyzed. Please try again.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function pick(camera: boolean) {
+    if (busy) return;
+    setError('');
+    try {
+      if (camera && Platform.OS !== 'web') {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) {
+          setError(
+            'Camera access is off. Enable it in your device settings, choose a photo from your library, or try a sample.',
+          );
+          return;
+        }
+      }
+      const result = camera
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+      if (result.canceled) return;
+      const asset = result.assets[0];
+      if ((asset.fileSize || 0) > 10 * 1024 * 1024) {
+        setError('This photo is too large. Please choose an image smaller than 10 MB.');
+        return;
+      }
+      if (!asset.width || !asset.height || Math.min(asset.width, asset.height) < 100) {
+        setError(
+          'This image is too small or unreadable. Try a clear photo at least 100 × 100 pixels.',
+        );
+        return;
+      }
+      setUri(asset.uri);
+      await analyzePhoto(asset.uri);
+    } catch {
+      setError(
+        'The camera or photo picker could not open. Try choosing from your library or trying a sample.',
+      );
+    }
+  }
+
   function analyzeSample() {
     setBusy(true);
     setError('');
@@ -140,25 +179,7 @@ export default function ScanScreen() {
         return;
       }
       openResult(demoPredictions(sample, uncertain ? 46 : 98), 'demo');
-    }, 1600);
-  }
-
-  async function analyzePhoto() {
-    if (!uri) return;
-    setBusy(true);
-    setError('');
-    try {
-      const predictions = await recognizeImage(uri, selectedModel, currentConfidenceObj.value);
-      openResult(predictions, 'model', uri);
-    } catch (reason) {
-      setError(
-        reason instanceof Error
-          ? reason.message
-          : 'The image could not be analyzed. Please try again.',
-      );
-    } finally {
-      setBusy(false);
-    }
+    }, 900);
   }
 
   const samples = state.items.filter((i) =>
@@ -174,13 +195,12 @@ export default function ScanScreen() {
     ].includes(i.id),
   );
 
-  const currentConfidenceObj =
-    CONFIDENCE_LEVELS.find((c) => c.id === selectedConfidence) || CONFIDENCE_LEVELS[1];
-  const currentModelObj = models.find((m) => m.id === selectedModel) || models[0];
-
   return (
     <View style={{ maxWidth: 760, width: '100%', alignSelf: 'center' }}>
-      <Heading title="Scan an item" />
+      <Heading
+        title="Scan an item"
+        subtitle="Take a photo or choose one from your library for instant sorting steps."
+      />
       <Segments
         options={['Photo', 'Samples']}
         value={mode}
@@ -190,271 +210,127 @@ export default function ScanScreen() {
         }}
       />
 
-      <Card style={{ gap: 16, padding: 20 }}>
-        {/* Detection Controls: Confidence Threshold (left) and Model Switcher (right) */}
-        <View style={{ borderBottomWidth: 1, borderColor: C.line, paddingBottom: 14, gap: 10 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 10,
-              width: '100%',
-            }}
-          >
-            {/* Confidence Threshold Dropdown (to the left of models) */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              <Icon name="filter" size={14} color={C.green} />
-              <Txt size={12} weight="600" color={C.ink}>
-                Confidence:
-              </Txt>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Set Confidence Threshold"
-                onPress={() => {
-                  setShowConfidencePicker(!showConfidencePicker);
-                  setShowModelPicker(false);
-                }}
-                style={({ pressed, hovered }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  paddingHorizontal: 10,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: C.line,
-                  backgroundColor: hovered ? '#EFF3E8' : '#FAFBF7',
-                  opacity: pressed ? 0.75 : 1,
-                })}
-              >
-                <Txt size={12} weight="600" color={C.green}>
-                  {currentConfidenceObj.label} ({currentConfidenceObj.thresholdPercent}%)
-                </Txt>
-                <Icon name={showConfidencePicker ? 'down' : 'chevron'} size={14} color={C.muted} />
-              </Pressable>
-            </View>
-
-            {/* Model Switcher Dropdown (to the right of confidence) */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                flex: 1,
-                minWidth: 140,
-                maxWidth: '100%',
-              }}
-            >
-              <Icon name="sparkle" size={14} color={C.green} />
-              <Txt size={12} weight="600" color={C.ink}>
-                Model:
-              </Txt>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Switch Model"
-                onPress={() => {
-                  setShowModelPicker(!showModelPicker);
-                  setShowConfidencePicker(false);
-                }}
-                style={({ pressed, hovered }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 6,
-                  paddingHorizontal: 10,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: C.line,
-                  backgroundColor: hovered ? '#EFF3E8' : '#FAFBF7',
-                  opacity: pressed ? 0.75 : 1,
-                  flex: 1,
-                  minWidth: 0,
-                  maxWidth: '100%',
-                })}
-              >
-                <Txt
-                  size={12}
-                  weight="600"
-                  color={C.green}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={{ flex: 1, minWidth: 0 }}
-                >
-                  {currentModelObj?.name || selectedModel}
-                </Txt>
-                <Icon name={showModelPicker ? 'down' : 'chevron'} size={14} color={C.muted} />
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Confidence Threshold Picker Popover */}
-          {showConfidencePicker && (
-            <View
-              style={{
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: C.line,
-                backgroundColor: '#FFFFFF',
-                overflow: 'hidden',
-                width: '100%',
-                marginTop: 4,
-              }}
-            >
-              {CONFIDENCE_LEVELS.map((level) => {
-                const isSelected = level.id === selectedConfidence;
-                return (
-                  <Pressable
-                    key={level.id}
-                    onPress={() => {
-                      setSelectedConfidence(level.id);
-                      setShowConfidencePicker(false);
-                    }}
-                    style={({ pressed, hovered }) => ({
-                      paddingHorizontal: 12,
-                      paddingVertical: 10,
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      backgroundColor: isSelected ? '#EFF4E7' : hovered ? '#F8F9F4' : 'transparent',
-                      borderBottomWidth: 1,
-                      borderColor: '#F0F2EB',
-                      opacity: pressed ? 0.7 : 1,
-                    })}
-                  >
-                    <View style={{ flex: 1, flexShrink: 1, gap: 2, marginRight: 8 }}>
-                      <Row style={{ gap: 6, alignItems: 'center' }}>
-                        <Txt size={12} weight={isSelected ? '600' : '500'} color={isSelected ? C.green : C.ink}>
-                          {level.label} ({level.thresholdPercent}% Threshold)
-                        </Txt>
-                      </Row>
-                      <Txt size={11} color={C.muted} style={{ lineHeight: 16 }}>
-                        {level.description}
-                      </Txt>
-                    </View>
-                    {isSelected && (
-                      <View style={{ flexShrink: 0 }}>
-                        <Badge text="Selected" />
-                      </View>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
-
-          {/* Model Switcher Picker Popover */}
-          {showModelPicker && (
-            <View
-              style={{
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: C.line,
-                backgroundColor: '#FFFFFF',
-                overflow: 'hidden',
-                width: '100%',
-                marginTop: 4,
-              }}
-            >
-              {models.map((m) => {
-                const isSelected = m.id === selectedModel;
-                return (
-                  <Pressable
-                    key={m.id}
-                    onPress={() => {
-                      setSelectedModel(m.id);
-                      setShowModelPicker(false);
-                    }}
-                    style={({ pressed, hovered }) => ({
-                      paddingHorizontal: 12,
-                      paddingVertical: 10,
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      backgroundColor: isSelected ? '#EFF4E7' : hovered ? '#F8F9F4' : 'transparent',
-                      borderBottomWidth: 1,
-                      borderColor: '#F0F2EB',
-                      opacity: pressed ? 0.7 : 1,
-                    })}
-                  >
-                    <View style={{ flex: 1, flexShrink: 1, marginRight: 8 }}>
-                      <Txt
-                        size={12}
-                        weight={isSelected ? '600' : '400'}
-                        color={isSelected ? C.green : C.ink}
-                        style={{ lineHeight: 17 }}
-                      >
-                        {m.name}
-                      </Txt>
-                    </View>
-                    {isSelected && (
-                      <View style={{ flexShrink: 0 }}>
-                        <Badge text="Active" />
-                      </View>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
-        </View>
-
+      <Card style={{ gap: 16, padding: 18 }}>
         {mode === 'Photo' && (
           <>
             <View
               style={{
-                height: 180,
-                borderRadius: 12,
-                backgroundColor: '#F1F5E9',
+                height: 256,
+                borderRadius: 16,
+                backgroundColor: uri ? '#0F1A13' : '#F2F6EC',
+                borderWidth: uri ? 1 : 1.5,
+                borderStyle: uri ? 'solid' : 'dashed',
+                borderColor: uri ? '#1D3325' : '#C6D4B8',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 12,
-                padding: 16,
+                overflow: 'hidden',
+                position: 'relative',
               }}
             >
               {uri ? (
-                <Image
-                  accessibilityLabel="Selected waste photo"
-                  source={{ uri }}
-                  style={{ height: 150, width: '100%', borderRadius: 10 }}
-                  resizeMode="contain"
-                />
-              ) : (
                 <>
-                  <Icon name="scan" size={42} />
-                  <Txt size={13} color={C.muted}>
-                    One item, clearly in focus.
-                  </Txt>
-                  <Txt size={12} color={C.muted}>
-                    Images up to 10 MB
-                  </Txt>
+                  <Image
+                    accessibilityLabel="Selected waste photo"
+                    source={{ uri }}
+                    style={{ height: '100%', width: '100%' }}
+                    resizeMode="contain"
+                  />
+                  {busy && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundColor: 'rgba(15, 26, 19, 0.72)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 10,
+                        padding: 20,
+                      }}
+                    >
+                      <ActivityIndicator color="#FFFFFF" size="large" />
+                      <Txt size={15} weight="600" color="#FFFFFF">
+                        Identifying item…
+                      </Txt>
+                      <Txt size={12} color="rgba(255, 255, 255, 0.75)" numberOfLines={1}>
+                        {currentModelObj?.name.split('(')[0].trim() || 'Running detection'}
+                      </Txt>
+                    </View>
+                  )}
                 </>
+              ) : (
+                <View style={{ alignItems: 'center', gap: 10, paddingHorizontal: 24 }}>
+                  <View
+                    style={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: 20,
+                      backgroundColor: '#E1ECD3',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon name="scan" size={28} color={C.green} />
+                  </View>
+                  <Txt size={16} weight="600" color={C.ink} style={{ textAlign: 'center' }}>
+                    Ready to scan
+                  </Txt>
+                  <Txt size={13} color={C.muted} style={{ textAlign: 'center', lineHeight: 19 }}>
+                    Center one item in good lighting. Analysis starts automatically.
+                  </Txt>
+                </View>
               )}
             </View>
-            <Row style={{ flexWrap: 'wrap' }}>
-              <Button
-                title="Take photo"
-                icon="camera"
-                onPress={() => pick(true)}
-                style={{ flexGrow: 1 }}
-              />
-              <Button
-                title={uri ? 'Replace photo' : 'Upload photo'}
-                icon="upload"
-                variant="secondary"
-                onPress={() => pick(false)}
-                style={{ flexGrow: 1 }}
-              />
-            </Row>
-            {!!uri && <Button title="Remove photo" variant="ghost" onPress={() => setUri('')} />}
+
+            {!uri ? (
+              <View style={{ gap: 10 }}>
+                <Button
+                  title="Take photo"
+                  icon="camera"
+                  onPress={() => pick(true)}
+                  disabled={busy}
+                />
+                <Button
+                  title="Choose from library"
+                  icon="image"
+                  variant="secondary"
+                  onPress={() => pick(false)}
+                  disabled={busy}
+                />
+              </View>
+            ) : (
+              !busy && (
+                <View style={{ gap: 10 }}>
+                  <Button
+                    title={error ? 'Try again' : 'Identify item'}
+                    icon="scan"
+                    onPress={() => analyzePhoto(uri)}
+                  />
+                  <Row style={{ gap: 10 }}>
+                    <Button
+                      title="Retake"
+                      icon="camera"
+                      variant="secondary"
+                      onPress={() => pick(true)}
+                      style={{ flex: 1 }}
+                    />
+                    <Button
+                      title="Library"
+                      icon="image"
+                      variant="secondary"
+                      onPress={() => pick(false)}
+                      style={{ flex: 1 }}
+                    />
+                  </Row>
+                </View>
+              )
+            )}
           </>
         )}
+
         {mode === 'Samples' && (
           <>
             <Txt size={13} color={C.muted}>
-              Choose an item to try the scan flow.
+              Choose a sample item to preview the post-scan experience.
             </Txt>
             <View style={{ gap: 4 }}>
               {samples.map((item) => (
@@ -466,14 +342,16 @@ export default function ScanScreen() {
                   onPress={() => setSample(item.id)}
                   style={{
                     padding: 10,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     backgroundColor: sample === item.id ? '#EFF4E7' : 'transparent',
                     minHeight: 48,
                   }}
                 >
                   <Row>
-                    <ItemArt item={item} size={32} />
-                    <Txt style={{ flex: 1 }}>{item.name}</Txt>
+                    <ItemArt item={item} size={34} />
+                    <Txt style={{ flex: 1 }} weight={sample === item.id ? '600' : '400'}>
+                      {item.name}
+                    </Txt>
                     <Icon
                       name={sample === item.id ? 'success' : 'plus'}
                       size={18}
@@ -484,30 +362,19 @@ export default function ScanScreen() {
               ))}
             </View>
             <Button
-              title="Identify sample item"
+              title="Identify sample"
               icon="scan"
               loading={busy}
               disabled={!samples.some((i) => i.id === sample)}
               onPress={analyzeSample}
             />
-            <Txt size={12} color={C.muted}>
-              Sample detection mode. The selected item simulates live recognition; photos stay on this
-              device.
-            </Txt>
           </>
         )}
-        {mode === 'Photo' && !!uri && (
-          <>
-            <Button title="Identify item" icon="scan" loading={busy} onPress={analyzePhoto} />
-            <Txt size={12} color={C.muted}>
-              Your photo is analyzed with {currentModelObj?.name || 'the selected model'}.
-            </Txt>
-          </>
-        )}
+
         {!!error && (
           <View
             accessibilityRole="alert"
-            style={{ padding: 14, backgroundColor: '#FAEDE7', borderRadius: 9 }}
+            style={{ padding: 14, backgroundColor: '#FAEDE7', borderRadius: 12 }}
           >
             <Txt color="#914A32" size={13}>
               {error}
@@ -515,58 +382,158 @@ export default function ScanScreen() {
           </View>
         )}
       </Card>
+
+      <View style={{ marginTop: 14 }}>
+        <Disclosure
+          title={`Detection settings · ${currentConfidenceObj.label} (${currentConfidenceObj.thresholdPercent}%)`}
+          icon="filter"
+        >
+          <View style={{ gap: 14 }}>
+            <View style={{ gap: 8 }}>
+              <Txt size={12} weight="600" color={C.ink}>
+                Confidence threshold
+              </Txt>
+              <Row style={{ gap: 8, flexWrap: 'wrap' }}>
+                {CONFIDENCE_LEVELS.map((level) => {
+                  const isSelected = level.id === selectedConfidence;
+                  return (
+                    <Pressable
+                      key={level.id}
+                      onPress={() => setSelectedConfidence(level.id)}
+                      style={({ pressed }) => ({
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        borderColor: isSelected ? C.green : C.line,
+                        backgroundColor: isSelected ? '#EAF2E2' : C.white,
+                        opacity: pressed ? 0.75 : 1,
+                      })}
+                    >
+                      <Txt
+                        size={12}
+                        weight={isSelected ? '600' : '500'}
+                        color={isSelected ? C.green : C.ink}
+                      >
+                        {level.label} ({level.thresholdPercent}%)
+                      </Txt>
+                    </Pressable>
+                  );
+                })}
+              </Row>
+              <Txt size={11} color={C.muted}>
+                {currentConfidenceObj.description}
+              </Txt>
+            </View>
+
+            <View style={{ gap: 6 }}>
+              <Txt size={12} weight="600" color={C.ink}>
+                Detection model
+              </Txt>
+              <View
+                style={{
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: C.line,
+                  backgroundColor: C.white,
+                  overflow: 'hidden',
+                }}
+              >
+                {models.map((m) => {
+                  const isSelected = m.id === selectedModel;
+                  return (
+                    <Pressable
+                      key={m.id}
+                      onPress={() => setSelectedModel(m.id)}
+                      style={({ pressed }) => ({
+                        paddingHorizontal: 12,
+                        paddingVertical: 10,
+                        minHeight: 44,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: 8,
+                        backgroundColor: isSelected ? '#EFF4E7' : 'transparent',
+                        borderBottomWidth: 1,
+                        borderColor: '#F0F2EB',
+                        opacity: pressed ? 0.75 : 1,
+                      })}
+                    >
+                      <Txt
+                        size={12}
+                        weight={isSelected ? '600' : '400'}
+                        color={isSelected ? C.green : C.ink}
+                        style={{ flex: 1, lineHeight: 17 }}
+                      >
+                        {m.name}
+                      </Txt>
+                      {isSelected && <Badge text="Active" />}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </Disclosure>
+
+        <Disclosure title="Photo tips">
+          <Txt size={13} color={C.muted}>
+            Use even lighting and a plain background. Keep the whole item in frame. If the image is
+            unclear, retake it or search the waste guide.
+          </Txt>
+        </Disclosure>
+
+        {mode === 'Samples' && (
+          <Disclosure
+            title={`Test scenarios${uncertain || failed ? ' · active' : ''}`}
+            icon="settings"
+          >
+            {[
+              {
+                label: 'Low-confidence result',
+                value: uncertain,
+                toggle: () => setUncertain(!uncertain),
+              },
+              { label: 'Service unavailable', value: failed, toggle: () => setFailed(!failed) },
+            ].map((o) => (
+              <Pressable
+                key={o.label}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: o.value }}
+                aria-checked={o.value}
+                onPress={o.toggle}
+                style={{ minHeight: 44, justifyContent: 'center' }}
+              >
+                <Row style={{ justifyContent: 'space-between' }}>
+                  <Txt size={13}>{o.label}</Txt>
+                  <View
+                    style={{
+                      width: 38,
+                      height: 24,
+                      borderRadius: 20,
+                      padding: 3,
+                      backgroundColor: o.value ? C.green : '#CED6C4',
+                      alignItems: o.value ? 'flex-end' : 'flex-start',
+                    }}
+                  >
+                    <View
+                      style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: 'white' }}
+                    />
+                  </View>
+                </Row>
+              </Pressable>
+            ))}
+          </Disclosure>
+        )}
+      </View>
+
       <Button
-        title="Search the waste guide"
+        title="Search the waste guide instead"
         icon="search"
         variant="ghost"
         onPress={() => router.push('/explore')}
-        style={{ marginVertical: 12 }}
+        style={{ marginTop: 8 }}
       />
-      <Disclosure title="Photo tips">
-        <Txt size={13} color={C.muted}>
-          Use even lighting and a plain background. Keep the whole item in frame. If the image is
-          unclear, retake it or search the guide.
-        </Txt>
-      </Disclosure>
-      {mode === 'Samples' && (
-        <Disclosure title={`Test scenarios${uncertain || failed ? ' · active' : ''}`} icon="settings">
-          {[
-            {
-              label: 'Low-confidence result',
-              value: uncertain,
-              toggle: () => setUncertain(!uncertain),
-            },
-            { label: 'Service unavailable', value: failed, toggle: () => setFailed(!failed) },
-          ].map((o) => (
-            <Pressable
-              key={o.label}
-              accessibilityRole="switch"
-              accessibilityState={{ checked: o.value }}
-              aria-checked={o.value}
-              onPress={o.toggle}
-              style={{ minHeight: 44, justifyContent: 'center' }}
-            >
-              <Row style={{ justifyContent: 'space-between' }}>
-                <Txt size={13}>{o.label}</Txt>
-                <View
-                  style={{
-                    width: 38,
-                    height: 24,
-                    borderRadius: 20,
-                    padding: 3,
-                    backgroundColor: o.value ? C.green : '#CED6C4',
-                    alignItems: o.value ? 'flex-end' : 'flex-start',
-                  }}
-                >
-                  <View
-                    style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: 'white' }}
-                  />
-                </View>
-              </Row>
-            </Pressable>
-          ))}
-        </Disclosure>
-      )}
     </View>
   );
 }

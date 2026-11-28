@@ -1,6 +1,6 @@
 import { Disclosure } from '@/components/sortify/controls';
 import { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, View, useWindowDimensions } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { uniqueId, useApp } from '@/state/app-state';
 import { Category, locationGuidance } from '@/data/catalog';
@@ -54,6 +54,9 @@ export default function ResultScreen() {
     confidenceThreshold?: string;
     itemsJson?: string;
   }>();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const isNarrow = width < 360;
   const { state, update, notify, saveScan } = useApp();
   const [savedByItem, setSavedByItem] = useState<Record<number, string>>(() => {
     const initial: Record<number, string> = {};
@@ -68,7 +71,11 @@ export default function ResultScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const [selectedTier, setSelectedTier] = useState<ConfidenceTier>(() => {
-    if (params.confidenceTier === 'low' || params.confidenceTier === 'medium' || params.confidenceTier === 'high') {
+    if (
+      params.confidenceTier === 'low' ||
+      params.confidenceTier === 'medium' ||
+      params.confidenceTier === 'high'
+    ) {
       return params.confidenceTier as ConfidenceTier;
     }
     const thresh = Number(params.confidenceThreshold || 50);
@@ -87,7 +94,6 @@ export default function ResultScreen() {
     setCorrection('');
   };
 
-  // Parse all detected items from scan
   const initialDetectedItems: DetectedItemPayload[] = useMemo(() => {
     try {
       if (params.itemsJson) {
@@ -111,53 +117,46 @@ export default function ResultScreen() {
         box: defaultBox,
       },
     ];
-  }, [params.itemsJson, params.id, params.confidence, params.detectorClass, params.modelClass, params.displayName, params.bbox]);
+  }, [
+    params.itemsJson,
+    params.id,
+    params.confidence,
+    params.detectorClass,
+    params.modelClass,
+    params.displayName,
+    params.bbox,
+  ]);
 
   const detectedItems = customDetections !== null ? customDetections : initialDetectedItems;
-
-  // Current active detected item being inspected
   const activeDetected = detectedItems[activeIndex] || detectedItems[0];
-  const item = state.items.find((i) => i.id === activeDetected?.id) || state.items.find((i) => i.id === params.id);
+  const item =
+    state.items.find((i) => i.id === activeDetected?.id) ||
+    state.items.find((i) => i.id === params.id);
   const currentSavedId = savedByItem[activeIndex] || '';
   const saved = state.scans.find((s) => s.id === currentSavedId);
-  const confidence = activeDetected ? activeDetected.confidence : saved?.confidence ?? Number(params.confidence || 0);
+  const confidence = activeDetected
+    ? activeDetected.confidence
+    : (saved?.confidence ?? Number(params.confidence || 0));
   const isConfirmed = !!confirmedByItem[activeIndex];
   const low = confidence > 0 && confidence < 70 && !isConfirmed && !saved;
   const source =
     saved?.source ||
     (params.source === 'demo' ? 'demo' : params.source === 'model' ? 'model' : 'manual');
 
-  // Confidence assessment & styling
   const confidenceScore = Math.max(0, Math.min(100, Math.round(confidence)));
-  const confidenceTierLabel =
-    confidenceScore >= 75
-      ? 'High Confidence'
-      : confidenceScore >= 50
-        ? 'Moderate Confidence'
-        : 'Low Confidence';
   const confidenceColor =
-    confidenceScore >= 75 ? '#2E7D32' : confidenceScore >= 50 ? '#D97706' : '#DC2626';
+    confidenceScore >= 75 ? '#2E7D32' : confidenceScore >= 50 ? '#B45309' : '#DC2626';
   const confidenceBg =
-    confidenceScore >= 75 ? '#EFF8EE' : confidenceScore >= 50 ? '#FFFBEB' : '#FEF2F2';
-  const confidenceBorder =
-    confidenceScore >= 75 ? '#C8E6C9' : confidenceScore >= 50 ? '#FDE68A' : '#FECACA';
-  const confidenceDescription =
-    confidenceScore >= 75
-      ? 'The model is highly confident in this categorization.'
-      : confidenceScore >= 50
-        ? 'The model detected this item with moderate confidence. Reviewing the item is recommended.'
-        : 'The model has low confidence for this image. Please confirm before sorting.';
+    confidenceScore >= 75 ? '#EAF5EA' : confidenceScore >= 50 ? '#FEF3C7' : '#FEE2E2';
 
-  // Labels
-  const rawModelClass = activeDetected?.modelClassName || activeDetected?.className || params.modelClass || params.detectorClass || '';
-  const detectorLabel =
-    activeDetected?.displayName ||
-    params.displayName ||
-    rawModelClass.replaceAll('_', ' ') ||
-    item?.name ||
-    'detected item';
+  const rawModelClass =
+    activeDetected?.modelClassName ||
+    activeDetected?.className ||
+    params.modelClass ||
+    params.detectorClass ||
+    '';
 
-  if (!item)
+  if (!item) {
     return (
       <Empty
         title="This item isn’t in the guide."
@@ -165,10 +164,11 @@ export default function ResultScreen() {
         action={<Button title="Open waste guide" onPress={() => router.replace('/explore')} />}
       />
     );
+  }
 
-  const activeItem = (selectedSubItemId ? state.items.find((i) => i.id === selectedSubItemId) : null) || item;
+  const activeItem =
+    (selectedSubItemId ? state.items.find((i) => i.id === selectedSubItemId) : null) || item;
 
-  // If viewing a specific sub-item directly (e.g. from guide, history or barcode), locate its parent class
   const parentClassItem =
     !item.subItemIds && !selectedSubItemId
       ? state.items.find((i) => i.subItemIds && i.subItemIds.includes(item.id))
@@ -176,11 +176,12 @@ export default function ResultScreen() {
 
   function save(sorted = false) {
     if (saved) {
-      if (sorted)
+      if (sorted) {
         update((s) => ({
           ...s,
           scans: s.scans.map((scan) => (scan.id === saved.id ? { ...scan, sorted: true } : scan)),
         }));
+      }
     } else {
       const targetId = activeItem?.id || item!.id;
       const newScanId = saveScan(targetId, confidence, source, sorted);
@@ -237,52 +238,59 @@ export default function ResultScreen() {
           }));
           setCustomDetections(newItems);
           setActiveIndex(0);
-          notify(`Re-evaluated with ${targetLevel.label} confidence (${targetLevel.thresholdPercent}%): ${newItems.length} item(s) found`);
+          notify(
+            `Re-evaluated at ${targetLevel.thresholdPercent}%: ${newItems.length} item(s) found`,
+          );
         } else {
-          // If live model returned 0 items above threshold, filter existing scan items
-          const filtered = initialDetectedItems.filter((d) => d.confidence >= targetLevel.thresholdPercent);
+          const filtered = initialDetectedItems.filter(
+            (d) => d.confidence >= targetLevel.thresholdPercent,
+          );
           if (filtered.length > 0) {
             setCustomDetections(filtered);
             setActiveIndex(0);
-            notify(`Filtered by ${targetLevel.label} confidence (${targetLevel.thresholdPercent}%): ${filtered.length} item(s)`);
+            notify(
+              `Filtered at ${targetLevel.thresholdPercent}%: ${filtered.length} item(s)`,
+            );
           } else {
             const topMatch = initialDetectedItems[0];
             setCustomDetections(topMatch ? [topMatch] : null);
             setActiveIndex(0);
-            notify(`No items passed the ${targetLevel.label} (${targetLevel.thresholdPercent}%) threshold. Showing highest match.`);
+            notify(`No items passed ${targetLevel.thresholdPercent}%. Showing top match.`);
           }
         }
       } catch {
-        // Backend offline or error -> fall back to filtering existing scan items
-        const filtered = initialDetectedItems.filter((d) => d.confidence >= targetLevel.thresholdPercent);
+        const filtered = initialDetectedItems.filter(
+          (d) => d.confidence >= targetLevel.thresholdPercent,
+        );
         if (filtered.length > 0) {
           setCustomDetections(filtered);
           setActiveIndex(0);
-          notify(`Re-evaluated (${targetLevel.label} ≥${targetLevel.thresholdPercent}%): ${filtered.length} item(s)`);
+          notify(`Filtered at ≥${targetLevel.thresholdPercent}%: ${filtered.length} item(s)`);
         } else {
           const topMatch = initialDetectedItems[0];
           setCustomDetections(topMatch ? [topMatch] : null);
           setActiveIndex(0);
-          notify(`No items passed the ${targetLevel.label} (${targetLevel.thresholdPercent}%) threshold. Showing highest match.`);
+          notify(`No items passed ${targetLevel.thresholdPercent}%. Showing top match.`);
         }
       } finally {
         setReEvaluating(false);
       }
     } else {
-      // Simulated mode
       setReEvaluating(true);
       setTimeout(() => {
         if (initialDetectedItems.length > 1) {
-          const filtered = initialDetectedItems.filter((d) => d.confidence >= targetLevel.thresholdPercent);
+          const filtered = initialDetectedItems.filter(
+            (d) => d.confidence >= targetLevel.thresholdPercent,
+          );
           if (filtered.length > 0) {
             setCustomDetections(filtered);
             setActiveIndex(0);
-            notify(`Re-evaluated with ${targetLevel.label} confidence (${targetLevel.thresholdPercent}%): ${filtered.length} item(s)`);
+            notify(`Filtered at ${targetLevel.thresholdPercent}%: ${filtered.length} item(s)`);
           } else {
             const topMatch = initialDetectedItems[0];
             setCustomDetections(topMatch ? [topMatch] : null);
             setActiveIndex(0);
-            notify(`No items passed the ${targetLevel.label} (${targetLevel.thresholdPercent}%) threshold. Showing highest match.`);
+            notify(`No items passed ${targetLevel.thresholdPercent}%. Showing top match.`);
           }
         } else {
           const simConf = tier === 'low' ? 46 : tier === 'medium' ? 78 : 98;
@@ -298,7 +306,7 @@ export default function ResultScreen() {
           }));
           setCustomDetections(newItems);
           setActiveIndex(0);
-          notify(`Re-evaluated with ${targetLevel.label} confidence (${targetLevel.thresholdPercent}%)`);
+          notify(`Re-evaluated at ${targetLevel.thresholdPercent}%`);
         }
         setReEvaluating(false);
       }, 300);
@@ -306,347 +314,9 @@ export default function ResultScreen() {
   }
 
   return (
-    <View style={{ maxWidth: 850, width: '100%', alignSelf: 'center' }}>
-      <Button
-        title="Waste guide"
-        icon="back"
-        variant="ghost"
-        onPress={() => router.push('/explore')}
-        style={{ alignSelf: 'flex-start', paddingLeft: 0, marginBottom: 8 }}
-      />
-
-      {/* Streamlined Detection Summary Bar */}
-      <Card
-        style={{
-          marginBottom: 16,
-          padding: 14,
-          gap: 12,
-          backgroundColor: '#F6F8F3',
-          borderWidth: 1,
-          borderColor: C.line,
-        }}
-      >
-        <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-          <Row style={{ gap: 8, alignItems: 'center', flex: 1, minWidth: 200, flexShrink: 1 }}>
-            <View
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                backgroundColor: C.green,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon name="scan" size={16} color="#FFFFFF" />
-            </View>
-            <View style={{ flex: 1, flexShrink: 1, minWidth: 0 }}>
-              <Txt size={14} weight="700" color={C.ink} numberOfLines={1} ellipsizeMode="tail">
-                {detectedItems.length > 1
-                  ? `Detection Summary (${detectedItems.length} items detected)`
-                  : 'Detection Summary (1 item detected)'}
-              </Txt>
-              <Txt size={11} color={C.muted} numberOfLines={1} ellipsizeMode="tail">
-                {detectedItems.length > 1
-                  ? `Inspecting item ${activeIndex + 1} of ${detectedItems.length}: ${detectorLabel} (${confidenceScore}%)`
-                  : 'Scan complete • Ready to sort or capture a new image'}
-              </Txt>
-            </View>
-          </Row>
-
-          <Button
-            title="Capture new image"
-            icon="camera"
-            variant="primary"
-            onPress={() => router.push('/scan')}
-          />
-        </Row>
-
-        {/* Selectable item pills row */}
-        {detectedItems.length > 1 && (
-          <Row style={{ flexWrap: 'wrap', gap: 8 }}>
-            {detectedItems.map((det, idx) => {
-              const isSelected = idx === activeIndex;
-              return (
-                <Pressable
-                  key={idx}
-                  onPress={() => handleSelectIndex(idx)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Inspect item ${idx + 1}: ${det.displayName}`}
-                  style={({ pressed, hovered }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                    borderRadius: 20,
-                    borderWidth: 1.5,
-                    borderColor: isSelected ? C.green : C.line,
-                    backgroundColor: isSelected ? '#E2ECE0' : hovered ? '#F0F3EC' : '#FFFFFF',
-                    opacity: pressed ? 0.75 : 1,
-                  })}
-                >
-                  <View
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 9,
-                      backgroundColor: isSelected ? C.green : '#D5DDD1',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Txt size={10} weight="700" color={isSelected ? '#FFFFFF' : C.ink}>
-                      {idx + 1}
-                    </Txt>
-                  </View>
-                  <Txt size={12} weight={isSelected ? '700' : '500'} color={isSelected ? C.green : C.ink}>
-                    {det.displayName}
-                  </Txt>
-                  <Badge
-                    text={`${det.confidence}%`}
-                    background={isSelected ? '#CBE3C9' : '#EAECE4'}
-                    color={isSelected ? C.ink : C.muted}
-                  />
-                </Pressable>
-              );
-            })}
-          </Row>
-        )}
-      </Card>
-
-      <Row style={{ marginBottom: 20, alignItems: 'flex-start' }}>
-        <ItemArt item={activeItem} size={64} />
-        <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
-          <Txt accessibilityRole="header" size={26} weight="500" style={{ lineHeight: 32 }}>
-            {activeItem.name}
-          </Txt>
-          <Txt size={13} color={C.muted}>
-            {activeItem.material}
-          </Txt>
-          <Row style={{ flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-            <CategoryBadge category={activeItem.category} />
-            {confidence > 0 && (
-              <Badge
-                text={`${confidenceScore}% • ${confidenceTierLabel}`}
-                background={confidenceBg}
-                color={confidenceColor}
-              />
-            )}
-            {!!rawModelClass && (
-              <Badge
-                text={`Model Class: ${rawModelClass.replaceAll('_', ' ')}`}
-                background="#EFF4E7"
-                color={C.green}
-              />
-            )}
-          </Row>
-        </View>
-      </Row>
-
-      {/* Parent class link when viewing a specific sub-item */}
-      {parentClassItem && (
-        <Card
-          style={{
-            marginBottom: 16,
-            padding: 12,
-            backgroundColor: '#FAFBF7',
-            borderWidth: 1,
-            borderColor: C.line,
-          }}
-        >
-          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-            <Row style={{ gap: 6, alignItems: 'center' }}>
-              <Txt size={12} color={C.muted}>
-                Part of class:
-              </Txt>
-              <Badge text={parentClassItem.name} />
-            </Row>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`View full ${parentClassItem.name} class overview`}
-              onPress={() =>
-                router.push({
-                  pathname: '/result',
-                  params: { id: parentClassItem.id, source: 'manual' },
-                })
-              }
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-            >
-              <Txt size={12} color={C.green} weight="600">
-                View class overview
-              </Txt>
-              <Icon name="arrow" size={14} color={C.green} />
-            </Pressable>
-          </Row>
-        </Card>
-      )}
-
-      {/* Sub-items / Specific items in this class selector */}
-      {item.subItemIds && item.subItemIds.length > 0 && (
-        <Card
-          style={{
-            marginBottom: 16,
-            padding: 14,
-            gap: 10,
-            backgroundColor: '#FAFBF7',
-            borderWidth: 1,
-            borderColor: C.line,
-          }}
-        >
-          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-            <Row style={{ gap: 6, alignItems: 'center' }}>
-              <Icon name="tag" size={16} color={C.green} />
-              <Txt size={13} weight="600" color={C.ink}>
-                Specific items in this class:
-              </Txt>
-            </Row>
-            {selectedSubItemId && (
-              <Pressable
-                onPress={() => setSelectedSubItemId(null)}
-                accessibilityRole="button"
-                style={{ paddingVertical: 2, paddingHorizontal: 6 }}
-              >
-                <Txt size={12} color={C.green} weight="600">
-                  Show class overview
-                </Txt>
-              </Pressable>
-            )}
-          </Row>
-          <Txt size={11} color={C.muted}>
-            Tap a specific item below if you need item-tailored sorting steps:
-          </Txt>
-          <Row style={{ flexWrap: 'wrap', gap: 8 }}>
-            {item.subItemIds.map((subId) => {
-              const sub = state.items.find((i) => i.id === subId);
-              if (!sub) return null;
-              const isSelected = activeItem.id === sub.id;
-              return (
-                <Pressable
-                  key={subId}
-                  onPress={() => setSelectedSubItemId(sub.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`View instructions for ${sub.name}`}
-                  style={({ pressed, hovered }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                    borderRadius: 16,
-                    borderWidth: 1.5,
-                    borderColor: isSelected ? C.green : C.line,
-                    backgroundColor: isSelected ? '#E2ECE0' : hovered ? '#F0F3EC' : '#FFFFFF',
-                    opacity: pressed ? 0.75 : 1,
-                  })}
-                >
-                  <ItemArt item={sub} size={22} />
-                  <Txt size={12} weight={isSelected ? '700' : '500'} color={isSelected ? C.green : C.ink}>
-                    {sub.name}
-                  </Txt>
-                </Pressable>
-              );
-            })}
-          </Row>
-        </Card>
-      )}
-
-      {/* Model Confidence & Changeable Threshold Card */}
-      {confidence > 0 && (
-        <Card
-          style={{
-            marginBottom: 16,
-            padding: 16,
-            gap: 12,
-            borderWidth: 1,
-            borderColor: confidenceBorder,
-            backgroundColor: confidenceBg,
-          }}
-        >
-          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-            <Row style={{ gap: 8, alignItems: 'center' }}>
-              <Icon name="target" size={18} color={confidenceColor} />
-              <Txt size={14} weight="600" color={confidenceColor}>
-                {confidenceTierLabel} ({confidenceScore}%)
-              </Txt>
-              {reEvaluating && (
-                <Badge text="Re-evaluating…" background="#FEF3C7" color="#92400E" />
-              )}
-            </Row>
-
-            {/* Changeable Confidence Selector */}
-            <Row style={{ gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Txt size={11} weight="600" color={C.muted}>
-                Confidence:
-              </Txt>
-              {CONFIDENCE_LEVELS.map((lvl) => {
-                const isSelected = lvl.id === selectedTier;
-                return (
-                  <Pressable
-                    key={lvl.id}
-                    disabled={reEvaluating}
-                    onPress={() => handleConfidenceChange(lvl.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Re-evaluate with ${lvl.label} ${lvl.thresholdPercent}% confidence`}
-                    style={({ pressed, hovered }) => ({
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 12,
-                      borderWidth: 1.5,
-                      borderColor: isSelected ? confidenceColor : '#D1D5DB',
-                      backgroundColor: isSelected ? '#FFFFFF' : hovered ? '#F3F4F6' : 'rgba(255, 255, 255, 0.5)',
-                      opacity: reEvaluating ? 0.6 : pressed ? 0.75 : 1,
-                    })}
-                  >
-                    <Txt
-                      size={11}
-                      weight={isSelected ? '700' : '500'}
-                      color={isSelected ? confidenceColor : C.ink}
-                    >
-                      {lvl.label} {lvl.thresholdPercent}%
-                    </Txt>
-                  </Pressable>
-                );
-              })}
-            </Row>
-          </Row>
-
-          {/* Visual progress meter bar */}
-          <View
-            style={{
-              height: 8,
-              width: '100%',
-              backgroundColor: '#E2E6DC',
-              borderRadius: 4,
-              overflow: 'hidden',
-            }}
-          >
-            <View
-              style={{
-                height: '100%',
-                width: `${confidenceScore}%`,
-                backgroundColor: confidenceColor,
-                borderRadius: 4,
-              }}
-            />
-          </View>
-
-          <Row style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-            <Txt size={12} color={C.muted} style={{ flex: 1 }}>
-              {reEvaluating ? 'Re-evaluating image with new confidence threshold…' : confidenceDescription}
-            </Txt>
-            {!!params.modelUsed && (
-              <Txt size={11} color={C.muted}>
-                Engine: {params.modelUsed}
-              </Txt>
-            )}
-          </Row>
-        </Card>
-      )}
-
-      {/* Detection bounding box preview with active box focus */}
+    <View style={{ maxWidth: 800, width: '100%', alignSelf: 'center', gap: 16 }}>
       {!!params.imageUri && (
-        <Card style={{ gap: 10, marginBottom: 16, padding: 14 }}>
+        <View style={{ gap: 10 }}>
           <DetectionPreview
             uri={params.imageUri}
             boxes={detectedItems.map((d) => ({
@@ -656,48 +326,197 @@ export default function ResultScreen() {
             }))}
             activeIndex={activeIndex}
             onSelectIndex={handleSelectIndex}
-            onCaptureNewImage={() => router.push('/scan')}
           />
-          <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-            <Txt size={12} color={C.muted}>
-              Active item: <Txt size={12} weight="600" color={C.ink}>{detectorLabel}</Txt> → mapped to <Txt size={12} weight="600" color={C.green}>{activeItem.category}</Txt>
-            </Txt>
-            {detectedItems.length > 1 && (
-              <Txt size={11} color={C.muted}>
-                Item {activeIndex + 1} of {detectedItems.length} • Swipe or use controls to browse
-              </Txt>
+          {detectedItems.length > 1 && (
+            <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+              {detectedItems.map((det, idx) => {
+                const isSelected = idx === activeIndex;
+                return (
+                  <Pressable
+                    key={idx}
+                    hitSlop={4}
+                    onPress={() => handleSelectIndex(idx)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Inspect item ${idx + 1}: ${det.displayName}`}
+                    style={({ pressed }) => ({
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      paddingHorizontal: 11,
+                      paddingVertical: 7,
+                      minHeight: 38,
+                      borderRadius: 20,
+                      borderWidth: 1,
+                      borderColor: isSelected ? C.green : C.line,
+                      backgroundColor: isSelected ? '#E6F0DF' : C.white,
+                      opacity: pressed ? 0.75 : 1,
+                    })}
+                  >
+                    <Txt size={12} weight={isSelected ? '700' : '500'} color={isSelected ? C.green : C.ink}>
+                      {idx + 1}. {det.displayName}
+                    </Txt>
+                    <Txt size={11} weight="600" color={isSelected ? C.green : C.muted}>
+                      {det.confidence}%
+                    </Txt>
+                  </Pressable>
+                );
+              })}
+            </Row>
+          )}
+        </View>
+      )}
+
+      {/* Clean Item Hero */}
+      <Row style={{ alignItems: 'center', gap: 14 }}>
+        <ItemArt item={activeItem} size={60} />
+        <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+          <Txt
+            accessibilityRole="header"
+            size={isNarrow ? 22 : isMobile ? 24 : 28}
+            weight="700"
+            color={C.ink}
+            style={{
+              lineHeight: isNarrow ? 28 : isMobile ? 30 : 34,
+              letterSpacing: isMobile ? -0.5 : -0.7,
+            }}
+          >
+            {activeItem.name}
+          </Txt>
+          <Txt size={isMobile ? 13 : 14} color={C.muted} numberOfLines={2} style={{ lineHeight: isMobile ? 18 : 20 }}>
+            {activeItem.material}
+          </Txt>
+          <Row style={{ flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
+            <CategoryBadge category={activeItem.category} />
+            {confidence > 0 && (
+              <Badge
+                text={`${confidenceScore}% match`}
+                background={confidenceBg}
+                color={confidenceColor}
+              />
             )}
           </Row>
-        </Card>
-      )}
+        </View>
+      </Row>
 
       {low && (
-        <Card style={{ gap: 12, marginBottom: 16, backgroundColor: '#FAF2E4' }}>
-          <Txt weight="600">Confirm this item</Txt>
-          <Txt size={13} color={C.muted}>
-            The prediction is uncertain. Check the match before saving.
+        <Card style={{ gap: 12, padding: 16, backgroundColor: '#FAF2E4', borderColor: '#EBD9B8' }}>
+          <Txt size={15} weight="600" color="#7A561E">
+            Uncertain match — please confirm
           </Txt>
-          <Row style={{ flexWrap: 'wrap' }}>
+          <Txt size={13} color="#7A561E">
+            Confidence is low for this image. Confirm it matches your item before sorting.
+          </Txt>
+          <Row style={{ flexWrap: 'wrap', gap: 8 }}>
             <Button
-              title="Yes, this is my item"
+              title="Yes, confirm"
               onPress={() => setConfirmedByItem((prev) => ({ ...prev, [activeIndex]: true }))}
+              style={{ flexGrow: 1 }}
             />
             <Button
-              title="Choose another"
+              title="Retake"
               variant="secondary"
-              onPress={() => router.push('/explore')}
+              onPress={() => router.push('/scan')}
+              style={{ flexGrow: 1 }}
             />
-            <Button title="Retake photo" variant="ghost" onPress={() => router.push('/scan')} />
           </Row>
         </Card>
       )}
 
-      <Card style={{ padding: 20, gap: 18 }}>
+      {parentClassItem && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            router.push({
+              pathname: '/result',
+              params: { id: parentClassItem.id, source: 'manual' },
+            })
+          }
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 14,
+            paddingVertical: 11,
+            borderRadius: 12,
+            backgroundColor: C.white,
+            borderWidth: 1,
+            borderColor: C.line,
+            opacity: pressed ? 0.75 : 1,
+          })}
+        >
+          <Txt size={13} color={C.muted}>
+            Part of <Txt size={13} weight="600" color={C.ink}>{parentClassItem.name}</Txt>
+          </Txt>
+          <Row style={{ gap: 4 }}>
+            <Txt size={12} weight="600" color={C.green}>
+              Class overview
+            </Txt>
+            <Icon name="arrow" size={14} color={C.green} />
+          </Row>
+        </Pressable>
+      )}
+
+      {item.subItemIds && item.subItemIds.length > 0 && (
+        <View style={{ gap: 8 }}>
+          <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <Txt size={13} weight="600" color={C.muted}>
+              Specific variant
+            </Txt>
+            {selectedSubItemId && (
+              <Pressable onPress={() => setSelectedSubItemId(null)} accessibilityRole="button">
+                <Txt size={12} color={C.green} weight="600">
+                  Reset to {item.name}
+                </Txt>
+              </Pressable>
+            )}
+          </Row>
+          <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+            {item.subItemIds.map((subId) => {
+              const sub = state.items.find((i) => i.id === subId);
+              if (!sub) return null;
+              const isSelected = activeItem.id === sub.id;
+              return (
+                <Pressable
+                  key={subId}
+                  hitSlop={4}
+                  onPress={() => setSelectedSubItemId(isSelected ? null : sub.id)}
+                  accessibilityRole="button"
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    paddingHorizontal: 11,
+                    paddingVertical: 7,
+                    minHeight: 38,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: isSelected ? C.green : C.line,
+                    backgroundColor: isSelected ? '#E6F0DF' : C.white,
+                    opacity: pressed ? 0.75 : 1,
+                  })}
+                >
+                  <ItemArt item={sub} size={20} />
+                  <Txt
+                    size={12}
+                    weight={isSelected ? '700' : '500'}
+                    color={isSelected ? C.green : C.ink}
+                  >
+                    {sub.name}
+                  </Txt>
+                </Pressable>
+              );
+            })}
+          </Row>
+        </View>
+      )}
+
+      {/* Disposal Steps Card */}
+      <Card style={{ padding: 18, gap: 16 }}>
         <Txt size={17} weight="600">
-          Disposal steps
+          How to dispose
         </Txt>
         {activeItem.steps.map((step, index) => (
-          <Row key={index} style={{ alignItems: 'flex-start' }}>
+          <Row key={index} style={{ alignItems: 'flex-start', gap: 12 }}>
             <View
               style={{
                 width: 26,
@@ -708,82 +527,64 @@ export default function ResultScreen() {
                 justifyContent: 'center',
               }}
             >
-              <Txt size={12} weight="600">
+              <Txt size={12} weight="600" color={C.green}>
                 {index + 1}
               </Txt>
             </View>
-            <Txt style={{ flex: 1 }}>{step}</Txt>
+            <Txt style={{ flex: 1, lineHeight: 21 }}>{step}</Txt>
           </Row>
         ))}
+
         {!!activeItem.caution && (
           <Row
             style={{
               backgroundColor: '#FAF2E4',
-              padding: 14,
+              padding: 12,
               borderRadius: 10,
               alignItems: 'flex-start',
+              gap: 10,
             }}
           >
             <Icon name="warning" size={18} color="#8B652B" />
-            <Txt style={{ flex: 1 }} color="#805D28" size={13}>
+            <Txt style={{ flex: 1, lineHeight: 19 }} color="#805D28" size={13}>
               {activeItem.caution}
             </Txt>
           </Row>
         )}
+
         {!low && (
-          <View style={{ gap: 10, paddingTop: 4 }}>
-            <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+          <View style={{ gap: 10, paddingTop: 2 }}>
+            <Row style={{ gap: 10 }}>
               <Button
-                title={saved?.sorted ? 'Marked as sorted' : 'I sorted this item'}
+                title={saved?.sorted ? 'Sorted' : 'I sorted this'}
                 disabled={saved?.sorted}
                 icon="check"
                 onPress={() => save(true)}
-                style={{ flexGrow: 1 }}
+                style={{ flex: 1 }}
               />
               <Button
-                title={saved ? 'Saved to history' : 'Save for later'}
+                title={saved ? 'Saved' : 'Save'}
                 disabled={!!saved}
                 icon="bookmark"
                 variant="secondary"
                 onPress={() => save(false)}
-                style={{ flexGrow: 1 }}
+                style={{ minWidth: 90 }}
               />
             </Row>
-            {detectedItems.length > 1 ? (
-              <Row style={{ justifyContent: 'space-between', alignItems: 'center', marginTop: 4, flexWrap: 'wrap', gap: 8 }}>
-                <Txt size={12} color={C.muted}>
-                  Item {activeIndex + 1} of {detectedItems.length}
-                </Txt>
-                {activeIndex < detectedItems.length - 1 ? (
-                  <Button
-                    title={`Next: ${detectedItems[activeIndex + 1].displayName} →`}
-                    variant="ghost"
-                    onPress={() => handleSelectIndex(activeIndex + 1)}
-                  />
-                ) : (
-                  <Button
-                    title="Capture new image →"
-                    icon="camera"
-                    variant="ghost"
-                    onPress={() => router.push('/scan')}
-                  />
-                )}
-              </Row>
-            ) : (
-              <Row style={{ justifyContent: 'flex-end', alignItems: 'center', marginTop: 4 }}>
-                <Button
-                  title="Capture new image →"
-                  icon="camera"
-                  variant="ghost"
-                  onPress={() => router.push('/scan')}
-                />
-              </Row>
+            {detectedItems.length > 1 && activeIndex < detectedItems.length - 1 && (
+              <Button
+                title={`Next item: ${detectedItems[activeIndex + 1].displayName} →`}
+                variant="ghost"
+                onPress={() => handleSelectIndex(activeIndex + 1)}
+              />
             )}
           </View>
         )}
       </Card>
+
       <NearbyDisposal key={activeItem.id} item={activeItem} />
-      <View style={{ marginTop: 16 }}>
+
+      <View>
         <Disclosure
           title={
             state.location && state.location !== 'Location detected'
@@ -796,32 +597,97 @@ export default function ResultScreen() {
             {locationGuidance(state.location, activeItem.category)}
           </Txt>
         </Disclosure>
+
+        {confidence > 0 && (
+          <Disclosure title="Scan details & sensitivity" icon="filter">
+            <View style={{ gap: 12 }}>
+              <View style={{ gap: 6 }}>
+                <Txt size={12} weight="600" color={C.ink}>
+                  Confidence threshold {reEvaluating ? '· Updating…' : ''}
+                </Txt>
+                <Row style={{ gap: 8, flexWrap: 'wrap' }}>
+                  {CONFIDENCE_LEVELS.map((lvl) => {
+                    const isSelected = lvl.id === selectedTier;
+                    return (
+                      <Pressable
+                        key={lvl.id}
+                        disabled={reEvaluating}
+                        onPress={() => handleConfidenceChange(lvl.id)}
+                        accessibilityRole="button"
+                        style={({ pressed }) => ({
+                          paddingHorizontal: 11,
+                          paddingVertical: 7,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: isSelected ? C.green : C.line,
+                          backgroundColor: isSelected ? '#E6F0DF' : C.white,
+                          opacity: reEvaluating ? 0.55 : pressed ? 0.75 : 1,
+                        })}
+                      >
+                        <Txt
+                          size={12}
+                          weight={isSelected ? '600' : '500'}
+                          color={isSelected ? C.green : C.ink}
+                        >
+                          {lvl.label} ({lvl.thresholdPercent}%)
+                        </Txt>
+                      </Pressable>
+                    );
+                  })}
+                </Row>
+              </View>
+              <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                {!!rawModelClass && (
+                  <Txt size={12} color={C.muted}>
+                    Detected class: {rawModelClass.replaceAll('_', ' ')}
+                  </Txt>
+                )}
+                {!!params.modelUsed && (
+                  <Txt size={12} color={C.muted}>
+                    Model: {params.modelUsed}
+                  </Txt>
+                )}
+              </Row>
+            </View>
+          </Disclosure>
+        )}
       </View>
-      <Row style={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
+
+      {/* Clean Footer Actions */}
+      <View style={{ gap: 8 }}>
         <Button
-          title="Ask about this item"
-          icon="chat"
-          variant="ghost"
-          onPress={() =>
-            router.push({
-              pathname: '/assistant',
-              params: {
-                item: activeItem.id,
-                itemName: activeItem.name,
-                fromScan: String(Date.now()),
-              },
-            })
-          }
+          title="Scan another item"
+          icon="camera"
+          variant="secondary"
+          onPress={() => router.push('/scan')}
         />
-        <Button
-          title="Correct result"
-          icon="edit"
-          variant="ghost"
-          onPress={() => setCorrecting(!correcting)}
-        />
-      </Row>
+        <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <Button
+            title="Ask assistant"
+            icon="chat"
+            variant="ghost"
+            onPress={() =>
+              router.push({
+                pathname: '/assistant',
+                params: {
+                  item: activeItem.id,
+                  itemName: activeItem.name,
+                  fromScan: String(Date.now()),
+                },
+              })
+            }
+          />
+          <Button
+            title="Correct result"
+            icon="edit"
+            variant="ghost"
+            onPress={() => setCorrecting(!correcting)}
+          />
+        </Row>
+      </View>
+
       {correcting && (
-        <Card style={{ gap: 14 }}>
+        <Card style={{ gap: 14, padding: 18 }}>
           <Field
             label="What should this item be?"
             value={correction}
