@@ -457,17 +457,148 @@ function isExplicitNonBulletRequest(query: string): boolean {
   ].some((phrase) => q.includes(phrase));
 }
 
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'if', 'so', 'how', 'what', 'where', 'when', 'why', 'who', 'which',
+  'can', 'could', 'would', 'should', 'will', 'do', 'does', 'did', 'is', 'are', 'was', 'were', 'be', 'been',
+  'being', 'have', 'has', 'had', 'i', 'me', 'my', 'you', 'your', 'we', 'our', 'they', 'them', 'their', 'he',
+  'she', 'it', 'its', 'this', 'that', 'these', 'those', 'to', 'for', 'in', 'on', 'at', 'of', 'by', 'from',
+  'with', 'about', 'into', 'out', 'up', 'down', 'over', 'under', 'not', 'no', 'yes', 'yeah', 'yep', 'nope',
+  'ok', 'okay', 'hi', 'hey', 'hello', 'yo', 'sup', 'hola', 'namaste', 'thanks', 'thank', 'thx', 'ty', 'bye',
+  'goodbye', 'please', 'pls', 'plz', 'help', 'tell', 'explain', 'show', 'give', 'know', 'want', 'need',
+  'think', 'like', 'just', 'really', 'very', 'too', 'also', 'more', 'some', 'any', 'all', 'one', 'two',
+  'get', 'got', 'go', 'goes', 'going', 'put', 'throw', 'away', 'dispose', 'disposal', 'recycle', 'recycling',
+  'bin', 'bins', 'waste', 'trash', 'rubbish', 'item', 'items', 'stuff', 'thing', 'things', 'lol', 'lmao',
+  'rofl', 'bruh', 'bro', 'dude', 'wtf', 'omg', 'idk', 'tbh', 'smh', 'test', 'testing', 'bullshit', 'bs',
+  'crap', 'shit', 'fuck', 'damn', 'heck', 'random', 'nothing', 'anything', 'something', 'everything',
+]);
+
+const GREETING_PHRASES = new Set([
+  'hi', 'hii', 'hiii', 'hello', 'helo', 'hey', 'heyy', 'heyyy', 'yo', 'sup', 'hiya', 'howdy', 'hola',
+  'namaste', 'gm', 'ge', 'good morning', 'good afternoon', 'good evening', 'hi there', 'hello there',
+  'hey there', 'whats up', "what's up", 'how are you', 'how r u', 'hows it going', "how's it going",
+]);
+
+const ACK_FAREWELL_PHRASES = new Set([
+  'thanks', 'thank you', 'thankyou', 'thx', 'ty', 'tysm', 'ok', 'okay', 'k', 'kk', 'cool', 'nice',
+  'great', 'awesome', 'got it', 'understood', 'sounds good', 'bye', 'goodbye', 'cya', 'see ya', 'see you',
+  'later', 'alright', 'fine',
+]);
+
+const HELP_META_PHRASES = new Set([
+  'who are you', 'what are you', 'what can you do', 'help', 'help me', 'how does this work',
+  'what is sortify', 'how to use', 'what do you do', 'how can you help', 'how can you help me',
+  'what can you help me with', 'what can you help with', 'how do you help',
+]);
+
+const HELP_META_PATTERN =
+  /\b(what can you do|what do you do|how can you help|how do you help|what can you help|how can u help|what can u do|how do i use|how does this work|who are you|what are you|what are your capabilities|what do you know)\b/;
+
+function normalizeToken(word: string): string {
+  const w = word.toLowerCase();
+  if (w.length > 4 && w.endsWith('ies')) return `${w.slice(0, -3)}y`;
+  if (w.length > 3 && w.endsWith('es') && ['s', 'x', 'z', 'h'].includes(w[w.length - 3])) {
+    return w.slice(0, -2);
+  }
+  if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
+  return w;
+}
+
+function tokenizeNormalized(text: string): string[] {
+  return (text.toLowerCase().match(/[a-z0-9]+/g) || [])
+    .filter((w) => w.length > 1)
+    .map(normalizeToken);
+}
+
+function hasWordPhrase(textLower: string, phrases: string[]): boolean {
+  return phrases.some((p) => {
+    const escaped = p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`\\b${escaped}\\b`).test(textLower);
+  });
+}
+
+function isGibberishToken(token: string): boolean {
+  if (token.length >= 4 && new Set(token).size === 1) return true;
+  if (token.length >= 5 && !/[aeiouy0-9]/.test(token)) return true;
+  return false;
+}
+
+function classifyConversationalOrInvalid(query: string): string | null {
+  const collapsed = query
+    .toLowerCase()
+    .replace(/[^\w\s']/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!collapsed || !/[a-z]{2,}/.test(collapsed)) {
+    return 'I can only help with waste sorting, recycling, and disposal questions. Try asking about a specific item or material, such as plastic bottles, batteries, pizza boxes, or e-waste.';
+  }
+  if (GREETING_PHRASES.has(collapsed)) {
+    return "Hello! I'm the Sortify waste sorting assistant. Ask me how to dispose of any item (for example, plastic bottles, batteries, pizza boxes, or e-waste) or which bin it belongs in.";
+  }
+  if (ACK_FAREWELL_PHRASES.has(collapsed)) {
+    if (['bye', 'cya', 'see ya', 'see you', 'later'].some((w) => collapsed.includes(w))) {
+      return 'Goodbye! Feel free to come back anytime you need help sorting an item.';
+    }
+    return "You're welcome! Let me know if you have another item you need help sorting.";
+  }
+  if (HELP_META_PHRASES.has(collapsed) || HELP_META_PATTERN.test(collapsed)) {
+    return [
+      '**Sortify Waste Sorting Assistant**',
+      'I can help you sort and dispose of household items properly using the Sortify waste guide:',
+      '• Bin Lookup: Ask which bin an item belongs in (e.g., "Where does a plastic bottle go?" or "Which bin for pizza boxes?").',
+      '• Preparation & Safety: Get disposal steps and safety cautions for tricky or hazardous items like batteries, vapes, motor oil, and medicines.',
+      '• Category Guides: Ask what goes in a bin (e.g., "What items go into the recyclable bin?" or "What goes in the green organics bin?").',
+      '• Feasibility Checks: Check whether specific materials can be recycled (e.g., "Can I recycle soft plastics?" or "Are ceramics recyclable?").',
+    ].join('\n\n');
+  }
+  if (/\b(who won|tell me a joke|write a poem|capital of|weather today|prime minister|president of)\b/.test(collapsed)) {
+    return 'I can only help with waste sorting, recycling, and disposal questions. Try asking about a specific item or material, such as plastic bottles, batteries, pizza boxes, or e-waste.';
+  }
+  return null;
+}
+
 function generateQwenRagResponse(
   query: string,
   contextItem?: WasteItem,
 ): AssistantResponse {
   const startTime = Date.now();
   const qLower = query.toLowerCase().trim();
-  const words = (qLower.match(/[a-z0-9]+/g) || []).filter(
-    (w) => !['the', 'a', 'an', 'and', 'or', 'how', 'what', 'where', 'can', 'i', 'do', 'it', 'is', 'to', 'for', 'in', 'on', 'of', 'about'].includes(w),
+  const modelLabel = DEFAULT_MODEL_LABEL;
+
+  const directReply = classifyConversationalOrInvalid(query);
+  if (directReply !== null) {
+    const genMs = Math.max(4, Date.now() - startTime);
+    const trace: RagTrace = {
+      trace_id: `trace-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      timestamp: new Date().toISOString(),
+      model: modelLabel,
+      query,
+      retrieval_ms: 0,
+      generation_ms: genMs,
+      total_ms: genMs,
+      retrieval_score: 0,
+      sources: [],
+      pipeline_steps: [
+        {
+          step: 'intent_guardrail',
+          status: 'completed',
+          duration_ms: genMs,
+          details: { handled_as: 'conversational_or_out_of_scope' },
+        },
+      ],
+      system_prompt: `You are Sortify waste sorting assistant powered by ${modelLabel}.`,
+    };
+    return {
+      reply: stripEmojis(directReply),
+      context: 'No rag.txt retrieval needed for conversational or out-of-scope query.',
+      traces: trace,
+    };
+  }
+
+  const words = tokenizeNormalized(qLower).filter(
+    (w) => !STOP_WORDS.has(w) && !isGibberishToken(w),
   );
 
-  const modelLabel = DEFAULT_MODEL_LABEL;
   const nonBullet = isExplicitNonBulletRequest(query);
 
   // 1. Detect Category-Level Synthesized Queries
@@ -572,7 +703,7 @@ function generateQwenRagResponse(
   }
 
   // 2. Specific Feasibility Questions ("Can I recycle...", "Is X recyclable...")
-  if (['pizza', 'pizza box', 'pizza boxes'].some((k) => qLower.includes(k))) {
+  if (hasWordPhrase(qLower, ['pizza', 'pizza box', 'pizza boxes'])) {
     const title = 'Pizza Boxes & Oil-Contaminated Paperboard';
     const lines = [
       `**${title}** (Recyclable & Organic / Compost)`,
@@ -584,7 +715,7 @@ function generateQwenRagResponse(
     return buildResponse(stripEmojis(lines.join('\n\n')), title, 'Recyclable / Compostable', query, modelLabel, startTime, 'box');
   }
 
-  if (['plastic bag', 'plastic bags', 'soft plastic', 'soft plastics', 'bubble wrap', 'cling film', 'chip packet', 'wrapper'].some((k) => qLower.includes(k))) {
+  if (hasWordPhrase(qLower, ['plastic bag', 'plastic bags', 'soft plastic', 'soft plastics', 'bubble wrap', 'cling film', 'chip packet', 'wrapper', 'wrappers'])) {
     const title = 'Plastic Bags & Flexible Soft Plastics';
     const lines = [
       `**${title}** (Specialized Drop-Off / General Waste)`,
@@ -597,7 +728,7 @@ function generateQwenRagResponse(
     return buildResponse(stripEmojis(lines.join('\n\n')), title, 'Specialized Drop-off / General waste', query, modelLabel, startTime, 'flexible-plastic');
   }
 
-  if (['bottle cap', 'bottle caps', 'lid', 'lids', 'caps stay on', 'cap on or off'].some((k) => qLower.includes(k))) {
+  if (hasWordPhrase(qLower, ['bottle cap', 'bottle caps', 'lid', 'lids', 'caps stay on', 'cap on or off'])) {
     const title = 'Bottle Caps, Jar Lids & Container Closures';
     const lines = [
       `**${title}** (Recyclable)`,
@@ -610,7 +741,7 @@ function generateQwenRagResponse(
     return buildResponse(stripEmojis(lines.join('\n\n')), title, 'Recyclable', query, modelLabel, startTime, 'bottle');
   }
 
-  if (['styrofoam', 'polystyrene', 'foam clamshell', 'packing peanut'].some((k) => qLower.includes(k))) {
+  if (hasWordPhrase(qLower, ['styrofoam', 'polystyrene', 'foam clamshell', 'packing peanut', 'packing peanuts'])) {
     const title = 'Polystyrene Foam & Styrofoam Packaging';
     const lines = [
       `**${title}** (General Waste / Specialized Drop-Off)`,
@@ -622,7 +753,7 @@ function generateQwenRagResponse(
     return buildResponse(stripEmojis(lines.join('\n\n')), title, 'General waste', query, modelLabel, startTime, 'general-waste');
   }
 
-  if (['drinking glass', 'wine glass', 'broken glass', 'ceramic', 'mug', 'pyrex', 'window pane', 'mirror'].some((k) => qLower.includes(k))) {
+  if (hasWordPhrase(qLower, ['drinking glass', 'wine glass', 'broken glass', 'ceramic', 'ceramics', 'mug', 'mugs', 'pyrex', 'window pane', 'mirror', 'mirrors'])) {
     const title = 'Ceramics, Drinking Glassware & Pyrex';
     const lines = [
       `**${title}** (General Waste / Donation)`,
@@ -635,32 +766,37 @@ function generateQwenRagResponse(
     return buildResponse(stripEmojis(lines.join('\n\n')), title, 'General waste', query, modelLabel, startTime, 'jar');
   }
 
-  // 3. Fallback to Multi-Factor Retrieval across Knowledge Base Chunks
-  const scored = FALLBACK_RAG_CHUNKS.map((chunk) => {
-    let score = 0;
-    const lowerText = chunk.text.toLowerCase();
-    const titleLower = chunk.title.toLowerCase();
+  // 3. Fallback to Multi-Factor Retrieval across Knowledge Base Chunks (whole-word tokens only)
+  const scored = words.length === 0
+    ? []
+    : FALLBACK_RAG_CHUNKS.map((chunk) => {
+        let score = 0;
+        const titleTokens = new Set(tokenizeNormalized(chunk.title));
+        const keywordTokens = new Set(chunk.keywords.map(normalizeToken));
+        const bodyTokens = new Set(tokenizeNormalized(chunk.text));
 
-    for (const w of words) {
-      if (titleLower.includes(w)) score += 5;
-      else if (chunk.keywords.includes(w)) score += 3;
-      else if (lowerText.includes(w)) score += 1;
-    }
+        for (const w of words) {
+          if (titleTokens.has(w)) score += 5;
+          else if (keywordTokens.has(w)) score += 3;
+          else if (bodyTokens.has(w)) score += 1;
+        }
 
-    const isContextMatch = Boolean(
-      contextItem &&
-        (chunk.itemId === contextItem.id ||
-          (contextItem.subItemIds && chunk.itemId && contextItem.subItemIds.includes(chunk.itemId)) ||
-          (chunk.itemId && catalog.find((c) => c.id === chunk.itemId)?.subItemIds?.includes(contextItem.id)) ||
-          (contextItem.detectorClass && chunk.itemId === contextItem.detectorClass) ||
-          (chunk.itemId && (contextItem.id.startsWith(chunk.itemId) || chunk.itemId.startsWith(contextItem.id))))
-    );
-    if (isContextMatch) score += 6;
+        if (score > 0) {
+          const isContextMatch = Boolean(
+            contextItem &&
+              (chunk.itemId === contextItem.id ||
+                (contextItem.subItemIds && chunk.itemId && contextItem.subItemIds.includes(chunk.itemId)) ||
+                (chunk.itemId && catalog.find((c) => c.id === chunk.itemId)?.subItemIds?.includes(contextItem.id)) ||
+                (contextItem.detectorClass && chunk.itemId === contextItem.detectorClass) ||
+                (chunk.itemId && (contextItem.id.startsWith(chunk.itemId) || chunk.itemId.startsWith(contextItem.id))))
+          );
+          if (isContextMatch) score += 6;
+        }
 
-    return { chunk, score };
-  })
-    .filter((s) => s.score > 0)
-    .sort((a, b) => b.score - a.score);
+        return { chunk, score };
+      })
+        .filter((s) => s.score > 0)
+        .sort((a, b) => b.score - a.score);
 
   const topMatch = scored[0];
   const retrievalMs = Math.max(8, Math.round((Date.now() - startTime) + Math.random() * 8));
@@ -875,10 +1011,15 @@ export async function askAssistant(
 
     if (response.ok) {
       const data = await response.json();
-      const matched = catalog.find((i) =>
-        query.toLowerCase().includes(i.name.toLowerCase()) ||
-        i.keywords.some((k) => query.toLowerCase().includes(k)),
-      );
+      const hasMatches = (data.traces?.retrieval_score ?? 0) > 0;
+      const qLower = query.toLowerCase();
+      const matched = hasMatches
+        ? catalog.find(
+            (i) =>
+              hasWordPhrase(qLower, [i.name.toLowerCase()]) ||
+              hasWordPhrase(qLower, i.keywords.map((k) => k.toLowerCase())),
+          )
+        : undefined;
 
       return {
         reply: stripEmojis(data.reply),

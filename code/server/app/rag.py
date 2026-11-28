@@ -45,6 +45,115 @@ class KnowledgeChunk:
     content: str
     raw_text: str
     keywords: list[str]
+    title_tokens: set[str]
+    token_counts: dict[str, int]
+
+
+STOP_WORDS = {
+    "the", "a", "an", "and", "or", "but", "if", "so", "how", "what", "where", "when", "why", "who", "which",
+    "can", "could", "would", "should", "will", "do", "does", "did", "is", "are", "was", "were", "be", "been",
+    "being", "have", "has", "had", "i", "me", "my", "you", "your", "we", "our", "they", "them", "their", "he",
+    "she", "it", "its", "this", "that", "these", "those", "to", "for", "in", "on", "at", "of", "by", "from",
+    "with", "about", "into", "out", "up", "down", "over", "under", "not", "no", "yes", "yeah", "yep", "nope",
+    "ok", "okay", "hi", "hey", "hello", "yo", "sup", "hola", "namaste", "thanks", "thank", "thx", "ty", "bye",
+    "goodbye", "please", "pls", "plz", "help", "tell", "explain", "show", "give", "know", "want", "need",
+    "think", "like", "just", "really", "very", "too", "also", "more", "some", "any", "all", "one", "two",
+    "get", "got", "go", "goes", "going", "put", "throw", "away", "dispose", "disposal", "recycle", "recycling",
+    "bin", "bins", "waste", "trash", "rubbish", "item", "items", "stuff", "thing", "things", "lol", "lmao",
+    "rofl", "bruh", "bro", "dude", "wtf", "omg", "idk", "tbh", "smh", "test", "testing", "bullshit", "bs",
+    "crap", "shit", "fuck", "damn", "heck", "random", "nothing", "anything", "something", "everything",
+}
+
+GREETING_PHRASES = {
+    "hi", "hii", "hiii", "hello", "helo", "hey", "heyy", "heyyy", "yo", "sup", "hiya", "howdy", "hola",
+    "namaste", "gm", "ge", "good morning", "good afternoon", "good evening", "hi there", "hello there",
+    "hey there", "whats up", "what's up", "how are you", "how r u", "hows it going", "how's it going",
+}
+
+ACK_FAREWELL_PHRASES = {
+    "thanks", "thank you", "thankyou", "thx", "ty", "tysm", "ok", "okay", "k", "kk", "cool", "nice",
+    "great", "awesome", "got it", "understood", "sounds good", "bye", "goodbye", "cya", "see ya", "see you",
+    "later", "alright", "fine",
+}
+
+HELP_META_PHRASES = {
+    "who are you", "what are you", "what can you do", "help", "help me", "how does this work",
+    "what is sortify", "how to use", "what do you do", "how can you help", "how can you help me",
+    "what can you help me with", "what can you help with", "how do you help",
+}
+
+HELP_META_PATTERN = re.compile(
+    r"\b(what can you do|what do you do|how can you help|how do you help|what can you help|"
+    r"how can u help|what can u do|how do i use|how does this work|who are you|what are you|"
+    r"what are your capabilities|what do you know)\b"
+)
+
+
+def normalize_token(word: str) -> str:
+    w = word.lower()
+    if len(w) > 4 and w.endswith("ies"):
+        return w[:-3] + "y"
+    if len(w) > 3 and w.endswith("es") and w[-3] in ("s", "x", "z", "h"):
+        return w[:-2]
+    if len(w) > 3 and w.endswith("s") and not w.endswith("ss"):
+        return w[:-1]
+    return w
+
+
+def tokenize_normalized(text: str) -> list[str]:
+    return [normalize_token(w) for w in re.findall(r"[a-z0-9]+", text.lower()) if len(w) > 1]
+
+
+def has_word_phrase(text_lower: str, phrases: list[str]) -> bool:
+    return any(re.search(rf"\b{re.escape(p)}\b", text_lower) for p in phrases)
+
+
+def is_gibberish_token(token: str) -> bool:
+    if len(token) >= 4 and len(set(token)) == 1:
+        return True
+    if len(token) >= 5 and not re.search(r"[aeiouy0-9]", token):
+        return True
+    return False
+
+
+def classify_conversational_or_invalid(query: str) -> str | None:
+    """Return a direct conversational/guardrail reply if query is a greeting, ack, help, or nonsense."""
+    cleaned = re.sub(r"[^\w\s']", " ", query.lower()).strip()
+    collapsed = re.sub(r"\s+", " ", cleaned)
+    if not collapsed or not re.search(r"[a-z]{2,}", collapsed):
+        return (
+            "I can only help with waste sorting, recycling, and disposal questions. "
+            "Try asking about a specific item or material, such as plastic bottles, batteries, pizza boxes, or e-waste."
+        )
+
+    if collapsed in GREETING_PHRASES:
+        return (
+            "Hello! I'm the Sortify waste sorting assistant. "
+            "Ask me how to dispose of any item (for example, plastic bottles, batteries, pizza boxes, or e-waste) or which bin it belongs in."
+        )
+
+    if collapsed in ACK_FAREWELL_PHRASES:
+        if any(w in collapsed for w in ("bye", "cya", "see ya", "see you", "later")):
+            return "Goodbye! Feel free to come back anytime you need help sorting an item."
+        return "You're welcome! Let me know if you have another item you need help sorting."
+
+    if collapsed in HELP_META_PHRASES or HELP_META_PATTERN.search(collapsed):
+        return (
+            "**Sortify Waste Sorting Assistant**\n\n"
+            "I can help you sort and dispose of household items properly using the Sortify waste guide:\n\n"
+            "• Bin Lookup: Ask which bin an item belongs in (e.g., \"Where does a plastic bottle go?\" or \"Which bin for pizza boxes?\").\n\n"
+            "• Preparation & Safety: Get disposal steps and safety cautions for tricky or hazardous items like batteries, vapes, motor oil, and medicines.\n\n"
+            "• Category Guides: Ask what goes in a bin (e.g., \"What items go into the recyclable bin?\" or \"What goes in the green organics bin?\").\n\n"
+            "• Feasibility Checks: Check whether specific materials can be recycled (e.g., \"Can I recycle soft plastics?\" or \"Are ceramics recyclable?\")."
+        )
+
+    if re.search(r"\b(who won|tell me a joke|write a poem|capital of|weather today|prime minister|president of)\b", collapsed):
+        return (
+            "I can only help with waste sorting, recycling, and disposal questions. "
+            "Try asking about a specific item or material, such as plastic bottles, batteries, pizza boxes, or e-waste."
+        )
+
+    return None
 
 
 @dataclass
@@ -143,13 +252,13 @@ class RagEngine:
             category_match = re.search(r"Category:\s*([^\n]+)", body, re.IGNORECASE)
             category = category_match.group(1).strip() if category_match else "Waste Guidance"
 
-            # Keywords for retrieval
+            # Keywords and normalized tokens for retrieval
             words = re.findall(r"[a-z0-9]+", clean.lower())
-            stop_words = {
-                "the", "a", "an", "and", "or", "in", "on", "at", "to", "for", "of", "with",
-                "is", "are", "do", "not", "by", "from", "it", "as", "be", "this", "that"
-            }
-            keywords = [w for w in words if w not in stop_words and len(w) > 1]
+            keywords = [w for w in words if w not in STOP_WORDS and len(w) > 1]
+            title_tokens = set(tokenize_normalized(title))
+            token_counts: dict[str, int] = {}
+            for tok in tokenize_normalized(clean):
+                token_counts[tok] = token_counts.get(tok, 0) + 1
 
             chunk_id = f"chunk-{idx + 1}"
             chunks.append(
@@ -160,17 +269,20 @@ class RagEngine:
                     content=body,
                     raw_text=clean,
                     keywords=keywords,
+                    title_tokens=title_tokens,
+                    token_counts=token_counts,
                 )
             )
             idx += 1
         return chunks
 
     def retrieve(self, query: str, top_k: int = 3) -> tuple[list[tuple[KnowledgeChunk, float]], float]:
-        """Score knowledge chunks against the query using token overlap and BM25-style weighting."""
+        """Score knowledge chunks against the query using whole-word token overlap and BM25-style weighting."""
         start_time = time.perf_counter()
+        raw_tokens = tokenize_normalized(query)
         query_words = [
-            w for w in re.findall(r"[a-z0-9]+", query.lower())
-            if len(w) > 1 and w not in {"the", "a", "an", "and", "or", "how", "what", "where", "can", "i", "do"}
+            w for w in raw_tokens
+            if len(w) > 1 and w not in STOP_WORDS and not is_gibberish_token(w)
         ]
         if not query_words or not self.chunks:
             retrieval_duration = (time.perf_counter() - start_time) * 1000.0
@@ -179,20 +291,19 @@ class RagEngine:
         scored_chunks: list[tuple[KnowledgeChunk, float]] = []
         for chunk in self.chunks:
             score = 0.0
-            raw_lower = chunk.raw_text.lower()
-            title_lower = chunk.title.lower()
+            matched_terms = 0
 
-            # Exact title and keyword matching
+            # Exact whole-token title and body matching (never substring)
             for q in query_words:
-                if q in title_lower:
+                if q in chunk.title_tokens:
                     score += 4.0
-                elif q in raw_lower:
-                    # Weight by occurrences
-                    count = raw_lower.count(q)
+                    matched_terms += 1
+                elif q in chunk.token_counts:
+                    count = chunk.token_counts[q]
                     score += 1.0 + math.log1p(count)
+                    matched_terms += 1
 
             # Bonus if multiple query terms match
-            matched_terms = sum(1 for q in query_words if q in raw_lower)
             if matched_terms > 1:
                 score += matched_terms * 1.5
 
@@ -369,7 +480,7 @@ class RagEngine:
                 return remove_emojis("\n\n".join(bullets))
 
         # 2. Specific Feasibility Questions ("Can I recycle...", "Is X recyclable...")
-        if any(k in q_lower for k in ["pizza", "pizza box", "pizza boxes"]):
+        if has_word_phrase(q_lower, ["pizza", "pizza box", "pizza boxes"]):
             bullets = [
                 "**Pizza Boxes & Oil-Contaminated Paperboard** (Recyclable & Organic / Compost)",
                 "• Clean Cardboard Top: Tear off the clean top half of the pizza box and place it directly into your curbside paper and cardboard recycling bin.",
@@ -379,7 +490,7 @@ class RagEngine:
             ]
             return remove_emojis("\n\n".join(bullets))
 
-        if any(k in q_lower for k in ["plastic bag", "plastic bags", "soft plastic", "soft plastics", "bubble wrap", "cling film", "chip packet", "wrapper"]):
+        if has_word_phrase(q_lower, ["plastic bag", "plastic bags", "soft plastic", "soft plastics", "bubble wrap", "cling film", "chip packet", "wrapper", "wrappers"]):
             bullets = [
                 "**Plastic Bags & Flexible Soft Plastics** (Specialized Drop-Off / General Waste)",
                 "• Curbside Yellow Bin: No. Flexible soft plastics must never go into your curbside recycling bin.",
@@ -390,7 +501,7 @@ class RagEngine:
             ]
             return remove_emojis("\n\n".join(bullets))
 
-        if any(k in q_lower for k in ["bottle cap", "bottle caps", "lid", "lids", "caps stay on", "cap on or off"]):
+        if has_word_phrase(q_lower, ["bottle cap", "bottle caps", "lid", "lids", "caps stay on", "cap on or off"]):
             bullets = [
                 "**Bottle Caps, Jar Lids & Container Closures** (Recyclable)",
                 "• Plastic Bottle Caps: Empty the liquid, rinse briefly, and screw the plastic cap tightly back onto the plastic bottle.",
@@ -401,7 +512,7 @@ class RagEngine:
             ]
             return remove_emojis("\n\n".join(bullets))
 
-        if any(k in q_lower for k in ["styrofoam", "polystyrene", "foam clamshell", "packing peanut"]):
+        if has_word_phrase(q_lower, ["styrofoam", "polystyrene", "foam clamshell", "packing peanut", "packing peanuts"]):
             bullets = [
                 "**Polystyrene Foam & Styrofoam Packaging** (General Waste / Specialized Drop-Off)",
                 "• Curbside Yellow Bin: No. Expanded polystyrene foam cannot be recycled in curbside commingled bins.",
@@ -411,7 +522,7 @@ class RagEngine:
             ]
             return remove_emojis("\n\n".join(bullets))
 
-        if any(k in q_lower for k in ["drinking glass", "wine glass", "broken glass", "ceramic", "mug", "pyrex", "window pane", "mirror"]):
+        if has_word_phrase(q_lower, ["drinking glass", "wine glass", "broken glass", "ceramic", "ceramics", "mug", "mugs", "pyrex", "window pane", "mirror", "mirrors"]):
             bullets = [
                 "**Ceramics, Drinking Glassware & Pyrex** (General Waste / Donation)",
                 "• Curbside Glass Bin: No. Drinking glasses, ceramic mugs, Pyrex bakeware, and mirrors do not belong in curbside glass recycling.",
@@ -509,6 +620,45 @@ class RagEngine:
         overall_start = time.perf_counter()
         pipeline_steps: list[dict[str, Any]] = []
 
+        # 0. Guardrail for greetings, acknowledgments, help, or invalid/empty queries
+        direct_reply = classify_conversational_or_invalid(query)
+        model_name = custom_model or QWEN_MODEL_NAME
+        system_prompt = (
+            f"You are Sortify's waste sorting assistant powered by {model_name}.\n"
+            f"Answer the user query accurately, flexibly, and concisely using the provided context from rag.txt.\n"
+            f"Strict output constraints:\n"
+            f"- Make your response bullet-point based by default (e.g. • Step), UNLESS the user explicitly requests prose, a paragraph, or no bullets.\n"
+            f"- Answer the specific question directly rather than reciting the entire document entry verbatim.\n"
+            f"- Use plain text labels like 'Caution:' or 'Note:' without emoji icons.\n"
+            f"- Absolutely NO emojis anywhere in the response (zero emojis, no unicode warning or recycle symbols).\n"
+            f"- If the answer is not in the context, provide helpful guidance pointing to the waste guide."
+        )
+        model_used = f"{model_name} (RAG Knowledge Engine)"
+
+        if direct_reply is not None:
+            total_ms = (time.perf_counter() - overall_start) * 1000.0
+            trace = RagTrace(
+                trace_id=f"trace-{int(time.time())}-{uuid.uuid4().hex[:6]}",
+                timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                query=query,
+                model=model_used,
+                retrieval_ms=0.0,
+                generation_ms=round(total_ms, 2),
+                total_ms=round(total_ms, 2),
+                retrieval_score=0.0,
+                sources=[],
+                pipeline_steps=[
+                    {
+                        "step": "intent_guardrail",
+                        "status": "completed",
+                        "duration_ms": round(total_ms, 2),
+                        "details": {"handled_as": "conversational_or_out_of_scope"},
+                    }
+                ],
+                system_prompt=system_prompt,
+            )
+            return remove_emojis(direct_reply), "No rag.txt retrieval needed for conversational or out-of-scope query.", trace
+
         # 1. Retrieval
         retrieved, retrieval_ms = self.retrieve(query, top_k=3)
         pipeline_steps.append({
@@ -540,17 +690,6 @@ class RagEngine:
         top_score = retrieved[0][1] if retrieved else 0.0
 
         # 2. Context Injection & System Prompt
-        model_name = custom_model or QWEN_MODEL_NAME
-        system_prompt = (
-            f"You are Sortify's waste sorting assistant powered by {model_name}.\n"
-            f"Answer the user query accurately, flexibly, and concisely using the provided context from rag.txt.\n"
-            f"Strict output constraints:\n"
-            f"- Make your response bullet-point based by default (e.g. • Step), UNLESS the user explicitly requests prose, a paragraph, or no bullets.\n"
-            f"- Answer the specific question directly rather than reciting the entire document entry verbatim.\n"
-            f"- Use plain text labels like 'Caution:' or 'Note:' without emoji icons.\n"
-            f"- Absolutely NO emojis anywhere in the response (zero emojis, no unicode warning or recycle symbols).\n"
-            f"- If the answer is not in the context, provide helpful guidance pointing to the waste guide."
-        )
         pipeline_steps.append({
             "step": "context_injection",
             "status": "completed",
@@ -564,7 +703,6 @@ class RagEngine:
         # 3. Model Generation
         gen_start = time.perf_counter()
         reply = remove_emojis(self._generate_grounded_response(query, [c for c, _ in retrieved]))
-        model_used = f"{model_name} (RAG Knowledge Engine)"
 
         generation_ms = (time.perf_counter() - gen_start) * 1000.0
         pipeline_steps.append({
